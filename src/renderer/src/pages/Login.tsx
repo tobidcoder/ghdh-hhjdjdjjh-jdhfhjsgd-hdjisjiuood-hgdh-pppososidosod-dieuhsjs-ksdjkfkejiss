@@ -1,9 +1,11 @@
 import * as React from 'react';
 import { useState } from 'react';
 import { Button } from '../components/ui/button';
+import { useNavigate } from 'react-router-dom'
 
 const Login: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
+  const navigate = useNavigate()
 
   return (
     <div className="min-h-screen min-w-screen flex items-center justify-center bg-[#052315]">
@@ -20,13 +22,16 @@ const Login: React.FC = () => {
         </div>
         <h2 className="text-2xl font-semibold text-[#052315] mb-2">Sign in</h2>
         <p className="text-center text-[#052315] mb-6">Please enter your email address and password.</p>
-        <form className="w-full flex flex-col gap-4">
+        <form  onSubmit={(e) => {
+            e.preventDefault()
+            navigate('/dashboard')
+          }} className="w-full flex flex-col gap-4">
           <div className="flex flex-col gap-1">
             <label htmlFor="email" className="text-[#052315] font-medium">Email/Username<span className="text-red-500">*</span></label>
             <input
               id="email"
-              type="email"
-              placeholder="Enter Email"
+              type="text"
+              placeholder="Enter Email or Username"
               className="border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#052315]"
               required
             />
