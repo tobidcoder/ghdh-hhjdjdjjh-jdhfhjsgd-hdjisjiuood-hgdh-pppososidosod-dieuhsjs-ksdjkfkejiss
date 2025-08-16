@@ -1,11 +1,23 @@
 import * as React from 'react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '../components/ui/button';
 import { useNavigate } from 'react-router-dom'
+import { useAuthStore } from '@renderer/store/auth'
+import { useAuthService } from '@renderer/services/authService'
 
 const Login: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const navigate = useNavigate()
+  const { login, isSubmitting, error, user, clearError } = useAuthStore()
+  const authService = useAuthService()
+
+  useEffect(() => {
+    if (user) {
+      navigate('/dashboard')
+    }
+  }, [user, navigate])
 
   return (
     <div className="min-h-screen min-w-screen flex items-center justify-center bg-[#052315]">
@@ -22,9 +34,10 @@ const Login: React.FC = () => {
         </div>
         <h2 className="text-2xl font-semibold text-[#052315] mb-2">Sign in</h2>
         <p className="text-center text-[#052315] mb-6">Please enter your email address and password.</p>
-        <form  onSubmit={(e) => {
+        <form  onSubmit={async (e) => {
             e.preventDefault()
-            navigate('/dashboard')
+            clearError()
+            await login({ email, password })
           }} className="w-full flex flex-col gap-4">
           <div className="flex flex-col gap-1">
             <label htmlFor="email" className="text-[#052315] font-medium">Email/Username<span className="text-red-500">*</span></label>
@@ -33,6 +46,8 @@ const Login: React.FC = () => {
               type="text"
               placeholder="Enter Email or Username"
               className="border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#052315]"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               required
             />
           </div>
@@ -44,6 +59,8 @@ const Login: React.FC = () => {
                 type={showPassword ? 'text' : 'password'}
                 placeholder="Enter Password"
                 className="border border-gray-300 rounded-md px-4 py-2 w-full focus:outline-none focus:ring-2 focus:ring-[#052315]"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 required
               />
               <button
@@ -77,10 +94,18 @@ const Login: React.FC = () => {
               </button>
             </div>
           </div>
+          {error ? (
+            <div className="text-red-600 text-sm bg-red-50 p-3 rounded-md" role="alert">
+              <div className="font-medium">Login Failed</div>
+              <div>{error}</div>
+            </div>
+          ) : null}
           <div className="flex justify-end mb-2">
             <a href="#" className="text-blue-500 text-sm hover:underline">Forgot Password ?</a>
           </div>
-          <Button type="submit" className="w-full bg-[#052315] text-white rounded-md py-2 mt-2 hover:bg-[#09351f]">Login</Button>
+          <Button type="submit" disabled={isSubmitting} className="w-full bg-[#052315] text-white rounded-md py-2 mt-2 hover:bg-[#09351f]">
+            {isSubmitting ? 'Signing in…' : 'Login'}
+          </Button>
         </form>
        
       </div>

@@ -1,7 +1,19 @@
+// Load environment variables from .env file FIRST, before any other imports
+if (process.env.NODE_ENV !== 'production') {
+  try {
+    require('dotenv').config()
+    console.log('[ENV] Loaded .env file')
+    console.log('[ENV] BASE_URL:', process.env.BASE_URL)
+  } catch (error) {
+    console.log('[ENV] No .env file found or error loading it')
+  }
+}
+
 import { app, shell, BrowserWindow, ipcMain } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
+import { initDatabase, closeDatabase } from './db'
 
 function createWindow(): void {
   // Create the browser window.
@@ -20,6 +32,11 @@ function createWindow(): void {
   mainWindow.on('ready-to-show', () => {
     mainWindow.show()
   })
+
+  // Open DevTools in development
+  if (is.dev) {
+    mainWindow.webContents.openDevTools()
+  }
 
   mainWindow.webContents.setWindowOpenHandler((details) => {
     shell.openExternal(details.url)
@@ -52,6 +69,29 @@ app.whenReady().then(() => {
   // IPC test
   ipcMain.on('ping', () => console.log('pong'))
 
+  // Environment variable handler
+  ipcMain.handle('env:get', (_event, key: string) => {
+    const value = process.env[key] || ''
+    console.log(`[ENV] Requested ${key}:`, value)
+    console.log(`[ENV] All env vars:`, Object.keys(process.env).filter(k => k.includes('BASE') || k.includes('URL')))
+    return value
+  })
+
+  // Debug: List all environment variables
+  ipcMain.handle('env:list', () => {
+    const envVars = Object.keys(process.env).filter(key => 
+      key.includes('BASE') || key.includes('URL') || key.includes('API')
+    )
+    console.log('[ENV] Available env vars:', envVars)
+    return envVars.reduce((acc, key) => {
+      acc[key] = process.env[key]
+      return acc
+    }, {} as Record<string, string | undefined>)
+  })
+
+  // Initialize offline database
+  initDatabase()
+
   createWindow()
 
   app.on('activate', function () {
@@ -68,6 +108,11 @@ app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit()
   }
+})
+
+// Close database when app is about to quit
+app.on('before-quit', () => {
+  closeDatabase()
 })
 
 // In this file you can include the rest of your app's specific main process

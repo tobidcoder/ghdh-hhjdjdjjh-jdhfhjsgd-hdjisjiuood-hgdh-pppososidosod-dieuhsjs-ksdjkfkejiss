@@ -1,18 +1,18 @@
 import * as React from 'react';
-import { useState } from 'react'
+import { useEffect } from 'react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Card, CardContent } from './ui/card';
 import { Badge } from './ui/badge';
-
-interface Product {
-  id: string;
-  name: string;
-  price: number;
-  category: string;
-}
+import { useProductsStore } from '@renderer/store/products'
 
 const Products: React.FC = () => {
-  const [selectedCategory, setSelectedCategory] = useState('all');
+  const {
+    selectedCategory,
+    setCategory,
+    products,
+    refresh,
+    isLoading
+  } = useProductsStore()
 
   const categories = [
     'All Categories',
@@ -23,16 +23,9 @@ const Products: React.FC = () => {
     'BAGS'
   ];
 
-  const products: Product[] = [
-    { id: '1', name: 'MERBA DOUBLE CHOCO 200G', price: 4200, category: 'BISCUIT & COOKIES' },
-    { id: '2', name: 'MERBER WHITE CHOCO CRANB 150G', price: 3300, category: 'BISCUIT & COOKIES' },
-    { id: '3', name: 'MERBA CHOCO CHIP COOKIES 150G', price: 2950, category: 'BISCUIT & COOKIES' },
-    { id: '4', name: 'MERBA NOUGATELLI COOKIES', price: 2200, category: 'BISCUIT & COOKIES' },
-    { id: '5', name: 'HELLEMA SPECULAAS', price: 599.99, category: 'BISCUIT & COOKIES' },
-    { id: '6', name: 'LORD OF WAFERS', price: 100, category: 'BISCUIT & COOKIES' },
-    { id: '7', name: 'MERBA TRIPLE CHOCOLATE COOKIES', price: 2300, category: 'BISCUIT & COOKIES' },
-    { id: '8', name: 'BEST DREAM PURPLE COOKIES', price: 450, category: 'BISCUIT & COOKIES' },
-  ];
+  useEffect(() => {
+    void refresh()
+  }, [])
 
   const filteredProducts = selectedCategory === 'all' 
     ? products 
@@ -48,8 +41,8 @@ const Products: React.FC = () => {
 
   return (
     <div className="flex-1 bg-gray-50 p-6">
-      <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="w-full">
-        <TabsList className="grid w-full grid-cols-6 mb-6">
+      <Tabs value={selectedCategory} onValueChange={setCategory} className="w-full">
+        <TabsList className="grid w-full grid-cols-6 mb-6 overflow-x-auto ">
           {categories.map((category) => (
             <TabsTrigger
               key={category}
@@ -66,8 +59,12 @@ const Products: React.FC = () => {
         </TabsList>
 
         <TabsContent value={selectedCategory} className="mt-0">
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-            {filteredProducts.map((product) => (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 overflow-y-scroll h-[40vh]">
+            {isLoading ? (
+              <div className="col-span-full text-center text-sm text-gray-500">Loading...</div>
+            ) : filteredProducts.length === 0 ? (
+              <div className="col-span-full text-center text-sm text-gray-500">No products</div>
+            ) : filteredProducts.map((product) => (
               <Card key={product.id} className="cursor-pointer hover:shadow-md transition-shadow">
                 <CardContent className="p-4 text-center">
                   <div className="relative">
