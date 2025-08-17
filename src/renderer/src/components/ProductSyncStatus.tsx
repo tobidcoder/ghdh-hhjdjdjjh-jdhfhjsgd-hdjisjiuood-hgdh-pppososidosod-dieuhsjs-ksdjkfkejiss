@@ -8,7 +8,7 @@ import { Button } from './ui/button'
 import { getBaseUrl } from '@renderer/config/env'
 
 export const ProductSyncStatus: React.FC = () => {
-  const { syncProgress, isSyncing, syncError, checkSyncProgress, startSync } = useProductsStore()
+  const { syncProgress, isSyncing, syncError, checkSyncProgress, startSync, resetSync } = useProductsStore()
   const { user } = useAuthStore()
 
   useEffect(() => {
@@ -55,6 +55,15 @@ export const ProductSyncStatus: React.FC = () => {
     }
   }
 
+  const handleResetSync = async () => {
+    try {
+      await resetSync()
+      console.log('Sync progress reset')
+    } catch (error) {
+      console.error('Failed to reset sync:', error)
+    }
+  }
+
   return (
     <Card className="w-full max-w-md">
       <CardHeader className="pb-3">
@@ -70,25 +79,32 @@ export const ProductSyncStatus: React.FC = () => {
           </div>
         )}
         
-        {user?.token && (
-          <div className="flex gap-2">
-            <Button 
-              onClick={handleManualSync} 
-              disabled={isSyncing}
-              size="sm"
-              variant="outline"
-            >
-              {isSyncing ? 'Syncing...' : 'Manual Sync'}
-            </Button>
-            <Button 
-              onClick={checkSyncProgress} 
-              size="sm"
-              variant="ghost"
-            >
-              Refresh Status
-            </Button>
-          </div>
-        )}
+                 {user?.token && (
+           <div className="flex gap-2">
+             <Button 
+               onClick={handleManualSync} 
+               disabled={isSyncing}
+               size="sm"
+               variant="outline"
+             >
+               {isSyncing ? 'Syncing...' : 'Manual Sync'}
+             </Button>
+             <Button 
+               onClick={checkSyncProgress} 
+               size="sm"
+               variant="ghost"
+             >
+               Refresh Status
+             </Button>
+             <Button 
+               onClick={handleResetSync} 
+               size="sm"
+               variant="destructive"
+             >
+               Reset Sync
+             </Button>
+           </div>
+         )}
         
         {syncProgress && (
           <div className="space-y-2">

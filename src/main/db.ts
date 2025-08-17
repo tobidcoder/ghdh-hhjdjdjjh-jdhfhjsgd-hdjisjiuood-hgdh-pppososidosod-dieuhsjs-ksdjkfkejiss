@@ -11,6 +11,7 @@ export interface ProductRecord {
   name: string
   price: number
   category: string
+  code: string | null
   raw_response: string | null
 }
 
@@ -85,14 +86,14 @@ export function initDatabase(): void {
   const count = db.prepare('SELECT COUNT(1) as c FROM products').get() as { c: number }
   if (count.c === 0) {
     const seedProducts: ProductRecord[] = [
-      { id: '1', name: 'MERBA DOUBLE CHOCO 200G', price: 4200, category: 'BISCUIT & COOKIES', raw_response: null },
-      { id: '2', name: 'MERBER WHITE CHOCO CRANB 150G', price: 3300, category: 'BISCUIT & COOKIES', raw_response: null },
-      { id: '3', name: 'MERBA CHOCO CHIP COOKIES 150G', price: 2950, category: 'BISCUIT & COOKIES', raw_response: null },
-      { id: '4', name: 'MERBA NOUGATELLI COOKIES', price: 2200, category: 'BISCUIT & COOKIES', raw_response: null },
-      { id: '5', name: 'HELLEMA SPECULAAS', price: 599.99, category: 'BISCUIT & COOKIES', raw_response: null },
-      { id: '6', name: 'LORD OF WAFERS', price: 100, category: 'BISCUIT & COOKIES', raw_response: null },
-      { id: '7', name: 'MERBA TRIPLE CHOCOLATE COOKIES', price: 2300, category: 'BISCUIT & COOKIES', raw_response: null },
-      { id: '8', name: 'BEST DREAM PURPLE COOKIES', price: 450, category: 'BISCUIT & COOKIES', raw_response: null }
+      { id: '1', name: 'MERBA DOUBLE CHOCO 200G', price: 4200, category: 'BISCUIT & COOKIES', code: 'MB001', raw_response: null },
+      { id: '2', name: 'MERBER WHITE CHOCO CRANB 150G', price: 3300, category: 'BISCUIT & COOKIES', code: 'MB002', raw_response: null },
+      { id: '3', name: 'MERBA CHOCO CHIP COOKIES 150G', price: 2950, category: 'BISCUIT & COOKIES', code: 'MB003', raw_response: null },
+      { id: '4', name: 'MERBA NOUGATELLI COOKIES', price: 2200, category: 'BISCUIT & COOKIES', code: 'MB004', raw_response: null },
+      { id: '5', name: 'HELLEMA SPECULAAS', price: 599.99, category: 'BISCUIT & COOKIES', code: 'MB005', raw_response: null },
+      { id: '6', name: 'LORD OF WAFERS', price: 100, category: 'BISCUIT & COOKIES', code: 'MB006', raw_response: null },
+      { id: '7', name: 'MERBA TRIPLE CHOCOLATE COOKIES', price: 2300, category: 'BISCUIT & COOKIES', code: 'MB007', raw_response: null },
+      { id: '8', name: 'BEST DREAM PURPLE COOKIES', price: 450, category: 'BISCUIT & COOKIES', code: 'MB008', raw_response: null }
     ]
     upsertProducts(seedProducts)
   }
@@ -256,6 +257,46 @@ function runMigrations(): void {
     markMigrationComplete('004_add_raw_response_to_products_and_sync_progress')
   }
 
+  // Migration 5: Add code column to products table
+  if (!migrationExists('005_add_code_to_products')) {
+    try {
+      // Check if code column exists in products table
+      const productColumns = db!.prepare("PRAGMA table_info(products)").all() as any[]
+      const hasCode = productColumns.some(col => col.name === 'code')
+      
+      if (!hasCode) {
+        // Create new products table with code column
+        db!.exec(`
+          CREATE TABLE products_new (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            price REAL NOT NULL,
+            category TEXT NOT NULL,
+            code TEXT,
+            raw_response TEXT
+          );
+        `)
+        
+        // Copy data from old products table to new table
+        db!.exec(`
+          INSERT INTO products_new (id, name, price, category, raw_response)
+          SELECT id, name, price, category, raw_response
+          FROM products;
+        `)
+        
+        // Drop old table and rename new table
+        db!.exec('DROP TABLE products;')
+        db!.exec('ALTER TABLE products_new RENAME TO products;')
+        
+        console.log('[DB] Migration 005: Added code column to products table')
+      }
+    } catch (error: any) {
+      console.error('[DB] Migration 005 failed:', error.message)
+      throw error
+    }
+    markMigrationComplete('005_add_code_to_products')
+  }
+
   console.log('[DB] All migrations completed')
 }
 
@@ -276,34 +317,44 @@ function requireDb(): Database.Database {
   return db
 }
 
-export function listProducts(category?: string): ProductRecord[] {
+export function searchProductByCode(code: string): ProductRecord | null {
+  const database = requireDb()
+  const result = database
+    .prepare('SELECT id, name, price, category, code, raw_response FROM products WHERE code = ?')
+    .get(code) as ProductRecord | undefined
+  
+  return result || null
+}
+
+export function listProducts(category?: string, limit: number = 50): ProductRecord[] {
   const database = requireDb()
   if (category) {
     return database
-      .prepare('SELECT id, name, price, category, raw_response FROM products WHERE category = ? ORDER BY name')
-      .all(category) as ProductRecord[]
+      .prepare('SELECT id, name, price, category, code, raw_response FROM products WHERE category = ? ORDER BY name LIMIT ?')
+      .all(category, limit) as ProductRecord[]
   }
   return database
-    .prepare('SELECT id, name, price, category, raw_response FROM products ORDER BY name')
-    .all() as ProductRecord[]
+    .prepare('SELECT id, name, price, category, code, raw_response FROM products ORDER BY name LIMIT ?')
+    .all(limit) as ProductRecord[]
 }
 
 export function upsertProducts(products: ProductRecord[]): void {
   const database = requireDb()
   const stmt = database.prepare(
-    `INSERT INTO products (id, name, price, category, raw_response)
-     VALUES (@id, @name, @price, @category, @raw_response)
+    `INSERT INTO products (id, name, price, category, code, raw_response)
+     VALUES (@id, @name, @price, @category, @code, @raw_response)
      ON CONFLICT(id) DO UPDATE SET
        name = excluded.name,
        price = excluded.price,
        category = excluded.category,
+       code = excluded.code,
        raw_response = excluded.raw_response`
   )
   const insertMany = database.transaction((rows: ProductRecord[]) => {
     for (const row of rows) stmt.run(row)
   })
   insertMany(products)
-}
+ }
 
 // Product sync functions
 export function getProductSyncProgress(): ProductSyncProgress | null {
@@ -357,8 +408,23 @@ export async function syncProductsFromRemote(baseUrl: string, userToken: string)
   console.log('[DB] Base URL:', baseUrl)
   console.log('[DB] Token available:', !!userToken)
   
-  // Reset sync progress
-  resetProductSyncProgress()
+  // Check existing sync progress first
+  const existingProgress = getProductSyncProgress()
+  let currentPage = 1
+  let lastPage = 1
+  let totalProducts = 0
+  
+  if (existingProgress && !existingProgress.is_completed) {
+    // Resume from where we left off
+    currentPage = existingProgress.current_page
+    lastPage = existingProgress.last_page
+    totalProducts = existingProgress.total_products
+    console.log(`[DB] Resuming sync from page ${currentPage} of ${lastPage} (total: ${totalProducts})`)
+  } else {
+    // Reset sync progress for new sync
+    resetProductSyncProgress()
+    console.log('[DB] Starting fresh sync')
+  }
   
   // First, test the connection with a simple endpoint
   try {
@@ -381,16 +447,89 @@ export async function syncProductsFromRemote(baseUrl: string, userToken: string)
     console.log('[DB] Test connection failed:', error)
   }
   
-  let currentPage = 1
-  let lastPage = 10
-  let totalProducts = 0
-  
   // Try different possible endpoints
   const endpoints = ['/products', '/api/products', '/api/v1/products']
   
   for (const endpoint of endpoints) {
     try {
       console.log(`[DB] Trying endpoint: ${endpoint}`)
+      
+             // If we're resuming and need pagination info, or starting fresh
+       if (currentPage === 1 && lastPage === 1) {
+        console.log('[DB] Fetching first page to get pagination info...')
+        const firstPageUrl = new URL(endpoint, baseUrl)
+        firstPageUrl.searchParams.set('page', '1')
+        
+        const firstPageResponse = await fetch(firstPageUrl.toString(), {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${userToken}`,
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          }
+        })
+        
+        if (!firstPageResponse.ok) {
+          const errorText = await firstPageResponse.text().catch(() => 'No error details available')
+          throw new Error(`Failed to fetch first page: ${firstPageResponse.status} ${firstPageResponse.statusText} - ${errorText}`)
+        }
+        
+        const firstPageData = await firstPageResponse.json()
+        console.log(`[DB] First page data:`, {
+          current_page: firstPageData.meta?.current_page,
+          last_page: firstPageData.meta?.last_page,
+          total: firstPageData.meta?.total,
+          data_length: firstPageData.data?.length || 0
+        })
+        
+        // Update pagination info from first page
+        lastPage = firstPageData.meta?.last_page || 1
+        totalProducts = firstPageData.meta?.total || 0
+        
+                 // Process and store first page products
+         if (firstPageData.data && Array.isArray(firstPageData.data)) {
+           const products: ProductRecord[] = firstPageData.data.map((product: any) => ({
+             id: String(product.id),
+             name: product.attributes.name || '',
+             price: parseFloat(product.attributes.price) || 0,
+             category: product.attributes.category || '',
+             code: product.attributes.code || null,
+             raw_response: JSON.stringify(product)
+           }))
+          
+          upsertProducts(products)
+          console.log(`[DB] Stored ${products.length} products from first page`)
+        }
+        
+        // Update sync progress after first page
+        updateProductSyncProgress({
+          current_page: 1,
+          last_page: lastPage,
+          is_completed: false,
+          total_products: totalProducts
+        })
+        
+        // If there's only one page, we're done
+        if (lastPage <= 1) {
+          updateProductSyncProgress({
+            current_page: 1,
+            last_page: lastPage,
+            is_completed: true,
+            total_products: totalProducts
+          })
+          console.log('[DB] Only one page, sync completed')
+          return
+        }
+        
+               // Move to next page for the main loop
+       currentPage = 2
+      }
+      
+      // Skip pages that have already been processed when resuming
+      if (existingProgress && existingProgress.current_page > 1) {
+        currentPage = existingProgress.current_page
+        console.log(`[DB] Skipping to page ${currentPage} (already processed)`)
+      }
       
       while (currentPage <= lastPage) {
         console.log(`[DB] Fetching products page ${currentPage}...`)
@@ -423,32 +562,27 @@ export async function syncProductsFromRemote(baseUrl: string, userToken: string)
         throw new Error(`Failed to fetch products: ${response.status} ${response.statusText} - ${errorText}`)
       }
       
-      const data = await response.json()
-      console.log(`[DB] Received products data:`, {
-        current_page: data.meta.current_page,
-        last_page: data.meta.last_page,
-        total: data.meta.total,
-        data_length: data.data?.length || 0,
-        has_data: !!data.data,
-        is_array: Array.isArray(data.data)
-      })
-      console.log(`[DB] Full response structure:`, Object.keys(data))
+             const data = await response.json()
+       console.log(`[DB] Received products data:`, {
+         current_page: data.meta?.current_page,
+         last_page: data.meta?.last_page,
+         total: data.meta?.total,
+         data_length: data.data?.length || 0,
+         has_data: !!data.data,
+         is_array: Array.isArray(data.data)
+       })
+       console.log(`[DB] Full response structure:`, Object.keys(data))
       
-      // Update pagination info on first page
-      if (currentPage === 1) {
-        lastPage = data.meta.last_page || 1
-        totalProducts = data.meta.total || 0
-      }
-      
-      // Process and store products
-      if (data.data && Array.isArray(data.data)) {
-        const products: ProductRecord[] = data.data.map((product: any) => ({
-          id: String(product.id),
-          name: product.attributes.name || '',
-          price: parseFloat(product.attributes.price) || 0,
-          category: product.attributes.category || '',
-          raw_response: JSON.stringify(product)
-        }))
+             // Process and store products
+       if (data.data && Array.isArray(data.data)) {
+         const products: ProductRecord[] = data.data.map((product: any) => ({
+           id: String(product.id),
+           name: product.attributes.name || '',
+           price: parseFloat(product.attributes.price) || 0,
+           category: product.attributes.category || '',
+           code: product.attributes.code || null,
+           raw_response: JSON.stringify(product)
+         }))
         
         upsertProducts(products)
         console.log(`[DB] Stored ${products.length} products from page ${currentPage}`)
@@ -706,8 +840,12 @@ function registerProductSyncIpcHandlers(): void {
 function registerDatabaseIpcHandlers(): void {
   console.log('[DB] Registering IPC handlers...')
   
-  ipcMain.handle('db:products:list', (_event, category?: string) => {
-    return listProducts(category)
+  ipcMain.handle('db:products:list', (_event, category?: string, limit?: number) => {
+    return listProducts(category, limit)
+  })
+
+  ipcMain.handle('db:products:searchByCode', (_event, code: string) => {
+    return searchProductByCode(code)
   })
 
   ipcMain.handle('db:products:upsertMany', (_event, products: ProductRecord[]) => {

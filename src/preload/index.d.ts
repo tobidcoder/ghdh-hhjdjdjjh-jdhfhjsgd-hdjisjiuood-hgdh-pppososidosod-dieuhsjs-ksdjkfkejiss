@@ -5,9 +5,10 @@ declare global {
     electron: ElectronAPI
     api: {
       db: {
-        listProducts: (category?: string) => Promise<Array<{ id: string; name: string; price: number; category: string; raw_response: string | null }>>
+        listProducts: (category?: string, limit?: number) => Promise<Array<{ id: string; name: string; price: number; category: string; code: string | null; raw_response: string | null }>>
+        searchProductByCode: (code: string) => Promise<{ id: string; name: string; price: number; category: string; code: string | null; raw_response: string | null } | null>
         upsertManyProducts: (
-          products: Array<{ id: string; name: string; price: number; category: string; raw_response: string | null }>
+          products: Array<{ id: string; name: string; price: number; category: string; code: string | null; raw_response: string | null }>
         ) => Promise<{ success: boolean }>
         getPath: () => Promise<string>
       }

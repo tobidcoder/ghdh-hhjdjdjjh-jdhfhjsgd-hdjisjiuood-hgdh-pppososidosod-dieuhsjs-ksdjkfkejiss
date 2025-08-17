@@ -1,94 +1,166 @@
-import * as React from 'react';
-import { useEffect } from 'react'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
-import { Card, CardContent } from './ui/card';
-import { Badge } from './ui/badge';
+import React, { useEffect, useState } from 'react'
 import { useProductsStore } from '@renderer/store/products'
+import { Card, CardContent } from '@renderer/components/ui/card'
+import { Badge } from '@renderer/components/ui/badge'
+import { Image, Package, Cloud } from 'lucide-react'
 
-const Products: React.FC = () => {
-  const {
-    selectedCategory,
-    setCategory,
-    products,
-    refresh,
-    isLoading
-  } = useProductsStore()
-
-  const categories = [
-    'All Categories',
-    'BISCUIT & COOKIES',
-    'BATTERIES',
-    'BATHING SOAP',
-    'BAKED SNACKS',
-    'BAGS'
-  ];
+export const Products: React.FC = () => {
+  const { products, selectedCategory, isLoading, error, setCategory, refresh, addToCart } = useProductsStore()
 
   useEffect(() => {
-    void refresh()
-  }, [])
+    refresh()
+  }, [refresh])
 
-  const filteredProducts = selectedCategory === 'all' 
-    ? products 
-    : products.filter(product => product.category === selectedCategory);
+  const handleCategoryChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    setCategory(event.target.value)
+  }
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-NG', {
-      style: 'currency',
-      currency: 'NGN',
-      minimumFractionDigits: 2
-    }).format(price);
-  };
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-gray-500">Loading products...</div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-red-500">Error: {error}</div>
+      </div>
+    )
+  }
 
   return (
-    <div className="flex-1 bg-gray-50 p-6">
-      <Tabs value={selectedCategory} onValueChange={setCategory} className="w-full">
-        <TabsList className="grid w-full grid-cols-6 mb-6 overflow-x-auto ">
-          {categories.map((category) => (
-            <TabsTrigger
-              key={category}
-              value={category === 'All Categories' ? 'all' : category}
-              className={`text-xs ${
-                selectedCategory === (category === 'All Categories' ? 'all' : category)
-                  ? 'bg-[#062417] text-white'
-                  : 'bg-white text-gray-600'
-              }`}
-            >
-              {category}
-            </TabsTrigger>
-          ))}
-        </TabsList>
+    <div className="space-y-4">
+      {/* Category Filter */}
+      <div className="flex justify-between items-center">
+        <select 
+          value={selectedCategory} 
+          onChange={handleCategoryChange}
+          className="px-3 py-2 border border-gray-300 rounded-md text-sm bg-white"
+        >
+          <option value="all">All Categories</option>
+          <option value="BISCUIT & COOKIES">BISCUIT & COOKIES</option>
+          <option value="FRUITS">FRUITS</option>
+          <option value="DAIRY">DAIRY</option>
+        </select>
+        
+        <div className="text-sm text-gray-600">
+          {products.length} products
+        </div>
+      </div>
 
-        <TabsContent value={selectedCategory} className="mt-0">
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 overflow-y-scroll h-[40vh]">
-            {isLoading ? (
-              <div className="col-span-full text-center text-sm text-gray-500">Loading...</div>
-            ) : filteredProducts.length === 0 ? (
-              <div className="col-span-full text-center text-sm text-gray-500">No products</div>
-            ) : filteredProducts.map((product) => (
-              <Card key={product.id} className="cursor-pointer hover:shadow-md transition-shadow">
-                <CardContent className="p-4 text-center">
-                  <div className="relative">
-                    <div className="w-16 h-16 bg-gray-200 rounded-full mx-auto mb-3 flex items-center justify-center">
-                      <span className="text-xs text-gray-500">NO IMAGE</span>
-                    </div>
-                    <Badge className="absolute top-0 right-0 text-xs bg-blue-500">Piece</Badge>
-                  </div>
-                  <div className="text-left">
-                    <p className="text-sm font-medium text-gray-900 mb-2 line-clamp-2">
-                      {product.name}
-                    </p>
-                    <p className="text-lg font-bold text-[#062417]">
-                      {formatPrice(product.price)}
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </TabsContent>
-      </Tabs>
+      {/* Products Grid */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+        {products.map((product) => (
+          <ProductCard key={product.id} product={product} />
+        ))}
+      </div>
+
+      {products.length === 0 && (
+        <div className="text-center text-gray-500 py-8">
+          No products found
+        </div>
+      )}
     </div>
-  );
-};
+  )
+}
 
-export default Products; 
+interface ProductCardProps {
+  product: {
+    id: string
+    name: string
+    price: number
+    category: string
+    code: string | null
+    raw_response?: string | null
+  }
+}
+
+const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
+  const { addToCart } = useProductsStore()
+  const [isHovered, setIsHovered] = useState(false)
+  
+  // Parse raw response to get additional product info
+  const productData = product.raw_response ? JSON.parse(product.raw_response) : null
+  const hasImage = productData?.attributes?.image || productData?.image
+  const isRetail = productData?.attributes?.is_retail || productData?.is_retail
+  
+  const handleClick = () => {
+    addToCart(product)
+  }
+  
+  return (
+    <Card 
+      className={`cursor-pointer transition-all duration-200 ${
+        isHovered ? 'shadow-lg scale-105 border-blue-300' : 'hover:shadow-md'
+      }`}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      onClick={handleClick}
+    >
+      <CardContent className="p-3">
+        {/* Product Image */}
+        <div className="relative mb-3">
+          <div className="aspect-square bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden">
+            {hasImage ? (
+              <img 
+                src={hasImage} 
+                alt={product.name}
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  e.currentTarget.style.display = 'none'
+                  e.currentTarget.nextElementSibling?.classList.remove('hidden')
+                }}
+              />
+            ) : null}
+            <div className={`${hasImage ? 'hidden' : ''} flex flex-col items-center justify-center text-gray-400`}>
+              <Package className="w-8 h-8 mb-1" />
+              <span className="text-xs text-center">NO IMAGE AVAILABLE</span>
+            </div>
+          </div>
+          
+          {/* Retail Product Badge */}
+          {isRetail && (
+            <Badge className="absolute top-2 left-2 bg-blue-600 text-white text-xs">
+              Retail Product
+            </Badge>
+          )}
+          
+          {/* Cloud Icon for Online Products */}
+          {product.raw_response && (
+            <div className="absolute top-2 right-2">
+              <Cloud className="w-4 h-4 text-blue-500" />
+            </div>
+          )}
+        </div>
+
+        {/* Product Info */}
+        <div className="space-y-2">
+          <h3 className="font-medium text-sm text-gray-900 line-clamp-2 leading-tight">
+            {product.name}
+          </h3>
+          
+          {/* Product Code */}
+          {product.code && (
+            <div className="text-xs text-blue-600 font-mono bg-blue-50 px-2 py-1 rounded">
+              {product.code}
+            </div>
+          )}
+          
+          <div className="flex items-center justify-between">
+            <span className="text-lg font-bold text-gray-900">
+              BHD {product.price.toFixed(3)}
+            </span>
+            <Badge variant="outline" className="text-xs">
+              {product.category}
+            </Badge>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+ 

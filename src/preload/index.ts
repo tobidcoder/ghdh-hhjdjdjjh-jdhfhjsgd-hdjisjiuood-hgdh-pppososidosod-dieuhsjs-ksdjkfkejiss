@@ -4,8 +4,9 @@ import { electronAPI } from '@electron-toolkit/preload'
 // Custom APIs for renderer
 const api = {
   db: {
-    listProducts: (category?: string) => ipcRenderer.invoke('db:products:list', category),
-    upsertManyProducts: (products: Array<{ id: string; name: string; price: number; category: string }>) =>
+    listProducts: (category?: string, limit?: number) => ipcRenderer.invoke('db:products:list', category, limit),
+    searchProductByCode: (code: string) => ipcRenderer.invoke('db:products:searchByCode', code),
+    upsertManyProducts: (products: Array<{ id: string; name: string; price: number; category: string; code: string | null; raw_response: string | null }>) =>
       ipcRenderer.invoke('db:products:upsertMany', products)
     ,
     getPath: () => ipcRenderer.invoke('db:path')
