@@ -36,14 +36,14 @@ export const TransactionPanel: React.FC<TransactionPanelProps> = ({
   onClearCart
 }) => {
   return (
-    <div className="w-96 bg-white border-r overflow-y-auto border-gray-200 flex flex-col">
+    <div className="w-96  bg-white border-r overflow-y-auto border-gray-200 flex flex-col">
       {/* Transaction Lines */}
       <div className="flex-1 p-4">
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm">Transaction Lines</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2">
+          <CardContent className="space-y-2 max-h-[40vh] overflow-y-auto">
             <div className="grid grid-cols-6 gap-2 text-xs font-medium text-gray-600 border-b border-gray-200 pb-2">
               <span>LINE</span>
               <span className="col-span-2">DESCRIPTION</span>
@@ -68,7 +68,7 @@ export const TransactionPanel: React.FC<TransactionPanelProps> = ({
             )}
 
             {/* Add item input */}
-            <div className="pt-2 space-y-2">
+            {/* <div className="pt-2 space-y-2">
               <Input
                 placeholder="Search by product code..."
                 className="text-xs h-8"
@@ -80,7 +80,7 @@ export const TransactionPanel: React.FC<TransactionPanelProps> = ({
                 Search & Add
               </Button>
 
-              {/* Search Result */}
+              //  Search Result 
               {searchResult && (
                 <div
                   className={`text-xs p-2 rounded ${
@@ -94,7 +94,7 @@ export const TransactionPanel: React.FC<TransactionPanelProps> = ({
                     : `Added: ${searchResult.product.name}`}
                 </div>
               )}
-            </div>
+            </div> */}
           </CardContent>
         </Card>
       </div>

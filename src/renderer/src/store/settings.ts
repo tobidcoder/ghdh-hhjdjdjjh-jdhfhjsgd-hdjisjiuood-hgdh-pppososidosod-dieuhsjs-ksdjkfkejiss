@@ -190,10 +190,10 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     }
   },
 
-  fetchSettingsFromAPI: async (baseUrl: string, userToken: string): Promise<void> => {
+  fetchSettingsFromAPI: async (userToken: string): Promise<void> => {
     try {
       set({ isLoading: true, error: null })
-      const settings = await window.api.db.fetchSettings(baseUrl, userToken)
+      const settings = await window.api.db.fetchSettings(userToken)
       set({ settings, isLoading: false })
       console.log('[Settings] Settings fetched and saved from API')
     } catch (error: unknown) {

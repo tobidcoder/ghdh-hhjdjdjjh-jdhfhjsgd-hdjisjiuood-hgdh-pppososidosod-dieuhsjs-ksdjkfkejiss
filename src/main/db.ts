@@ -4,6 +4,13 @@ import { randomBytes, scryptSync, timingSafeEqual } from 'crypto'
 import { existsSync, mkdirSync } from 'fs'
 import { join, dirname } from 'path'
 
+// Centralized base URL function
+function getBaseUrl(): string {
+  const baseUrl = process.env.BASE_URL || 'http://localhost:8000/api'
+  console.log('[DB] Using base URL:', baseUrl)
+  return baseUrl
+}
+
 let db: Database.Database | null = null
 
 export interface ProductRecord {
@@ -882,7 +889,7 @@ export function getSalesByDateRange(startDate: string, endDate: string): SaleRec
     .all(startDate, endDate) as SaleRecord[]
 }
 
-export async function syncSalesToRemote(baseUrl: string, userToken: string): Promise<void> {
+export async function syncSalesToRemote(userToken: string): Promise<void> {
   console.log('[DB] Starting sales sync to remote...')
 
   const pendingSales = getPendingSales()
@@ -913,12 +920,13 @@ export async function syncSalesToRemote(baseUrl: string, userToken: string): Pro
       }
 
       // Try different possible endpoints
-      const endpoints = ['/sales', '/api/sales', '/api/v1/sales']
+      const endpoints = ['/sales']
       let syncSuccess = false
 
       for (const endpoint of endpoints) {
         try {
-          const url = new URL(endpoint, baseUrl).toString()
+        //   const url = new URL(endpoint, getBaseUrl()).toString()
+            const url = getBaseUrl() + endpoint
           console.log(`[DB] Trying to sync sale ${sale.invoice_number} to: ${url}`)
 
           const response = await fetch(url, {
@@ -1017,8 +1025,9 @@ export function resetProductSyncProgress(): void {
   stmt.run('default', 1, 1, 0, now, 0)
 }
 
-export async function syncProductsFromRemote(baseUrl: string, userToken: string): Promise<void> {
+export async function syncProductsFromRemote(userToken: string): Promise<void> {
   console.log('[DB] Starting product sync from remote...')
+  const baseUrl = getBaseUrl()
   console.log('[DB] Base URL:', baseUrl)
   console.log('[DB] Token available:', !!userToken)
 
@@ -1064,7 +1073,7 @@ export async function syncProductsFromRemote(baseUrl: string, userToken: string)
   }
 
   // Try different possible endpoints
-  const endpoints = ['/products', '/api/products', '/api/v1/products']
+  const endpoints = ['/products', '/api/products']
 
   for (const endpoint of endpoints) {
     try {
@@ -1840,8 +1849,10 @@ export function getUnitsByBaseUnit(baseUnitId: number): UnitRecord[] {
 }
 
 // Settings, config, warehouses, product categories, payment methods, and units sync function
-export async function fetchAndSaveSettings(baseUrl: string, userToken: string): Promise<{ settings: SettingsRecord; config: ConfigRecord }> {
+export async function fetchAndSaveSettings(userToken: string): Promise<{ settings: SettingsRecord; config: ConfigRecord }> {
   console.log('[DB] Fetching settings, config, warehouses, product categories, payment methods, and units from API...')
+  
+  const baseUrl = getBaseUrl()
   
   try {
     // Fetch settings
@@ -2099,9 +2110,9 @@ export async function fetchAndSaveSettings(baseUrl: string, userToken: string): 
 function registerProductSyncIpcHandlers(): void {
   ipcMain.handle(
     'products:sync:start',
-    async (_event, { baseUrl, userToken }: { baseUrl: string; userToken: string }) => {
+    async (_event, { userToken }: { userToken: string }) => {
       try {
-        await syncProductsFromRemote(baseUrl, userToken)
+        await syncProductsFromRemote(userToken)
         return { success: true }
       } catch (error: any) {
         throw new Error(`Product sync failed: ${error.message}`)
@@ -2169,9 +2180,9 @@ function registerDatabaseIpcHandlers(): void {
     return getSalesByDateRange(startDate, endDate)
   })
 
-  ipcMain.handle('db:sales:sync', async (_event, baseUrl: string, userToken: string) => {
+  ipcMain.handle('db:sales:sync', async (_event, userToken: string) => {
     try {
-      await syncSalesToRemote(baseUrl, userToken)
+      await syncSalesToRemote(userToken)
       return { success: true }
     } catch (error: any) {
       throw new Error(`Sales sync failed: ${error.message}`)
@@ -2183,7 +2194,7 @@ function registerDatabaseIpcHandlers(): void {
   })
 
   ipcMain.handle('auth:login', async (_event, credentials: { email: string; password: string }) => {
-    const baseUrl = process.env.BASE_URL || ''
+    const baseUrl = getBaseUrl()
     console.log('[DB] Login attempt for:', credentials.email)
     console.log('[DB] BASE_URL from env:', baseUrl)
 
@@ -2197,10 +2208,6 @@ function registerDatabaseIpcHandlers(): void {
         return { user: toUserPayload(user), source: 'local' as const }
       }
       // If local password mismatched, try remote (in case user changed password)
-      if (!baseUrl) {
-        console.log('[DB] No BASE_URL configured for remote fallback')
-        throw new Error('Invalid credentials and no backend configured')
-      }
       try {
         console.log('[DB] Trying remote login for password mismatch')
         const remote = await remoteLogin(baseUrl, credentials)
@@ -2213,11 +2220,6 @@ function registerDatabaseIpcHandlers(): void {
 
     // User not found locally, try remote login
     console.log('[DB] User not found locally, checking for remote login')
-    if (!baseUrl) {
-      console.log('[DB] No BASE_URL configured for remote login')
-      throw new Error('User not found locally and no backend configured')
-    }
-
     try {
       console.log('[DB] Attempting remote login for new user')
       const remote = await remoteLogin(baseUrl, credentials)
@@ -2258,8 +2260,8 @@ function registerDatabaseIpcHandlers(): void {
     return getSettings()
   })
 
-  ipcMain.handle('db:settings:fetch', async (_event, baseUrl: string, userToken: string) => {
-    return fetchAndSaveSettings(baseUrl, userToken)
+  ipcMain.handle('db:settings:fetch', async (_event, userToken: string) => {
+    return fetchAndSaveSettings(userToken)
   })
 
   ipcMain.handle('db:countries:get', () => {

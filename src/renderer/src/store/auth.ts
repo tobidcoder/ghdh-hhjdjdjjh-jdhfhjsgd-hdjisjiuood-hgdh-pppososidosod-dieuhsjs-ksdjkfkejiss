@@ -66,7 +66,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       // If no progress exists or sync is not completed, start sync
       if (!progress || !progress.is_completed) {
         console.log('[Auth] Starting product sync after login...')
-        await window.api.products.sync.start({ baseUrl, userToken: user.token })
+        await window.api.products.sync.start({ userToken: user.token })
       } else {
         console.log('[Auth] Product sync already completed')
       }

@@ -28,9 +28,7 @@ export const SalesSyncStatus: React.FC = () => {
     }
 
     try {
-      // Get base URL from environment or use a default
-      const baseUrl = import.meta.env.VITE_API_BASE_URL || 'https://api.example.com'
-      await syncSales(baseUrl, user.token)
+      await syncSales(user.token)
     } catch (error: any) {
       console.error('Sales sync failed:', error)
     }

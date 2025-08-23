@@ -11,7 +11,7 @@ import { ProductSearchPanel } from '@renderer/components/ProductSearchPanel'
 
 export const Dashboard: React.FC = () => {
   const { user, logout } = useAuthStore()
-  const { searchProductByCode, addToCart, cartItems, searchProducts } = useProductsStore()
+  const { searchProductByCode, addToCart, cartItems, searchProducts, setSearchQuery, searchQuery } = useProductsStore()
   const { createSale, unsyncedCount } = useSalesStore()
   const { productCategories, fetchProductCategories } = useSettingsStore()
   const [currentTime, setCurrentTime] = React.useState(new Date())
@@ -22,7 +22,6 @@ export const Dashboard: React.FC = () => {
     | { type: 'product'; product: { id: string; name: string; price: number; code: string | null } }
     | null
   >(null)
-  const [productSearchQuery, setProductSearchQuery] = React.useState('')
   const [selectedCategory, setSelectedCategory] = React.useState<number | null>(null)
   const [autoAddNotification, setAutoAddNotification] = React.useState<{
     product: { id: string; name: string; price: number; code: string | null }
@@ -31,16 +30,7 @@ export const Dashboard: React.FC = () => {
   const [isSearchingCode, setIsSearchingCode] = React.useState(false)
   const [isSearchCleared, setIsSearchCleared] = React.useState(false)
 
-  // Sync local state with store
-  React.useEffect(() => {
-    const unsubscribe = useProductsStore.subscribe((state) => {
-      if (state.searchQuery !== productSearchQuery) {
-        setProductSearchQuery(state.searchQuery)
-      }
-    })
-    return unsubscribe
-  }, [productSearchQuery])
-
+  // Timer effect
   React.useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000)
     return () => clearInterval(timer)
@@ -62,15 +52,15 @@ export const Dashboard: React.FC = () => {
     fetchProductCategories()
   }, [fetchProductCategories])
 
-  // Debounced search effect
+  // Optimized debounced search effect with shorter delay
   React.useEffect(() => {
     const timeoutId = setTimeout(async () => {
-      if (productSearchQuery.trim()) {
+      if (searchQuery.trim()) {
         // First, try to find an exact product code match if the query looks like a product code
-        if (looksLikeProductCode(productSearchQuery)) {
+        if (looksLikeProductCode(searchQuery)) {
           setIsSearchingCode(true)
           try {
-            const exactMatch = await window.api.db.searchProductByCode(productSearchQuery.trim())
+            const exactMatch = await window.api.db.searchProductByCode(searchQuery.trim())
             if (exactMatch) {
               // Auto-add to cart if exact code match found
               addToCart(exactMatch)
@@ -79,11 +69,8 @@ export const Dashboard: React.FC = () => {
               setAutoAddNotification({ product: exactMatch, visible: true })
               setTimeout(() => setAutoAddNotification(null), 3000) // Hide after 3 seconds
 
-              // Clear the search bar
-              setProductSearchQuery('')
-
               // Clear the search query in the store
-              useProductsStore.getState().setSearchQuery('')
+              setSearchQuery('')
 
               // Show brief visual feedback that search was cleared
               setIsSearchCleared(true)
@@ -102,15 +89,15 @@ export const Dashboard: React.FC = () => {
         }
 
         // If no exact match found, perform regular search
-        searchProducts(productSearchQuery)
+        searchProducts(searchQuery)
       } else {
         // If search query is empty, refresh to show all products
         useProductsStore.getState().refresh()
       }
-    }, 500) // 500ms debounce
+    }, 300) // Reduced to 300ms for better responsiveness
 
     return () => clearTimeout(timeoutId)
-  }, [productSearchQuery, searchProducts, addToCart])
+  }, [searchQuery, searchProducts, addToCart, setSearchQuery])
 
   const handleProductSearch = async (): Promise<void> => {
     if (!searchCode.trim()) return
@@ -140,8 +127,8 @@ export const Dashboard: React.FC = () => {
   const handleProductListKeyPress = (event: React.KeyboardEvent): void => {
     if (event.key === 'Enter') {
       // Trigger search immediately on Enter
-      if (productSearchQuery.trim()) {
-        searchProducts(productSearchQuery)
+      if (searchQuery.trim()) {
+        searchProducts(searchQuery)
       } else {
         useProductsStore.getState().refresh()
       }
@@ -162,8 +149,7 @@ export const Dashboard: React.FC = () => {
     setSelectedCategory(id === 'all' ? null : id)
     
     // Clear search when category changes
-    setProductSearchQuery('')
-    useProductsStore.getState().setSearchQuery('')
+    setSearchQuery('')
     
     // Pass the category ID directly to the store
     useProductsStore.getState().setCategory(id)
@@ -199,20 +185,19 @@ export const Dashboard: React.FC = () => {
 
       await createSale(saleData)
 
-      // Clear cart after successful sale creation
+      // Clear cart after successful sale
       useProductsStore.getState().clearCart()
 
       // Show success message
-      alert(`Sale completed! Invoice: ${invoiceNumber}`)
-    } catch (error: unknown) {
+      alert('Sale completed successfully!')
+    } catch (error) {
       console.error('Checkout failed:', error)
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-      alert(`Checkout failed: ${errorMessage}`)
+      alert('Checkout failed. Please try again.')
     }
   }
 
   return (
-    <div className="h-screen bg-gray-50 flex flex-col">
+    <div className="h-screen flex flex-col bg-gray-100">
       <DashboardHeader
         currentTime={currentTime}
         user={user}
@@ -220,7 +205,6 @@ export const Dashboard: React.FC = () => {
         unsyncedCount={unsyncedCount}
         onLogout={logout}
       />
-
       <div className="flex-1 flex overflow-hidden">
       <div className="">
 
@@ -233,7 +217,6 @@ export const Dashboard: React.FC = () => {
           onKeyPress={handleKeyPress}
           onClearCart={() => useProductsStore.getState().clearCart()}
         />
-
         <div className="w-96 bg-white border-l overflow-y-auto border-gray-200 flex flex-col">
           <PaymentSummary
             cartItems={cartItems}
@@ -243,19 +226,16 @@ export const Dashboard: React.FC = () => {
       </div>
 
         <ProductSearchPanel
-          productSearchQuery={productSearchQuery}
+          productSearchQuery={searchQuery}
           selectedCategory={selectedCategory}
           productCategories={productCategories}
           autoAddNotification={autoAddNotification}
           isSearchingCode={isSearchingCode}
           isSearchCleared={isSearchCleared}
-          onProductSearchQueryChange={setProductSearchQuery}
+          onProductSearchQueryChange={setSearchQuery}
           onCategoryChange={handleCategoryChange}
           onClearAutoAddNotification={() => setAutoAddNotification(null)}
-          onClearProductSearch={() => {
-            setProductSearchQuery('')
-            useProductsStore.getState().setSearchQuery('')
-          }}
+          onClearProductSearch={() => setSearchQuery('')}
           onProductListKeyPress={handleProductListKeyPress}
           looksLikeProductCode={looksLikeProductCode}
         />

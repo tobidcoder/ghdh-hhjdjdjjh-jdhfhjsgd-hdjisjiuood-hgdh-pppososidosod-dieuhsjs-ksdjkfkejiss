@@ -29,12 +29,12 @@ const api = {
     deleteSyncedSale: (saleId: string) => ipcRenderer.invoke('db:sales:deleteSynced', saleId),
     getSalesByDateRange: (startDate: string, endDate: string) =>
       ipcRenderer.invoke('db:sales:getByDateRange', startDate, endDate),
-    syncSales: (baseUrl: string, userToken: string) =>
-      ipcRenderer.invoke('db:sales:sync', baseUrl, userToken),
+    syncSales: (userToken: string) =>
+      ipcRenderer.invoke('db:sales:sync', userToken),
     // Settings API
     getSettings: () => ipcRenderer.invoke('db:settings:get'),
-    fetchSettings: (baseUrl: string, userToken: string) =>
-      ipcRenderer.invoke('db:settings:fetch', baseUrl, userToken),
+    fetchSettings: (userToken: string) =>
+      ipcRenderer.invoke('db:settings:fetch', userToken),
     getCountries: () => ipcRenderer.invoke('db:countries:get'),
     getActiveCountries: () => ipcRenderer.invoke('db:countries:getActive'),
     // Config API
@@ -81,7 +81,7 @@ const api = {
   },
   products: {
     sync: {
-      start: (payload: { baseUrl: string; userToken: string }) =>
+      start: (payload: { userToken: string }) =>
         ipcRenderer.invoke('products:sync:start', payload),
       progress: () => ipcRenderer.invoke('products:sync:progress'),
       reset: () => ipcRenderer.invoke('products:sync:reset')

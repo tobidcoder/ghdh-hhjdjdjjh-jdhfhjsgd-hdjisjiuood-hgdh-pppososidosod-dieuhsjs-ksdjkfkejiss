@@ -4,10 +4,9 @@ import { useAuthStore } from '@renderer/store/auth'
 class SalesSyncService {
   private syncInterval: NodeJS.Timeout | null = null
   private isRunning = false
-  private baseUrl: string
 
   constructor() {
-    this.baseUrl = import.meta.env.VITE_API_BASE_URL || 'https://api.example.com'
+    console.log('[SalesSyncService] Initialized')
   }
 
   start() {
@@ -58,7 +57,7 @@ class SalesSyncService {
       console.log(`[SalesSyncService] Found ${unsyncedCount} unsynced sales, attempting sync...`)
 
       // Attempt to sync sales
-      await salesStore.syncSales(this.baseUrl, authStore.user.token)
+      await salesStore.syncSales(authStore.user.token)
 
       console.log('[SalesSyncService] Sales sync completed successfully')
     } catch (error: any) {
@@ -79,7 +78,7 @@ class SalesSyncService {
         throw new Error('No authentication token available')
       }
 
-      await salesStore.syncSales(this.baseUrl, authStore.user.token)
+      await salesStore.syncSales(authStore.user.token)
       return { success: true }
     } catch (error: any) {
       console.error('[SalesSyncService] Manual sync failed:', error)

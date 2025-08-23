@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@renderer/components/u
 import { Progress } from './ui/progress'
 import { Button } from './ui/button'
 import { ChevronDown, ChevronRight, RefreshCw, AlertCircle, CheckCircle, Clock } from 'lucide-react'
-import { getBaseUrl } from '@renderer/config/env'
+
 
 export const ProductSyncStatus: React.FC = () => {
   const { syncProgress, isSyncing, syncError, checkSyncProgress, startSync, resetSync } =
@@ -52,14 +52,8 @@ export const ProductSyncStatus: React.FC = () => {
     if (!user?.token) return
 
     try {
-      const baseUrl = await getBaseUrl()
-      if (!baseUrl) {
-        console.error('No BASE_URL configured')
-        return
-      }
-
       console.log('Starting manual sync...')
-      await startSync(baseUrl, user.token)
+      await startSync(user.token)
     } catch (error) {
       console.error('Manual sync failed:', error)
     }

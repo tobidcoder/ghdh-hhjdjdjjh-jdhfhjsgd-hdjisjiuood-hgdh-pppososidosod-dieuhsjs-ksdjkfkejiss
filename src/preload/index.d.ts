@@ -61,7 +61,7 @@ declare global {
         ) => Promise<{ success: boolean }>
         deleteSyncedSale: (saleId: string) => Promise<{ success: boolean }>
         getSalesByDateRange: (startDate: string, endDate: string) => Promise<Array<any>>
-        syncSales: (baseUrl: string, userToken: string) => Promise<{ success: boolean }>
+        syncSales: (userToken: string) => Promise<{ success: boolean }>
         // Settings API
         getSettings: () => Promise<{
           id: string
@@ -93,7 +93,7 @@ declare global {
           created_at: string
           updated_at: string
         } | null>
-        fetchSettings: (baseUrl: string, userToken: string) => Promise<{
+        fetchSettings: (userToken: string) => Promise<{
           id: string
           currency: string
           email: string
@@ -427,7 +427,7 @@ declare global {
       }
       products: {
         sync: {
-          start: (payload: { baseUrl: string; userToken: string }) => Promise<{ success: boolean }>
+          start: (payload: { userToken: string }) => Promise<{ success: boolean }>
           progress: () => Promise<{
             id: string
             current_page: number

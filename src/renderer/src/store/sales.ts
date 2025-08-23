@@ -33,7 +33,7 @@ interface SalesState {
     >
   ) => Promise<Sale>
   getUnsyncedCount: () => Promise<void>
-  syncSales: (baseUrl: string, userToken: string) => Promise<void>
+  syncSales: (userToken: string) => Promise<void>
   clearError: () => void
 }
 
@@ -66,10 +66,10 @@ export const useSalesStore = create<SalesState>((set, get) => ({
     }
   },
 
-  syncSales: async (baseUrl: string, userToken: string) => {
+  syncSales: async (userToken: string) => {
     set({ isSyncing: true, syncError: null })
     try {
-      await window.api.db.syncSales(baseUrl, userToken)
+      await window.api.db.syncSales(userToken)
       // Update unsynced count after sync
       await get().getUnsyncedCount()
       set({ isSyncing: false })
