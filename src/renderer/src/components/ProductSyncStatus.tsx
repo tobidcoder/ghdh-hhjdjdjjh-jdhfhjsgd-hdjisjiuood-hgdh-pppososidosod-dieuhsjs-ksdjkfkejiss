@@ -8,7 +8,8 @@ import { Button } from './ui/button'
 import { getBaseUrl } from '@renderer/config/env'
 
 export const ProductSyncStatus: React.FC = () => {
-  const { syncProgress, isSyncing, syncError, checkSyncProgress, startSync, resetSync } = useProductsStore()
+  const { syncProgress, isSyncing, syncError, checkSyncProgress, startSync, resetSync } =
+    useProductsStore()
   const { user } = useAuthStore()
 
   useEffect(() => {
@@ -40,14 +41,14 @@ export const ProductSyncStatus: React.FC = () => {
 
   const handleManualSync = async () => {
     if (!user?.token) return
-    
+
     try {
       const baseUrl = await getBaseUrl()
       if (!baseUrl) {
         console.error('No BASE_URL configured')
         return
       }
-      
+
       console.log('Starting manual sync...')
       await startSync(baseUrl, user.token)
     } catch (error) {
@@ -73,39 +74,22 @@ export const ProductSyncStatus: React.FC = () => {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
-        {syncError && (
-          <div className="text-sm text-red-600 bg-red-50 p-2 rounded">
-            {syncError}
+        {syncError && <div className="text-sm text-red-600 bg-red-50 p-2 rounded">{syncError}</div>}
+
+        {user?.token && (
+          <div className="flex gap-2">
+            <Button onClick={handleManualSync} disabled={isSyncing} size="sm" variant="outline">
+              {isSyncing ? 'Syncing...' : 'Manual Sync'}
+            </Button>
+            <Button onClick={checkSyncProgress} size="sm" variant="ghost">
+              Refresh Status
+            </Button>
+            <Button onClick={handleResetSync} size="sm" variant="destructive">
+              Reset Sync
+            </Button>
           </div>
         )}
-        
-                 {user?.token && (
-           <div className="flex gap-2">
-             <Button 
-               onClick={handleManualSync} 
-               disabled={isSyncing}
-               size="sm"
-               variant="outline"
-             >
-               {isSyncing ? 'Syncing...' : 'Manual Sync'}
-             </Button>
-             <Button 
-               onClick={checkSyncProgress} 
-               size="sm"
-               variant="ghost"
-             >
-               Refresh Status
-             </Button>
-             <Button 
-               onClick={handleResetSync} 
-               size="sm"
-               variant="destructive"
-             >
-               Reset Sync
-             </Button>
-           </div>
-         )}
-        
+
         {syncProgress && (
           <div className="space-y-2">
             <div className="flex justify-between text-xs text-gray-600">
@@ -113,7 +97,7 @@ export const ProductSyncStatus: React.FC = () => {
               <span>{getProgressPercentage()}%</span>
             </div>
             <Progress value={getProgressPercentage()} className="h-2" />
-            
+
             <div className="grid grid-cols-2 gap-2 text-xs">
               <div>
                 <span className="text-gray-600">Page:</span>
@@ -126,7 +110,7 @@ export const ProductSyncStatus: React.FC = () => {
                 <span className="ml-1 font-medium">{syncProgress.total_products}</span>
               </div>
             </div>
-            
+
             {syncProgress.last_sync_at && (
               <div className="text-xs text-gray-500">
                 Last sync: {new Date(syncProgress.last_sync_at).toLocaleString()}

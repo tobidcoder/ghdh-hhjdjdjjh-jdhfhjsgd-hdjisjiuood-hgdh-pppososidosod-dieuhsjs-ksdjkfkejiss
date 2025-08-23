@@ -1,17 +1,17 @@
-import * as React from 'react';
-import { useEffect, useState } from 'react';
-import { Button } from '../components/ui/button';
+import * as React from 'react'
+import { useEffect, useState } from 'react'
+import { Button } from '../components/ui/button'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@renderer/store/auth'
-import { useAuthService } from '@renderer/services/authService'
+
 
 const Login: React.FC = () => {
-  const [showPassword, setShowPassword] = useState(false);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false)
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const navigate = useNavigate()
   const { login, isSubmitting, error, user, clearError } = useAuthStore()
-  const authService = useAuthService()
+
 
   useEffect(() => {
     if (user) {
@@ -25,22 +25,44 @@ const Login: React.FC = () => {
         <div className="flex flex-col items-center mb-6">
           <span className="text-4xl font-bold text-[#052315] flex items-center gap-2 mb-2">
             <span className="inline-block">
-              <svg width="130" height="24" viewBox="0 0 130 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect width="40" height="24" fill="none"/>
-                <text x="0" y="18" fontFamily="Arial Black, Arial, sans-serif" fontSize="24" fontWeight="bold" fill="#052315">Cheetah</text>
+              <svg
+                width="130"
+                height="24"
+                viewBox="0 0 130 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <rect width="40" height="24" fill="none" />
+                <text
+                  x="0"
+                  y="18"
+                  fontFamily="Arial Black, Arial, sans-serif"
+                  fontSize="24"
+                  fontWeight="bold"
+                  fill="#052315"
+                >
+                  Cheetah
+                </text>
               </svg>
             </span>
           </span>
         </div>
         <h2 className="text-2xl font-semibold text-[#052315] mb-2">Sign in</h2>
-        <p className="text-center text-[#052315] mb-6">Please enter your email address and password.</p>
-        <form  onSubmit={async (e) => {
+        <p className="text-center text-[#052315] mb-6">
+          Please enter your email address and password.
+        </p>
+        <form
+          onSubmit={async (e) => {
             e.preventDefault()
             clearError()
             await login({ email, password })
-          }} className="w-full flex flex-col gap-4">
+          }}
+          className="w-full flex flex-col gap-4"
+        >
           <div className="flex flex-col gap-1">
-            <label htmlFor="email" className="text-[#052315] font-medium">Email/Username<span className="text-red-500">*</span></label>
+            <label htmlFor="email" className="text-[#052315] font-medium">
+              Email/Username<span className="text-red-500">*</span>
+            </label>
             <input
               id="email"
               type="text"
@@ -52,7 +74,9 @@ const Login: React.FC = () => {
             />
           </div>
           <div className="flex flex-col gap-1">
-            <label htmlFor="password" className="text-[#052315] font-medium">Password<span className="text-red-500">*</span></label>
+            <label htmlFor="password" className="text-[#052315] font-medium">
+              Password<span className="text-red-500">*</span>
+            </label>
             <div className="relative flex items-center">
               <input
                 id="password"
@@ -101,16 +125,21 @@ const Login: React.FC = () => {
             </div>
           ) : null}
           <div className="flex justify-end mb-2">
-            <a href="#" className="text-blue-500 text-sm hover:underline">Forgot Password ?</a>
+            <a href="#" className="text-blue-500 text-sm hover:underline">
+              Forgot Password ?
+            </a>
           </div>
-          <Button type="submit" disabled={isSubmitting} className="w-full bg-[#052315] text-white rounded-md py-2 mt-2 hover:bg-[#09351f]">
+          <Button
+            type="submit"
+            disabled={isSubmitting}
+            className="w-full bg-[#052315] text-white rounded-md py-2 mt-2 hover:bg-[#09351f]"
+          >
             {isSubmitting ? 'Signing in…' : 'Login'}
           </Button>
         </form>
-       
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default Login; 
+export default Login

@@ -29,28 +29,31 @@ interface CartItem {
 interface ProductsState {
   // Product list management
   products: Product[]
-  selectedCategory: string
+  selectedCategory: 'all' | number
   isLoading: boolean
   error: string | null
-  
+  searchQuery: string
+
   // Product sync management
   syncProgress: ProductSyncProgress | null
   isSyncing: boolean
   syncError: string | null
-  
+
   // Cart management
   cartItems: CartItem[]
-  
+
   // Product list actions
-  setCategory: (category: string) => void
+  setCategory: (category: 'all' | number) => void
+  setSearchQuery: (query: string) => void
   refresh: () => Promise<void>
-  
+  searchProducts: (query: string) => Promise<void>
+
   // Product sync actions
   startSync: (baseUrl: string, userToken: string) => Promise<void>
   checkSyncProgress: () => Promise<void>
   resetSync: () => Promise<void>
   clearError: () => void
-  
+
   // Cart actions
   addToCart: (product: Product) => void
   removeFromCart: (productId: string) => void
@@ -65,21 +68,26 @@ export const useProductsStore = create<ProductsState>((set, get) => ({
   selectedCategory: 'all',
   isLoading: false,
   error: null,
-  
+  searchQuery: '',
+
   // Product sync state
   syncProgress: null,
   isSyncing: false,
   syncError: null,
-  
+
   // Cart state
   cartItems: [],
-  
+
   // Product list actions
-  setCategory: (category: string) => {
+  setCategory: (category: 'all' | number) => {
     set({ selectedCategory: category })
     void get().refresh()
   },
-  
+
+  setSearchQuery: (query: string) => {
+    set({ searchQuery: query })
+  },
+
   refresh: async () => {
     set({ isLoading: true, error: null })
     try {
@@ -90,7 +98,22 @@ export const useProductsStore = create<ProductsState>((set, get) => ({
       set({ error: err?.message ?? 'Failed to load products', isLoading: false })
     }
   },
-  
+
+  searchProducts: async (query: string) => {
+    if (!query.trim()) {
+      await get().refresh()
+      return
+    }
+
+    set({ isLoading: true, error: null, searchQuery: query })
+    try {
+      const rows = await window.api.db.searchProducts(query, 50)
+      set({ products: rows, isLoading: false })
+    } catch (err: any) {
+      set({ error: err?.message ?? 'Search failed', isLoading: false })
+    }
+  },
+
   // Product sync actions
   startSync: async (baseUrl: string, userToken: string) => {
     set({ isSyncing: true, syncError: null })
@@ -102,7 +125,7 @@ export const useProductsStore = create<ProductsState>((set, get) => ({
       set({ syncError: err?.message ?? 'Product sync failed', isSyncing: false })
     }
   },
-  
+
   checkSyncProgress: async () => {
     try {
       const progress = await window.api.products.sync.progress()
@@ -119,7 +142,7 @@ export const useProductsStore = create<ProductsState>((set, get) => ({
       console.error('Failed to check sync progress:', err)
     }
   },
-  
+
   resetSync: async () => {
     try {
       await window.api.products.sync.reset()
@@ -128,57 +151,54 @@ export const useProductsStore = create<ProductsState>((set, get) => ({
       set({ syncError: err?.message ?? 'Failed to reset sync' })
     }
   },
-  
+
   clearError: () => set({ syncError: null, error: null }),
-  
+
   // Cart actions
   addToCart: (product: Product) => {
     const { cartItems } = get()
-    const existingItem = cartItems.find(item => item.id === product.id)
-    
+    const existingItem = cartItems.find((item) => item.id === product.id)
+
     if (existingItem) {
       set({
-        cartItems: cartItems.map(item =>
-          item.id === product.id
-            ? { ...item, quantity: item.quantity + 1 }
-            : item
+        cartItems: cartItems.map((item) =>
+          item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
         )
       })
     } else {
       set({
-        cartItems: [...cartItems, {
-          id: product.id,
-          name: product.name,
-          price: product.price,
-          quantity: 1,
-          code: product.code
-        }]
+        cartItems: [
+          ...cartItems,
+          {
+            id: product.id,
+            name: product.name,
+            price: product.price,
+            quantity: 1,
+            code: product.code
+          }
+        ]
       })
     }
   },
-  
+
   removeFromCart: (productId: string) => {
     const { cartItems } = get()
-    set({ cartItems: cartItems.filter(item => item.id !== productId) })
+    set({ cartItems: cartItems.filter((item) => item.id !== productId) })
   },
-  
+
   updateCartItemQuantity: (productId: string, quantity: number) => {
     if (quantity <= 0) {
       get().removeFromCart(productId)
     } else {
       const { cartItems } = get()
       set({
-        cartItems: cartItems.map(item =>
-          item.id === productId
-            ? { ...item, quantity }
-            : item
-        )
+        cartItems: cartItems.map((item) => (item.id === productId ? { ...item, quantity } : item))
       })
     }
   },
-  
+
   clearCart: () => set({ cartItems: [] }),
-  
+
   searchProductByCode: async (code: string) => {
     try {
       const product = await window.api.db.searchProductByCode(code)
@@ -189,5 +209,3 @@ export const useProductsStore = create<ProductsState>((set, get) => ({
     }
   }
 }))
-
-

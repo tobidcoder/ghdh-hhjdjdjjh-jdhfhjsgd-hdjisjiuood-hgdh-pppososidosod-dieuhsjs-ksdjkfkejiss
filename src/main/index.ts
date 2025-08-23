@@ -73,20 +73,26 @@ app.whenReady().then(() => {
   ipcMain.handle('env:get', (_event, key: string) => {
     const value = process.env[key] || ''
     console.log(`[ENV] Requested ${key}:`, value)
-    console.log(`[ENV] All env vars:`, Object.keys(process.env).filter(k => k.includes('BASE') || k.includes('URL')))
+    console.log(
+      `[ENV] All env vars:`,
+      Object.keys(process.env).filter((k) => k.includes('BASE') || k.includes('URL'))
+    )
     return value
   })
 
   // Debug: List all environment variables
   ipcMain.handle('env:list', () => {
-    const envVars = Object.keys(process.env).filter(key => 
-      key.includes('BASE') || key.includes('URL') || key.includes('API')
+    const envVars = Object.keys(process.env).filter(
+      (key) => key.includes('BASE') || key.includes('URL') || key.includes('API')
     )
     console.log('[ENV] Available env vars:', envVars)
-    return envVars.reduce((acc, key) => {
-      acc[key] = process.env[key]
-      return acc
-    }, {} as Record<string, string | undefined>)
+    return envVars.reduce(
+      (acc, key) => {
+        acc[key] = process.env[key]
+        return acc
+      },
+      {} as Record<string, string | undefined>
+    )
   })
 
   // Initialize offline database

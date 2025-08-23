@@ -4,21 +4,78 @@ import { electronAPI } from '@electron-toolkit/preload'
 // Custom APIs for renderer
 const api = {
   db: {
-    listProducts: (category?: string, limit?: number) => ipcRenderer.invoke('db:products:list', category, limit),
+    listProducts: (category?: string, limit?: number) =>
+      ipcRenderer.invoke('db:products:list', category, limit),
     searchProductByCode: (code: string) => ipcRenderer.invoke('db:products:searchByCode', code),
-    upsertManyProducts: (products: Array<{ id: string; name: string; price: number; category: string; code: string | null; raw_response: string | null }>) =>
-      ipcRenderer.invoke('db:products:upsertMany', products)
-    ,
-    getPath: () => ipcRenderer.invoke('db:path')
-  }
-  ,
+    searchProducts: (query: string, limit?: number) =>
+      ipcRenderer.invoke('db:products:search', query, limit),
+    upsertManyProducts: (
+      products: Array<{
+        id: string
+        name: string
+        price: number
+        category: string
+        code: string | null
+        raw_response: string | null
+      }>
+    ) => ipcRenderer.invoke('db:products:upsertMany', products),
+    getPath: () => ipcRenderer.invoke('db:path'),
+    // Sales API
+    createSale: (sale: any) => ipcRenderer.invoke('db:sales:create', sale),
+    getPendingSales: () => ipcRenderer.invoke('db:sales:getPending'),
+    getUnsyncedSalesCount: () => ipcRenderer.invoke('db:sales:getUnsyncedCount'),
+    updateSaleSyncStatus: (saleId: string, status: string, error?: string) =>
+      ipcRenderer.invoke('db:sales:updateSyncStatus', saleId, status, error),
+    deleteSyncedSale: (saleId: string) => ipcRenderer.invoke('db:sales:deleteSynced', saleId),
+    getSalesByDateRange: (startDate: string, endDate: string) =>
+      ipcRenderer.invoke('db:sales:getByDateRange', startDate, endDate),
+    syncSales: (baseUrl: string, userToken: string) =>
+      ipcRenderer.invoke('db:sales:sync', baseUrl, userToken),
+    // Settings API
+    getSettings: () => ipcRenderer.invoke('db:settings:get'),
+    fetchSettings: (baseUrl: string, userToken: string) =>
+      ipcRenderer.invoke('db:settings:fetch', baseUrl, userToken),
+    getCountries: () => ipcRenderer.invoke('db:countries:get'),
+    getActiveCountries: () => ipcRenderer.invoke('db:countries:getActive'),
+    // Config API
+    getConfig: () => ipcRenderer.invoke('db:config:get'),
+    getPermissions: () => ipcRenderer.invoke('db:config:getPermissions'),
+    hasPermission: (permission: string) => ipcRenderer.invoke('db:config:hasPermission', permission),
+    isCurrencyRight: () => ipcRenderer.invoke('db:config:isCurrencyRight'),
+    isOpenRegister: () => ipcRenderer.invoke('db:config:isOpenRegister'),
+    // Warehouse API
+    getWarehouses: () => ipcRenderer.invoke('db:warehouses:get'),
+    getWarehouseById: (id: number) => ipcRenderer.invoke('db:warehouses:getById', id),
+    getWarehouseByName: (name: string) => ipcRenderer.invoke('db:warehouses:getByName', name),
+    getDefaultWarehouse: () => ipcRenderer.invoke('db:warehouses:getDefault'),
+    // Product Categories API
+    getProductCategories: () => ipcRenderer.invoke('db:productCategories:get'),
+    getProductCategoryById: (id: number) => ipcRenderer.invoke('db:productCategories:getById', id),
+    getProductCategoryByName: (name: string) => ipcRenderer.invoke('db:productCategories:getByName', name),
+    getProductCategoriesWithProducts: () => ipcRenderer.invoke('db:productCategories:getWithProducts'),
+    searchProductCategories: (searchTerm: string) => ipcRenderer.invoke('db:productCategories:search', searchTerm),
+    // Payment Methods API
+    getPaymentMethods: () => ipcRenderer.invoke('db:paymentMethods:get'),
+    getAllPaymentMethods: () => ipcRenderer.invoke('db:paymentMethods:getAll'),
+    getPaymentMethodById: (id: number) => ipcRenderer.invoke('db:paymentMethods:getById', id),
+    getPaymentMethodByName: (name: string) => ipcRenderer.invoke('db:paymentMethods:getByName', name),
+    getActivePaymentMethods: () => ipcRenderer.invoke('db:paymentMethods:getActive'),
+    getPaymentMethodsByBusinessProfile: (businessProfileId: number) => ipcRenderer.invoke('db:paymentMethods:getByBusinessProfile', businessProfileId),
+    // Units API
+    getUnits: () => ipcRenderer.invoke('db:units:get'),
+    getUnitById: (id: number) => ipcRenderer.invoke('db:units:getById', id),
+    getUnitByName: (name: string) => ipcRenderer.invoke('db:units:getByName', name),
+    getUnitByShortName: (shortName: string) => ipcRenderer.invoke('db:units:getByShortName', shortName),
+    getDefaultUnits: () => ipcRenderer.invoke('db:units:getDefault'),
+    getUnitsByBusinessProfile: (businessProfileId: number) => ipcRenderer.invoke('db:units:getByBusinessProfile', businessProfileId),
+    getBaseUnits: () => ipcRenderer.invoke('db:units:getBaseUnits'),
+    getUnitsByBaseUnit: (baseUnitId: number) => ipcRenderer.invoke('db:units:getByBaseUnit', baseUnitId)
+  },
   auth: {
     login: (payload: { email: string; password: string }) =>
-      ipcRenderer.invoke('auth:login', payload)
-    ,
+      ipcRenderer.invoke('auth:login', payload),
     seedFromResponse: (payload: { response: any; password: string }) =>
-      ipcRenderer.invoke('auth:seedFromResponse', payload)
-    ,
+      ipcRenderer.invoke('auth:seedFromResponse', payload),
     getRawResponse: (emailOrUsername: string) =>
       ipcRenderer.invoke('auth:getRawResponse', emailOrUsername)
   },
@@ -29,8 +86,7 @@ const api = {
       progress: () => ipcRenderer.invoke('products:sync:progress'),
       reset: () => ipcRenderer.invoke('products:sync:reset')
     }
-  }
-  ,
+  },
   env: {
     get: (key: string) => ipcRenderer.invoke('env:get', key),
     list: () => ipcRenderer.invoke('env:list')

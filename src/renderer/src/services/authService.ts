@@ -29,13 +29,14 @@ export const useAuthService = () => {
   const api = useApi()
 
   const login = async (credentials: LoginCredentials): Promise<LoginResponse> => {
-    return api.post<LoginResponse['data']>('/login', credentials)
+    const response = await api.post<LoginResponse['data']>('/login', credentials)
+    return response as LoginResponse
   }
 
   return {
     login,
     loading: api.loading,
     error: api.error,
-    clearError: api.clearError,
+    clearError: api.clearError
   }
 }

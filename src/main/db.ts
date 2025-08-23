@@ -24,6 +24,24 @@ export interface ProductSyncProgress {
   total_products: number
 }
 
+export interface SaleRecord {
+  id: string
+  invoice_number: string
+  customer_name: string | null
+  customer_phone: string | null
+  subtotal: number
+  tax_amount: number
+  total_amount: number
+  payment_method: string
+  payment_status: string
+  items: string // JSON string of cart items
+  created_at: string
+  synced_at: string | null
+  sync_status: 'pending' | 'syncing' | 'synced' | 'failed'
+  sync_attempts: number
+  last_sync_error: string | null
+}
+
 export interface UserRecord {
   id: string
   username: string
@@ -35,6 +53,103 @@ export interface UserRecord {
   created_at: string
   updated_at: string
   raw_response: string | null
+}
+
+export interface SettingsRecord {
+  id: string
+  currency: string
+  email: string
+  company_name: string
+  phone: string
+  default_language: string
+  default_customer: string
+  default_warehouse: string
+  address: string
+  logo: string | null
+  show_phone: string
+  show_address: string
+  show_customer: string
+  show_email: string
+  show_tax_discount_shipping: string
+  show_note: string | null
+  show_barcode_in_receipt: string
+  show_logo_in_receipt: string
+  protect_cart_product_delete: string
+  protect_cart_product_reduce: string
+  enable_shipping: string
+  enable_tax: string
+  enable_discount: string
+  warehouse_name: string
+  customer_name: string
+  currency_symbol: string
+  created_at: string
+  updated_at: string
+}
+
+export interface CountryRecord {
+  id: number
+  name: string
+  short_code: string
+  phone_code: number
+  active: number
+  logo_url: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface ConfigRecord {
+  id: string
+  permissions: string // JSON string of permissions array
+  is_currency_right: string
+  open_register: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface WarehouseRecord {
+  id: number
+  name: string
+  phone: string
+  country: string
+  city: string
+  email: string
+  zip_code: string | null
+  state: string
+  address: string
+  created_at: string
+  updated_at: string
+}
+
+export interface ProductCategoryRecord {
+  id: number
+  name: string
+  image: string | null // JSON string of image array
+  products_count: number
+  created_at: string
+  updated_at: string
+}
+
+export interface PaymentMethodRecord {
+  id: number
+  name: string
+  display_name: string
+  active: boolean
+  business_profile_id: number
+  user_id: number
+  created_at: string
+  updated_at: string
+}
+
+export interface UnitRecord {
+  id: number
+  name: string
+  short_name: string
+  base_unit: number
+  is_default: boolean
+  business_profile_id: number
+  user_id: number
+  created_at: string
+  updated_at: string
 }
 
 export function getDatabaseFilePath(): string {
@@ -61,7 +176,7 @@ export function closeDatabase(): void {
 
 export function initDatabase(): void {
   if (db) return
-  
+
   try {
     const filePath = getDatabaseFilePath()
     db = new Database(filePath)
@@ -86,14 +201,70 @@ export function initDatabase(): void {
   const count = db.prepare('SELECT COUNT(1) as c FROM products').get() as { c: number }
   if (count.c === 0) {
     const seedProducts: ProductRecord[] = [
-      { id: '1', name: 'MERBA DOUBLE CHOCO 200G', price: 4200, category: 'BISCUIT & COOKIES', code: 'MB001', raw_response: null },
-      { id: '2', name: 'MERBER WHITE CHOCO CRANB 150G', price: 3300, category: 'BISCUIT & COOKIES', code: 'MB002', raw_response: null },
-      { id: '3', name: 'MERBA CHOCO CHIP COOKIES 150G', price: 2950, category: 'BISCUIT & COOKIES', code: 'MB003', raw_response: null },
-      { id: '4', name: 'MERBA NOUGATELLI COOKIES', price: 2200, category: 'BISCUIT & COOKIES', code: 'MB004', raw_response: null },
-      { id: '5', name: 'HELLEMA SPECULAAS', price: 599.99, category: 'BISCUIT & COOKIES', code: 'MB005', raw_response: null },
-      { id: '6', name: 'LORD OF WAFERS', price: 100, category: 'BISCUIT & COOKIES', code: 'MB006', raw_response: null },
-      { id: '7', name: 'MERBA TRIPLE CHOCOLATE COOKIES', price: 2300, category: 'BISCUIT & COOKIES', code: 'MB007', raw_response: null },
-      { id: '8', name: 'BEST DREAM PURPLE COOKIES', price: 450, category: 'BISCUIT & COOKIES', code: 'MB008', raw_response: null }
+      {
+        id: '1',
+        name: 'MERBA DOUBLE CHOCO 200G',
+        price: 4200,
+        category: 'BISCUIT & COOKIES',
+        code: 'MB001',
+        raw_response: null
+      },
+      {
+        id: '2',
+        name: 'MERBER WHITE CHOCO CRANB 150G',
+        price: 3300,
+        category: 'BISCUIT & COOKIES',
+        code: 'MB002',
+        raw_response: null
+      },
+      {
+        id: '3',
+        name: 'MERBA CHOCO CHIP COOKIES 150G',
+        price: 2950,
+        category: 'BISCUIT & COOKIES',
+        code: 'MB003',
+        raw_response: null
+      },
+      {
+        id: '4',
+        name: 'MERBA NOUGATELLI COOKIES',
+        price: 2200,
+        category: 'BISCUIT & COOKIES',
+        code: 'MB004',
+        raw_response: null
+      },
+      {
+        id: '5',
+        name: 'HELLEMA SPECULAAS',
+        price: 599.99,
+        category: 'BISCUIT & COOKIES',
+        code: 'MB005',
+        raw_response: null
+      },
+      {
+        id: '6',
+        name: 'LORD OF WAFERS',
+        price: 100,
+        category: 'BISCUIT & COOKIES',
+        code: 'MB006',
+        raw_response: null
+      },
+      {
+        id: '7',
+        name: 'MERBA TRIPLE CHOCOLATE COOKIES',
+        price: 2300,
+        category: 'BISCUIT & COOKIES',
+        code: 'MB007',
+        raw_response: null
+      },
+      {
+        id: '8',
+        name: 'BEST DREAM PURPLE COOKIES',
+        price: 450,
+        category: 'BISCUIT & COOKIES',
+        code: 'MB008',
+        raw_response: null
+      }
     ]
     upsertProducts(seedProducts)
   }
@@ -103,7 +274,7 @@ export function initDatabase(): void {
 
 function runMigrations(): void {
   console.log('[DB] Running migrations...')
-  
+
   try {
     // Create migrations table if it doesn't exist
     db!.exec(`
@@ -165,9 +336,9 @@ function runMigrations(): void {
   if (!migrationExists('003_add_raw_response_to_users')) {
     try {
       // Check if column exists
-      const columns = db!.prepare("PRAGMA table_info(users)").all() as any[]
-      const hasRawResponse = columns.some(col => col.name === 'raw_response')
-      
+      const columns = db!.prepare('PRAGMA table_info(users)').all() as any[]
+      const hasRawResponse = columns.some((col) => col.name === 'raw_response')
+
       if (!hasRawResponse) {
         // Create new table with the column
         db!.exec(`
@@ -184,18 +355,18 @@ function runMigrations(): void {
             raw_response TEXT
           );
         `)
-        
+
         // Copy data from old table to new table
         db!.exec(`
           INSERT INTO users_new (id, username, email, name, token, password_salt, password_hash, created_at, updated_at)
           SELECT id, username, email, name, token, password_salt, password_hash, created_at, updated_at
           FROM users;
         `)
-        
+
         // Drop old table and rename new table
         db!.exec('DROP TABLE users;')
         db!.exec('ALTER TABLE users_new RENAME TO users;')
-        
+
         console.log('[DB] Migration 003: Added raw_response column to users table')
       }
     } catch (error: any) {
@@ -208,9 +379,9 @@ function runMigrations(): void {
   if (!migrationExists('004_add_raw_response_to_products_and_sync_progress')) {
     try {
       // Check if raw_response column exists in products table
-      const productColumns = db!.prepare("PRAGMA table_info(products)").all() as any[]
-      const hasProductRawResponse = productColumns.some(col => col.name === 'raw_response')
-      
+      const productColumns = db!.prepare('PRAGMA table_info(products)').all() as any[]
+      const hasProductRawResponse = productColumns.some((col) => col.name === 'raw_response')
+
       if (!hasProductRawResponse) {
         // Create new products table with raw_response column
         db!.exec(`
@@ -222,18 +393,18 @@ function runMigrations(): void {
             raw_response TEXT
           );
         `)
-        
+
         // Copy data from old products table to new table
         db!.exec(`
           INSERT INTO products_new (id, name, price, category)
           SELECT id, name, price, category
           FROM products;
         `)
-        
+
         // Drop old table and rename new table
         db!.exec('DROP TABLE products;')
         db!.exec('ALTER TABLE products_new RENAME TO products;')
-        
+
         console.log('[DB] Migration 004: Added raw_response column to products table')
       }
 
@@ -248,7 +419,7 @@ function runMigrations(): void {
           total_products INTEGER NOT NULL DEFAULT 0
         );
       `)
-      
+
       console.log('[DB] Migration 004: Created product_sync_progress table')
     } catch (error: any) {
       console.error('[DB] Migration 004 failed:', error.message)
@@ -261,9 +432,9 @@ function runMigrations(): void {
   if (!migrationExists('005_add_code_to_products')) {
     try {
       // Check if code column exists in products table
-      const productColumns = db!.prepare("PRAGMA table_info(products)").all() as any[]
-      const hasCode = productColumns.some(col => col.name === 'code')
-      
+      const productColumns = db!.prepare('PRAGMA table_info(products)').all() as any[]
+      const hasCode = productColumns.some((col) => col.name === 'code')
+
       if (!hasCode) {
         // Create new products table with code column
         db!.exec(`
@@ -276,18 +447,18 @@ function runMigrations(): void {
             raw_response TEXT
           );
         `)
-        
+
         // Copy data from old products table to new table
         db!.exec(`
           INSERT INTO products_new (id, name, price, category, raw_response)
           SELECT id, name, price, category, raw_response
           FROM products;
         `)
-        
+
         // Drop old table and rename new table
         db!.exec('DROP TABLE products;')
         db!.exec('ALTER TABLE products_new RENAME TO products;')
-        
+
         console.log('[DB] Migration 005: Added code column to products table')
       }
     } catch (error: any) {
@@ -295,6 +466,218 @@ function runMigrations(): void {
       throw error
     }
     markMigrationComplete('005_add_code_to_products')
+  }
+
+  // Migration 6: Create sales table
+  if (!migrationExists('006_create_sales_table')) {
+    try {
+      db!.exec(`
+        CREATE TABLE IF NOT EXISTS sales (
+          id TEXT PRIMARY KEY,
+          invoice_number TEXT UNIQUE NOT NULL,
+          customer_name TEXT,
+          customer_phone TEXT,
+          subtotal REAL NOT NULL,
+          tax_amount REAL NOT NULL,
+          total_amount REAL NOT NULL,
+          payment_method TEXT NOT NULL,
+          payment_status TEXT NOT NULL,
+          items TEXT NOT NULL,
+          created_at TEXT NOT NULL,
+          synced_at TEXT,
+          sync_status TEXT NOT NULL DEFAULT 'pending',
+          sync_attempts INTEGER NOT NULL DEFAULT 0,
+          last_sync_error TEXT
+        );
+      `)
+
+      console.log('[DB] Migration 006: Created sales table')
+    } catch (error: any) {
+      console.error('[DB] Migration 006 failed:', error.message)
+      throw error
+    }
+    markMigrationComplete('006_create_sales_table')
+  }
+
+  // Migration 7: Create settings table
+  if (!migrationExists('007_create_settings_table')) {
+    try {
+      db!.exec(`
+        CREATE TABLE IF NOT EXISTS settings (
+          id TEXT PRIMARY KEY,
+          currency TEXT NOT NULL,
+          email TEXT NOT NULL,
+          company_name TEXT NOT NULL,
+          phone TEXT NOT NULL,
+          default_language TEXT NOT NULL,
+          default_customer TEXT NOT NULL,
+          default_warehouse TEXT NOT NULL,
+          address TEXT NOT NULL,
+          logo TEXT,
+          show_phone TEXT NOT NULL,
+          show_address TEXT NOT NULL,
+          show_customer TEXT NOT NULL,
+          show_email TEXT NOT NULL,
+          show_tax_discount_shipping TEXT NOT NULL,
+          show_note TEXT,
+          show_barcode_in_receipt TEXT NOT NULL,
+          show_logo_in_receipt TEXT NOT NULL,
+          protect_cart_product_delete TEXT NOT NULL,
+          protect_cart_product_reduce TEXT NOT NULL,
+          enable_shipping TEXT NOT NULL,
+          enable_tax TEXT NOT NULL,
+          enable_discount TEXT NOT NULL,
+          warehouse_name TEXT NOT NULL,
+          customer_name TEXT NOT NULL,
+          currency_symbol TEXT NOT NULL,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL
+        )
+      `)
+      markMigrationComplete('007_create_settings_table')
+      console.log('[DB] Created settings table')
+    } catch (error: unknown) {
+      console.error('[DB] Failed to create settings table:', error)
+      throw error
+    }
+  }
+
+  // Migration 8: Create countries table
+  if (!migrationExists('008_create_countries_table')) {
+    try {
+      db!.exec(`
+        CREATE TABLE IF NOT EXISTS countries (
+          id INTEGER PRIMARY KEY,
+          name TEXT NOT NULL,
+          short_code TEXT NOT NULL,
+          phone_code INTEGER NOT NULL,
+          active INTEGER NOT NULL DEFAULT 0,
+          logo_url TEXT,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL
+        )
+      `)
+      markMigrationComplete('008_create_countries_table')
+      console.log('[DB] Created countries table')
+    } catch (error: unknown) {
+      console.error('[DB] Failed to create countries table:', error)
+      throw error
+    }
+  }
+
+  // Migration 9: Create config table
+  if (!migrationExists('009_create_config_table')) {
+    try {
+      db!.exec(`
+        CREATE TABLE IF NOT EXISTS config (
+          id TEXT PRIMARY KEY,
+          permissions TEXT NOT NULL,
+          is_currency_right TEXT NOT NULL,
+          open_register INTEGER NOT NULL DEFAULT 0,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL
+        )
+      `)
+      markMigrationComplete('009_create_config_table')
+      console.log('[DB] Created config table')
+    } catch (error: unknown) {
+      console.error('[DB] Failed to create config table:', error)
+      throw error
+    }
+  }
+
+  // Migration 10: Create warehouses table
+  if (!migrationExists('010_create_warehouses_table')) {
+    try {
+      db!.exec(`
+        CREATE TABLE IF NOT EXISTS warehouses (
+          id INTEGER PRIMARY KEY,
+          name TEXT NOT NULL,
+          phone TEXT NOT NULL,
+          country TEXT NOT NULL,
+          city TEXT NOT NULL,
+          email TEXT NOT NULL,
+          zip_code TEXT,
+          state TEXT NOT NULL,
+          address TEXT NOT NULL,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL
+        )
+      `)
+      markMigrationComplete('010_create_warehouses_table')
+      console.log('[DB] Created warehouses table')
+    } catch (error: unknown) {
+      console.error('[DB] Failed to create warehouses table:', error)
+      throw error
+    }
+  }
+
+  // Migration 11: Create product_categories table
+  if (!migrationExists('011_create_product_categories_table')) {
+    try {
+      db!.exec(`
+        CREATE TABLE IF NOT EXISTS product_categories (
+          id INTEGER PRIMARY KEY,
+          name TEXT NOT NULL,
+          image TEXT,
+          products_count INTEGER NOT NULL DEFAULT 0,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL
+        )
+      `)
+      markMigrationComplete('011_create_product_categories_table')
+      console.log('[DB] Created product_categories table')
+    } catch (error: unknown) {
+      console.error('[DB] Failed to create product_categories table:', error)
+      throw error
+    }
+  }
+
+  // Migration 12: Create payment_methods table
+  if (!migrationExists('012_create_payment_methods_table')) {
+    try {
+      db!.exec(`
+        CREATE TABLE IF NOT EXISTS payment_methods (
+          id INTEGER PRIMARY KEY,
+          name TEXT NOT NULL,
+          display_name TEXT NOT NULL,
+          active INTEGER NOT NULL DEFAULT 1,
+          business_profile_id INTEGER NOT NULL DEFAULT 0,
+          user_id INTEGER NOT NULL DEFAULT 0,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL
+        )
+      `)
+      markMigrationComplete('012_create_payment_methods_table')
+      console.log('[DB] Created payment_methods table')
+    } catch (error: unknown) {
+      console.error('[DB] Failed to create payment_methods table:', error)
+      throw error
+    }
+  }
+
+  // Migration 13: Create units table
+  if (!migrationExists('013_create_units_table')) {
+    try {
+      db!.exec(`
+        CREATE TABLE IF NOT EXISTS units (
+          id INTEGER PRIMARY KEY,
+          name TEXT NOT NULL,
+          short_name TEXT NOT NULL,
+          base_unit INTEGER NOT NULL,
+          is_default INTEGER NOT NULL DEFAULT 0,
+          business_profile_id INTEGER NOT NULL DEFAULT 0,
+          user_id INTEGER NOT NULL DEFAULT 0,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL
+        )
+      `)
+      markMigrationComplete('013_create_units_table')
+      console.log('[DB] Created units table')
+    } catch (error: unknown) {
+      console.error('[DB] Failed to create units table:', error)
+      throw error
+    }
   }
 
   console.log('[DB] All migrations completed')
@@ -322,19 +705,56 @@ export function searchProductByCode(code: string): ProductRecord | null {
   const result = database
     .prepare('SELECT id, name, price, category, code, raw_response FROM products WHERE code = ?')
     .get(code) as ProductRecord | undefined
-  
+
   return result || null
 }
 
-export function listProducts(category?: string, limit: number = 50): ProductRecord[] {
+export function searchProducts(query: string, limit: number = 50): ProductRecord[] {
   const database = requireDb()
-  if (category) {
-    return database
-      .prepare('SELECT id, name, price, category, code, raw_response FROM products WHERE category = ? ORDER BY name LIMIT ?')
-      .all(category, limit) as ProductRecord[]
+  const searchTerm = `%${query}%`
+
+  const result = database
+    .prepare(
+      `
+      SELECT id, name, price, category, code, raw_response 
+      FROM products 
+      WHERE name LIKE ? OR code LIKE ? OR category LIKE ?
+      ORDER BY name 
+      LIMIT ?
+    `
+    )
+    .all(searchTerm, searchTerm, searchTerm, limit) as ProductRecord[]
+
+  return result
+}
+
+export function listProducts(category?: string | number, limit: number = 50): ProductRecord[] {
+  const database = requireDb()
+  if (category && category !== 'all') {
+    // If category is a number (ID), join with product_categories table
+    if (typeof category === 'number') {
+      return database
+        .prepare(
+          `SELECT p.id, p.name, p.price, p.category, p.code, p.raw_response 
+           FROM products p
+           INNER JOIN product_categories pc ON p.category = pc.id
+           WHERE pc.id = ? 
+           ORDER BY p.name LIMIT ?`
+        )
+        .all(category, limit) as ProductRecord[]
+    } else {
+      // If category is a string (name), use the old logic for backward compatibility
+      return database
+        .prepare(
+          'SELECT id, name, price, category, code, raw_response FROM products WHERE category = ? ORDER BY name LIMIT ?'
+        )
+        .all(category, limit) as ProductRecord[]
+    }
   }
   return database
-    .prepare('SELECT id, name, price, category, code, raw_response FROM products ORDER BY name LIMIT ?')
+    .prepare(
+      'SELECT id, name, price, category, code, raw_response FROM products ORDER BY name LIMIT ?'
+    )
     .all(limit) as ProductRecord[]
 }
 
@@ -354,22 +774,216 @@ export function upsertProducts(products: ProductRecord[]): void {
     for (const row of rows) stmt.run(row)
   })
   insertMany(products)
- }
+}
+
+// Sales functions
+export function createSale(
+  sale: Omit<
+    SaleRecord,
+    'id' | 'created_at' | 'synced_at' | 'sync_status' | 'sync_attempts' | 'last_sync_error'
+  >
+): SaleRecord {
+  const database = requireDb()
+  const id = crypto.randomUUID()
+  const now = new Date().toISOString()
+
+  const stmt = database.prepare(`
+    INSERT INTO sales (
+      id, invoice_number, customer_name, customer_phone, subtotal, tax_amount, 
+      total_amount, payment_method, payment_status, items, created_at, 
+      sync_status, sync_attempts
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', 0)
+  `)
+
+  stmt.run(
+    id,
+    sale.invoice_number,
+    sale.customer_name,
+    sale.customer_phone,
+    sale.subtotal,
+    sale.tax_amount,
+    sale.total_amount,
+    sale.payment_method,
+    sale.payment_status,
+    sale.items,
+    now
+  )
+
+  return {
+    id,
+    invoice_number: sale.invoice_number,
+    customer_name: sale.customer_name,
+    customer_phone: sale.customer_phone,
+    subtotal: sale.subtotal,
+    tax_amount: sale.tax_amount,
+    total_amount: sale.total_amount,
+    payment_method: sale.payment_method,
+    payment_status: sale.payment_status,
+    items: sale.items,
+    created_at: now,
+    synced_at: null,
+    sync_status: 'pending',
+    sync_attempts: 0,
+    last_sync_error: null
+  }
+}
+
+export function getPendingSales(): SaleRecord[] {
+  const database = requireDb()
+  return database
+    .prepare('SELECT * FROM sales WHERE sync_status IN (?, ?) ORDER BY created_at ASC')
+    .all('pending', 'failed') as SaleRecord[]
+}
+
+export function getUnsyncedSalesCount(): number {
+  const database = requireDb()
+  const result = database
+    .prepare('SELECT COUNT(*) as count FROM sales WHERE sync_status IN (?, ?)')
+    .get('pending', 'failed') as { count: number }
+  return result.count
+}
+
+export function updateSaleSyncStatus(
+  saleId: string,
+  status: 'syncing' | 'synced' | 'failed',
+  error?: string
+): void {
+  const database = requireDb()
+  const now = new Date().toISOString()
+
+  if (status === 'synced') {
+    database
+      .prepare('UPDATE sales SET sync_status = ?, synced_at = ? WHERE id = ?')
+      .run(status, now, saleId)
+  } else if (status === 'failed') {
+    database
+      .prepare(
+        `
+        UPDATE sales 
+        SET sync_status = ?, sync_attempts = sync_attempts + 1, last_sync_error = ? 
+        WHERE id = ?
+      `
+      )
+      .run(status, error || 'Unknown error', saleId)
+  } else {
+    database.prepare('UPDATE sales SET sync_status = ? WHERE id = ?').run(status, saleId)
+  }
+}
+
+export function deleteSyncedSale(saleId: string): void {
+  const database = requireDb()
+  database.prepare('DELETE FROM sales WHERE id = ? AND sync_status = ?').run(saleId, 'synced')
+}
+
+export function getSalesByDateRange(startDate: string, endDate: string): SaleRecord[] {
+  const database = requireDb()
+  return database
+    .prepare('SELECT * FROM sales WHERE created_at BETWEEN ? AND ? ORDER BY created_at DESC')
+    .all(startDate, endDate) as SaleRecord[]
+}
+
+export async function syncSalesToRemote(baseUrl: string, userToken: string): Promise<void> {
+  console.log('[DB] Starting sales sync to remote...')
+
+  const pendingSales = getPendingSales()
+  if (pendingSales.length === 0) {
+    console.log('[DB] No pending sales to sync')
+    return
+  }
+
+  console.log(`[DB] Found ${pendingSales.length} pending sales to sync`)
+
+  for (const sale of pendingSales) {
+    try {
+      // Mark as syncing
+      updateSaleSyncStatus(sale.id, 'syncing')
+
+      // Prepare sale data for API
+      const saleData = {
+        invoice_number: sale.invoice_number,
+        customer_name: sale.customer_name,
+        customer_phone: sale.customer_phone,
+        subtotal: sale.subtotal,
+        tax_amount: sale.tax_amount,
+        total_amount: sale.total_amount,
+        payment_method: sale.payment_method,
+        payment_status: sale.payment_status,
+        items: JSON.parse(sale.items),
+        created_at: sale.created_at
+      }
+
+      // Try different possible endpoints
+      const endpoints = ['/sales', '/api/sales', '/api/v1/sales']
+      let syncSuccess = false
+
+      for (const endpoint of endpoints) {
+        try {
+          const url = new URL(endpoint, baseUrl).toString()
+          console.log(`[DB] Trying to sync sale ${sale.invoice_number} to: ${url}`)
+
+          const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${userToken}`,
+              Accept: 'application/json',
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(saleData)
+          })
+
+          if (response.ok) {
+            console.log(`[DB] Successfully synced sale ${sale.invoice_number}`)
+            updateSaleSyncStatus(sale.id, 'synced')
+            // Delete the synced sale from local DB
+            deleteSyncedSale(sale.id)
+            syncSuccess = true
+            break
+          } else {
+            const errorText = await response.text().catch(() => 'No error details available')
+            console.log(
+              `[DB] Endpoint ${endpoint} failed for sale ${sale.invoice_number}:`,
+              response.status,
+              errorText
+            )
+          }
+        } catch (error: any) {
+          console.log(
+            `[DB] Error with endpoint ${endpoint} for sale ${sale.invoice_number}:`,
+            error.message
+          )
+        }
+      }
+
+      if (!syncSuccess) {
+        console.log(`[DB] Failed to sync sale ${sale.invoice_number} with all endpoints`)
+        updateSaleSyncStatus(sale.id, 'failed', 'All endpoints failed')
+      }
+
+      // Wait a bit between sales to avoid overwhelming the server
+      await new Promise((resolve) => setTimeout(resolve, 1000))
+    } catch (error: any) {
+      console.error(`[DB] Error syncing sale ${sale.invoice_number}:`, error.message)
+      updateSaleSyncStatus(sale.id, 'failed', error.message)
+    }
+  }
+
+  console.log('[DB] Sales sync completed')
+}
 
 // Product sync functions
 export function getProductSyncProgress(): ProductSyncProgress | null {
   const database = requireDb()
-  const result = database.prepare(
-    'SELECT * FROM product_sync_progress WHERE id = ?'
-  ).get('default') as ProductSyncProgress | undefined
-  
+  const result = database
+    .prepare('SELECT * FROM product_sync_progress WHERE id = ?')
+    .get('default') as ProductSyncProgress | undefined
+
   return result || null
 }
 
 export function updateProductSyncProgress(progress: Partial<ProductSyncProgress>): void {
   const database = requireDb()
   const now = new Date().toISOString()
-  
+
   const stmt = database.prepare(`
     INSERT INTO product_sync_progress (id, current_page, last_page, is_completed, last_sync_at, total_products)
     VALUES (?, ?, ?, ?, ?, ?)
@@ -380,7 +994,7 @@ export function updateProductSyncProgress(progress: Partial<ProductSyncProgress>
       last_sync_at = excluded.last_sync_at,
       total_products = excluded.total_products
   `)
-  
+
   stmt.run(
     'default',
     progress.current_page || 1,
@@ -394,12 +1008,12 @@ export function updateProductSyncProgress(progress: Partial<ProductSyncProgress>
 export function resetProductSyncProgress(): void {
   const database = requireDb()
   const now = new Date().toISOString()
-  
+
   const stmt = database.prepare(`
     INSERT OR REPLACE INTO product_sync_progress (id, current_page, last_page, is_completed, last_sync_at, total_products)
     VALUES (?, ?, ?, ?, ?, ?)
   `)
-  
+
   stmt.run('default', 1, 1, 0, now, 0)
 }
 
@@ -407,25 +1021,27 @@ export async function syncProductsFromRemote(baseUrl: string, userToken: string)
   console.log('[DB] Starting product sync from remote...')
   console.log('[DB] Base URL:', baseUrl)
   console.log('[DB] Token available:', !!userToken)
-  
+
   // Check existing sync progress first
   const existingProgress = getProductSyncProgress()
   let currentPage = 1
   let lastPage = 1
   let totalProducts = 0
-  
+
   if (existingProgress && !existingProgress.is_completed) {
     // Resume from where we left off
     currentPage = existingProgress.current_page
     lastPage = existingProgress.last_page
     totalProducts = existingProgress.total_products
-    console.log(`[DB] Resuming sync from page ${currentPage} of ${lastPage} (total: ${totalProducts})`)
+    console.log(
+      `[DB] Resuming sync from page ${currentPage} of ${lastPage} (total: ${totalProducts})`
+    )
   } else {
     // Reset sync progress for new sync
     resetProductSyncProgress()
     console.log('[DB] Starting fresh sync')
   }
-  
+
   // First, test the connection with a simple endpoint
   try {
     console.log('[DB] Testing connection...')
@@ -433,8 +1049,8 @@ export async function syncProductsFromRemote(baseUrl: string, userToken: string)
     const testResponse = await fetch(testUrl.toString(), {
       method: 'GET',
       headers: {
-        'Authorization': `Bearer ${userToken}`,
-        'Accept': 'application/json',
+        Authorization: `Bearer ${userToken}`,
+        Accept: 'application/json',
         'Content-Type': 'application/json'
       }
     })
@@ -446,34 +1062,36 @@ export async function syncProductsFromRemote(baseUrl: string, userToken: string)
   } catch (error) {
     console.log('[DB] Test connection failed:', error)
   }
-  
+
   // Try different possible endpoints
   const endpoints = ['/products', '/api/products', '/api/v1/products']
-  
+
   for (const endpoint of endpoints) {
     try {
       console.log(`[DB] Trying endpoint: ${endpoint}`)
-      
-             // If we're resuming and need pagination info, or starting fresh
-       if (currentPage === 1 && lastPage === 1) {
+
+      // If we're resuming and need pagination info, or starting fresh
+      if (currentPage === 1 && lastPage === 1) {
         console.log('[DB] Fetching first page to get pagination info...')
         const firstPageUrl = new URL(endpoint, baseUrl)
         firstPageUrl.searchParams.set('page', '1')
-        
+
         const firstPageResponse = await fetch(firstPageUrl.toString(), {
           method: 'GET',
           headers: {
-            'Authorization': `Bearer ${userToken}`,
-            'Accept': 'application/json',
+            Authorization: `Bearer ${userToken}`,
+            Accept: 'application/json',
             'Content-Type': 'application/json'
           }
         })
-        
+
         if (!firstPageResponse.ok) {
           const errorText = await firstPageResponse.text().catch(() => 'No error details available')
-          throw new Error(`Failed to fetch first page: ${firstPageResponse.status} ${firstPageResponse.statusText} - ${errorText}`)
+          throw new Error(
+            `Failed to fetch first page: ${firstPageResponse.status} ${firstPageResponse.statusText} - ${errorText}`
+          )
         }
-        
+
         const firstPageData = await firstPageResponse.json()
         console.log(`[DB] First page data:`, {
           current_page: firstPageData.meta?.current_page,
@@ -481,26 +1099,26 @@ export async function syncProductsFromRemote(baseUrl: string, userToken: string)
           total: firstPageData.meta?.total,
           data_length: firstPageData.data?.length || 0
         })
-        
+
         // Update pagination info from first page
         lastPage = firstPageData.meta?.last_page || 1
         totalProducts = firstPageData.meta?.total || 0
-        
-                 // Process and store first page products
-         if (firstPageData.data && Array.isArray(firstPageData.data)) {
-           const products: ProductRecord[] = firstPageData.data.map((product: any) => ({
-             id: String(product.id),
-             name: product.attributes.name || '',
-             price: parseFloat(product.attributes.price) || 0,
-             category: product.attributes.category || '',
-             code: product.attributes.code || null,
-             raw_response: JSON.stringify(product)
-           }))
-          
+
+        // Process and store first page products
+        if (firstPageData.data && Array.isArray(firstPageData.data)) {
+          const products: ProductRecord[] = firstPageData.data.map((product: any) => ({
+            id: String(product.id),
+            name: product.attributes.name || '',
+            price: parseFloat(product.attributes.product_price) || 0,
+            category: product.attributes.product_category_id || '',
+            code: product.attributes.code || null,
+            raw_response: JSON.stringify(product)
+          }))
+
           upsertProducts(products)
           console.log(`[DB] Stored ${products.length} products from first page`)
         }
-        
+
         // Update sync progress after first page
         updateProductSyncProgress({
           current_page: 1,
@@ -508,7 +1126,7 @@ export async function syncProductsFromRemote(baseUrl: string, userToken: string)
           is_completed: false,
           total_products: totalProducts
         })
-        
+
         // If there's only one page, we're done
         if (lastPage <= 1) {
           updateProductSyncProgress({
@@ -520,94 +1138,95 @@ export async function syncProductsFromRemote(baseUrl: string, userToken: string)
           console.log('[DB] Only one page, sync completed')
           return
         }
-        
-               // Move to next page for the main loop
-       currentPage = 2
+
+        // Move to next page for the main loop
+        currentPage = 2
       }
-      
+
       // Skip pages that have already been processed when resuming
       if (existingProgress && existingProgress.current_page > 1) {
         currentPage = existingProgress.current_page
         console.log(`[DB] Skipping to page ${currentPage} (already processed)`)
       }
-      
+
       while (currentPage <= lastPage) {
         console.log(`[DB] Fetching products page ${currentPage}...`)
-        
+
         const url = new URL(endpoint, baseUrl)
         url.searchParams.set('page', currentPage.toString())
-      
-      console.log(`[DB] Making request to: ${url.toString()}`)
-      console.log(`[DB] Headers:`, {
-        'Authorization': `Bearer ${userToken.substring(0, 10)}...`,
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
-      })
-      
-      const response = await fetch(url.toString(), {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${userToken}`,
-          'Accept': 'application/json',
+
+        console.log(`[DB] Making request to: ${url.toString()}`)
+        console.log(`[DB] Headers:`, {
+          Authorization: `Bearer ${userToken.substring(0, 10)}...`,
+          Accept: 'application/json',
           'Content-Type': 'application/json'
+        })
+
+        const response = await fetch(url.toString(), {
+          method: 'GET',
+          headers: {
+            Authorization: `Bearer ${userToken}`,
+            Accept: 'application/json',
+            'Content-Type': 'application/json'
+          }
+        })
+
+        console.log(`[DB] Response status: ${response.status}`)
+        console.log(`[DB] Response headers:`, Object.fromEntries(response.headers.entries()))
+
+        if (!response.ok) {
+          const errorText = await response.text().catch(() => 'No error details available')
+          console.error(`[DB] Error response body:`, errorText)
+          throw new Error(
+            `Failed to fetch products: ${response.status} ${response.statusText} - ${errorText}`
+          )
         }
-      })
-      
-      console.log(`[DB] Response status: ${response.status}`)
-      console.log(`[DB] Response headers:`, Object.fromEntries(response.headers.entries()))
-      
-      if (!response.ok) {
-        const errorText = await response.text().catch(() => 'No error details available')
-        console.error(`[DB] Error response body:`, errorText)
-        throw new Error(`Failed to fetch products: ${response.status} ${response.statusText} - ${errorText}`)
-      }
-      
-             const data = await response.json()
-       console.log(`[DB] Received products data:`, {
-         current_page: data.meta?.current_page,
-         last_page: data.meta?.last_page,
-         total: data.meta?.total,
-         data_length: data.data?.length || 0,
-         has_data: !!data.data,
-         is_array: Array.isArray(data.data)
-       })
-       console.log(`[DB] Full response structure:`, Object.keys(data))
-      
-             // Process and store products
-       if (data.data && Array.isArray(data.data)) {
-         const products: ProductRecord[] = data.data.map((product: any) => ({
-           id: String(product.id),
-           name: product.attributes.name || '',
-           price: parseFloat(product.attributes.price) || 0,
-           category: product.attributes.category || '',
-           code: product.attributes.code || null,
-           raw_response: JSON.stringify(product)
-         }))
-        
-        upsertProducts(products)
-        console.log(`[DB] Stored ${products.length} products from page ${currentPage}`)
-      }
-      
-      // Update sync progress
-      updateProductSyncProgress({
-        current_page: currentPage,
-        last_page: lastPage,
-        is_completed: currentPage >= lastPage,
-        total_products: totalProducts
-      })
-      
+
+        const data = await response.json()
+        console.log(`[DB] Received products data:`, {
+          current_page: data.meta?.current_page,
+          last_page: data.meta?.last_page,
+          total: data.meta?.total,
+          data_length: data.data?.length || 0,
+          has_data: !!data.data,
+          is_array: Array.isArray(data.data)
+        })
+        console.log(`[DB] Full response structure:`, Object.keys(data))
+
+        // Process and store products
+        if (data.data && Array.isArray(data.data)) {
+          const products: ProductRecord[] = data.data.map((product: any) => ({
+            id: String(product.id),
+            name: product.attributes.name || '',
+            price: parseFloat(product.attributes.product_price) || 0,
+            category: product.attributes.product_category_id || '',
+            code: product.attributes.code || null,
+            raw_response: JSON.stringify(product)
+          }))
+
+          upsertProducts(products)
+          console.log(`[DB] Stored ${products.length} products from page ${currentPage}`)
+        }
+
+        // Update sync progress
+        updateProductSyncProgress({
+          current_page: currentPage,
+          last_page: lastPage,
+          is_completed: currentPage >= lastPage,
+          total_products: totalProducts
+        })
+
         // Wait 20 seconds before next page (except for the last page)
         if (currentPage < lastPage) {
           console.log(`[DB] Waiting 20 seconds before next page...`)
-          await new Promise(resolve => setTimeout(resolve, 20000))
+          await new Promise((resolve) => setTimeout(resolve, 20000))
         }
-        
+
         currentPage++
       }
-      
+
       console.log(`[DB] Product sync completed successfully with endpoint: ${endpoint}`)
       return // Success, exit the function
-      
     } catch (error: any) {
       console.error(`[DB] Endpoint ${endpoint} failed:`, error.message)
       if (endpoint === endpoints[endpoints.length - 1]) {
@@ -631,10 +1250,10 @@ export async function syncProductsFromRemote(baseUrl: string, userToken: string)
 // User management functions
 export function findUserByEmailOrUsername(emailOrUsername: string): UserRecord | null {
   const database = requireDb()
-  const result = database.prepare(
-    'SELECT * FROM users WHERE email = ? OR username = ?'
-  ).get(emailOrUsername, emailOrUsername) as UserRecord | undefined
-  
+  const result = database
+    .prepare('SELECT * FROM users WHERE email = ? OR username = ?')
+    .get(emailOrUsername, emailOrUsername) as UserRecord | undefined
+
   return result || null
 }
 
@@ -650,7 +1269,7 @@ export function upsertUserNormalized(
 ): UserRecord {
   const database = requireDb()
   const now = new Date().toISOString()
-  
+
   const stmt = database.prepare(`
     INSERT INTO users (id, username, email, name, token, password_salt, password_hash, created_at, updated_at, raw_response)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -664,7 +1283,7 @@ export function upsertUserNormalized(
       updated_at = excluded.updated_at,
       raw_response = excluded.raw_response
   `)
-  
+
   stmt.run(
     id,
     username,
@@ -677,7 +1296,7 @@ export function upsertUserNormalized(
     now,
     rawResponse ? JSON.stringify(rawResponse) : null
   )
-  
+
   return findUserByEmailOrUsername(username)!
 }
 
@@ -685,7 +1304,7 @@ export function upsertUserFromRemote(remote: any, plainPassword: string): UserRe
   const normalized = normalizeRemoteResponse(remote)
   const salt = randomBytes(16).toString('hex')
   const hash = scryptSync(plainPassword, salt, 64).toString('hex')
-  
+
   return upsertUserNormalized(
     normalized.id,
     normalized.username,
@@ -718,16 +1337,19 @@ export function verifyPassword(plainPassword: string, salt: string, hash: string
   }
 }
 
-async function remoteLogin(baseUrl: string, credentials: { email: string; password: string }): Promise<any> {
+async function remoteLogin(
+  baseUrl: string,
+  credentials: { email: string; password: string }
+): Promise<any> {
   // Try different possible endpoints
-  const endpoints = [ '/login', '/api/login']
-  
+  const endpoints = ['/login', '/api/login']
+
   for (const endpoint of endpoints) {
     try {
       const url = new URL(endpoint, baseUrl).toString()
       console.log('[DB] Trying endpoint:', url)
       console.log('[DB] Credentials:', { email: credentials.email, password: '***' })
-      
+
       // First, try to get CSRF token if it's a Laravel app
       let csrfToken = ''
       try {
@@ -749,23 +1371,23 @@ async function remoteLogin(baseUrl: string, credentials: { email: string; passwo
       } catch (error) {
         console.log('[DB] Could not get CSRF token, proceeding without it')
       }
-      
+
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
-        'Accept': 'application/json'
+        Accept: 'application/json'
       }
-      
+
       if (csrfToken) {
         headers['X-XSRF-TOKEN'] = csrfToken
       }
-      
+
       const res = await fetch(url, {
         method: 'POST',
         headers,
         credentials: 'include',
         body: JSON.stringify(credentials)
       })
-      
+
       if (res.ok) {
         const data = await res.json().catch(() => ({}))
         console.log('[DB] Remote login successful with endpoint:', endpoint)
@@ -816,16 +1438,676 @@ function normalizeRemoteResponse(remote: any): {
   return { id, username, email, name, token }
 }
 
-// Add product sync IPC handlers
-function registerProductSyncIpcHandlers(): void {
-  ipcMain.handle('products:sync:start', async (_event, { baseUrl, userToken }: { baseUrl: string; userToken: string }) => {
-    try {
-      await syncProductsFromRemote(baseUrl, userToken)
-      return { success: true }
-    } catch (error: any) {
-      throw new Error(`Product sync failed: ${error.message}`)
+// Settings functions
+export function upsertSettings(settingsData: Omit<SettingsRecord, 'id' | 'created_at' | 'updated_at'>): SettingsRecord {
+  const database = requireDb()
+  const now = new Date().toISOString()
+  const id = 'settings' // Single settings record
+  
+  const stmt = database.prepare(`
+    INSERT OR REPLACE INTO settings (
+      id, currency, email, company_name, phone, default_language, default_customer, 
+      default_warehouse, address, logo, show_phone, show_address, show_customer, 
+      show_email, show_tax_discount_shipping, show_note, show_barcode_in_receipt, 
+      show_logo_in_receipt, protect_cart_product_delete, protect_cart_product_reduce, 
+      enable_shipping, enable_tax, enable_discount, warehouse_name, customer_name, 
+      currency_symbol, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `)
+  
+  stmt.run(
+    id,
+    settingsData.currency,
+    settingsData.email,
+    settingsData.company_name,
+    settingsData.phone,
+    settingsData.default_language,
+    settingsData.default_customer,
+    settingsData.default_warehouse,
+    settingsData.address,
+    settingsData.logo,
+    settingsData.show_phone,
+    settingsData.show_address,
+    settingsData.show_customer,
+    settingsData.show_email,
+    settingsData.show_tax_discount_shipping,
+    settingsData.show_note,
+    settingsData.show_barcode_in_receipt,
+    settingsData.show_logo_in_receipt,
+    settingsData.protect_cart_product_delete,
+    settingsData.protect_cart_product_reduce,
+    settingsData.enable_shipping,
+    settingsData.enable_tax,
+    settingsData.enable_discount,
+    settingsData.warehouse_name,
+    settingsData.customer_name,
+    settingsData.currency_symbol,
+    now,
+    now
+  )
+  
+  return getSettings()!
+}
+
+export function getSettings(): SettingsRecord | null {
+  const database = requireDb()
+  const result = database.prepare('SELECT * FROM settings WHERE id = ?').get('settings') as SettingsRecord | undefined
+  return result || null
+}
+
+// Countries functions
+export function upsertCountries(countries: Omit<CountryRecord, 'created_at' | 'updated_at'>[]): void {
+  const database = requireDb()
+  const now = new Date().toISOString()
+  
+  const stmt = database.prepare(`
+    INSERT OR REPLACE INTO countries (
+      id, name, short_code, phone_code, active, logo_url, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+  `)
+  
+  const insertMany = database.transaction((countries: Omit<CountryRecord, 'created_at' | 'updated_at'>[]) => {
+    for (const country of countries) {
+      stmt.run(
+        country.id,
+        country.name,
+        country.short_code,
+        country.phone_code,
+        country.active,
+        country.logo_url,
+        now,
+        now
+      )
     }
   })
+  
+  insertMany(countries)
+}
+
+export function getCountries(): CountryRecord[] {
+  const database = requireDb()
+  return database.prepare('SELECT * FROM countries ORDER BY name').all() as CountryRecord[]
+}
+
+export function getActiveCountries(): CountryRecord[] {
+  const database = requireDb()
+  return database.prepare('SELECT * FROM countries WHERE active = 1 ORDER BY name').all() as CountryRecord[]
+}
+
+// Config functions
+export function upsertConfig(configData: Omit<ConfigRecord, 'id' | 'created_at' | 'updated_at'>): ConfigRecord {
+  const database = requireDb()
+  const now = new Date().toISOString()
+  const id = 'config' // Single config record
+  
+  const stmt = database.prepare(`
+    INSERT OR REPLACE INTO config (
+      id, permissions, is_currency_right, open_register, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?)
+  `)
+  
+  stmt.run(
+    id,
+    configData.permissions,
+    configData.is_currency_right,
+    configData.open_register ? 1 : 0,
+    now,
+    now
+  )
+  
+  return getConfig()!
+}
+
+export function getConfig(): ConfigRecord | null {
+  const database = requireDb()
+  const result = database.prepare('SELECT * FROM config WHERE id = ?').get('config') as ConfigRecord | undefined
+  return result || null
+}
+
+export function getUserPermissions(): string[] {
+  const config = getConfig()
+  if (!config || !config.permissions) return []
+  
+  try {
+    return JSON.parse(config.permissions)
+  } catch (error) {
+    console.error('[DB] Failed to parse permissions:', error)
+    return []
+  }
+}
+
+export function hasPermission(permission: string): boolean {
+  const permissions = getUserPermissions()
+  return permissions.includes(permission)
+}
+
+export function isCurrencyRight(): boolean {
+  const config = getConfig()
+  return config?.is_currency_right === '1'
+}
+
+export function isOpenRegister(): boolean {
+  const config = getConfig()
+  return config?.open_register === true
+}
+
+// Warehouse functions
+export function upsertWarehouses(warehouses: Omit<WarehouseRecord, 'created_at' | 'updated_at'>[]): void {
+  const database = requireDb()
+  const now = new Date().toISOString()
+  
+  const stmt = database.prepare(`
+    INSERT OR REPLACE INTO warehouses (
+      id, name, phone, country, city, email, zip_code, state, address, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `)
+  
+  const insertMany = database.transaction((warehouses: Omit<WarehouseRecord, 'created_at' | 'updated_at'>[]) => {
+    for (const warehouse of warehouses) {
+      stmt.run(
+        warehouse.id,
+        warehouse.name,
+        warehouse.phone,
+        warehouse.country,
+        warehouse.city,
+        warehouse.email,
+        warehouse.zip_code,
+        warehouse.state,
+        warehouse.address,
+        now,
+        now
+      )
+    }
+  })
+  
+  insertMany(warehouses)
+}
+
+export function getWarehouses(): WarehouseRecord[] {
+  const database = requireDb()
+  return database.prepare('SELECT * FROM warehouses ORDER BY name').all() as WarehouseRecord[]
+}
+
+export function getWarehouseById(id: number): WarehouseRecord | null {
+  const database = requireDb()
+  const result = database.prepare('SELECT * FROM warehouses WHERE id = ?').get(id) as WarehouseRecord | undefined
+  return result || null
+}
+
+export function getWarehouseByName(name: string): WarehouseRecord | null {
+  const database = requireDb()
+  const result = database.prepare('SELECT * FROM warehouses WHERE name = ?').get(name) as WarehouseRecord | undefined
+  return result || null
+}
+
+export function getDefaultWarehouse(): WarehouseRecord | null {
+  const database = requireDb()
+  // Try to get the warehouse named 'main-branch' first, then fall back to the first one
+  let result = database.prepare('SELECT * FROM warehouses WHERE name = ?').get('main-branch') as WarehouseRecord | undefined
+  if (!result) {
+    result = database.prepare('SELECT * FROM warehouses ORDER BY id LIMIT 1').get() as WarehouseRecord | undefined
+  }
+  return result || null
+}
+
+// Product Categories functions
+export function upsertProductCategories(categories: Omit<ProductCategoryRecord, 'created_at' | 'updated_at'>[]): void {
+  const database = requireDb()
+  const now = new Date().toISOString()
+  
+  const stmt = database.prepare(`
+    INSERT OR REPLACE INTO product_categories (
+      id, name, image, products_count, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?)
+  `)
+  
+  const insertMany = database.transaction((categories: Omit<ProductCategoryRecord, 'created_at' | 'updated_at'>[]) => {
+    for (const category of categories) {
+      stmt.run(
+        category.id,
+        category.name,
+        category.image,
+        category.products_count,
+        now,
+        now
+      )
+    }
+  })
+  
+  insertMany(categories)
+}
+
+export function getProductCategories(): ProductCategoryRecord[] {
+  const database = requireDb()
+  return database.prepare('SELECT * FROM product_categories ORDER BY name').all() as ProductCategoryRecord[]
+}
+
+export function getProductCategoryById(id: number): ProductCategoryRecord | null {
+  const database = requireDb()
+  const result = database.prepare('SELECT * FROM product_categories WHERE id = ?').get(id) as ProductCategoryRecord | undefined
+  return result || null
+}
+
+export function getProductCategoryByName(name: string): ProductCategoryRecord | null {
+  const database = requireDb()
+  const result = database.prepare('SELECT * FROM product_categories WHERE name = ?').get(name) as ProductCategoryRecord | undefined
+  return result || null
+}
+
+export function getProductCategoriesWithProducts(): ProductCategoryRecord[] {
+  const database = requireDb()
+  return database.prepare('SELECT * FROM product_categories WHERE products_count > 0 ORDER BY products_count DESC, name').all() as ProductCategoryRecord[]
+}
+
+export function searchProductCategories(searchTerm: string): ProductCategoryRecord[] {
+  const database = requireDb()
+  const searchPattern = `%${searchTerm}%`
+  return database.prepare('SELECT * FROM product_categories WHERE name LIKE ? ORDER BY name').all(searchPattern) as ProductCategoryRecord[]
+}
+
+// Payment Methods functions
+export function upsertPaymentMethods(paymentMethods: Omit<PaymentMethodRecord, 'created_at' | 'updated_at'>[]): void {
+  const database = requireDb()
+  const now = new Date().toISOString()
+  
+  const stmt = database.prepare(`
+    INSERT OR REPLACE INTO payment_methods (
+      id, name, display_name, active, business_profile_id, user_id, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+  `)
+  
+  const insertMany = database.transaction((paymentMethods: Omit<PaymentMethodRecord, 'created_at' | 'updated_at'>[]) => {
+    for (const method of paymentMethods) {
+      stmt.run(
+        method.id,
+        method.name,
+        method.display_name,
+        method.active ? 1 : 0,
+        method.business_profile_id,
+        method.user_id,
+        now,
+        now
+      )
+    }
+  })
+  
+  insertMany(paymentMethods)
+}
+
+export function getPaymentMethods(): PaymentMethodRecord[] {
+  const database = requireDb()
+  return database.prepare('SELECT * FROM payment_methods WHERE active = 1 ORDER BY display_name').all() as PaymentMethodRecord[]
+}
+
+export function getAllPaymentMethods(): PaymentMethodRecord[] {
+  const database = requireDb()
+  return database.prepare('SELECT * FROM payment_methods ORDER BY display_name').all() as PaymentMethodRecord[]
+}
+
+export function getPaymentMethodById(id: number): PaymentMethodRecord | null {
+  const database = requireDb()
+  const result = database.prepare('SELECT * FROM payment_methods WHERE id = ?').get(id) as PaymentMethodRecord | undefined
+  return result || null
+}
+
+export function getPaymentMethodByName(name: string): PaymentMethodRecord | null {
+  const database = requireDb()
+  const result = database.prepare('SELECT * FROM payment_methods WHERE name = ?').get(name) as PaymentMethodRecord | undefined
+  return result || null
+}
+
+export function getActivePaymentMethods(): PaymentMethodRecord[] {
+  const database = requireDb()
+  return database.prepare('SELECT * FROM payment_methods WHERE active = 1 ORDER BY display_name').all() as PaymentMethodRecord[]
+}
+
+export function getPaymentMethodsByBusinessProfile(businessProfileId: number): PaymentMethodRecord[] {
+  const database = requireDb()
+  return database.prepare('SELECT * FROM payment_methods WHERE business_profile_id = ? AND active = 1 ORDER BY display_name').all(businessProfileId) as PaymentMethodRecord[]
+}
+
+// Units functions
+export function upsertUnits(units: Omit<UnitRecord, 'created_at' | 'updated_at'>[]): void {
+  const database = requireDb()
+  const now = new Date().toISOString()
+  
+  const stmt = database.prepare(`
+    INSERT OR REPLACE INTO units (
+      id, name, short_name, base_unit, is_default, business_profile_id, user_id, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `)
+  
+  const insertMany = database.transaction((units: Omit<UnitRecord, 'created_at' | 'updated_at'>[]) => {
+    for (const unit of units) {
+      stmt.run(
+        unit.id,
+        unit.name,
+        unit.short_name,
+        unit.base_unit,
+        unit.is_default ? 1 : 0,
+        unit.business_profile_id,
+        unit.user_id,
+        now,
+        now
+      )
+    }
+  })
+  
+  insertMany(units)
+}
+
+export function getUnits(): UnitRecord[] {
+  const database = requireDb()
+  return database.prepare('SELECT * FROM units ORDER BY name').all() as UnitRecord[]
+}
+
+export function getUnitById(id: number): UnitRecord | null {
+  const database = requireDb()
+  const result = database.prepare('SELECT * FROM units WHERE id = ?').get(id) as UnitRecord | undefined
+  return result || null
+}
+
+export function getUnitByName(name: string): UnitRecord | null {
+  const database = requireDb()
+  const result = database.prepare('SELECT * FROM units WHERE name = ?').get(name) as UnitRecord | undefined
+  return result || null
+}
+
+export function getUnitByShortName(shortName: string): UnitRecord | null {
+  const database = requireDb()
+  const result = database.prepare('SELECT * FROM units WHERE short_name = ?').get(shortName) as UnitRecord | undefined
+  return result || null
+}
+
+export function getDefaultUnits(): UnitRecord[] {
+  const database = requireDb()
+  return database.prepare('SELECT * FROM units WHERE is_default = 1 ORDER BY name').all() as UnitRecord[]
+}
+
+export function getUnitsByBusinessProfile(businessProfileId: number): UnitRecord[] {
+  const database = requireDb()
+  return database.prepare('SELECT * FROM units WHERE business_profile_id = ? ORDER BY name').all(businessProfileId) as UnitRecord[]
+}
+
+export function getBaseUnits(): UnitRecord[] {
+  const database = requireDb()
+  return database.prepare('SELECT * FROM units WHERE base_unit = id ORDER BY name').all() as UnitRecord[]
+}
+
+export function getUnitsByBaseUnit(baseUnitId: number): UnitRecord[] {
+  const database = requireDb()
+  return database.prepare('SELECT * FROM units WHERE base_unit = ? ORDER BY name').all(baseUnitId) as UnitRecord[]
+}
+
+// Settings, config, warehouses, product categories, payment methods, and units sync function
+export async function fetchAndSaveSettings(baseUrl: string, userToken: string): Promise<{ settings: SettingsRecord; config: ConfigRecord }> {
+  console.log('[DB] Fetching settings, config, warehouses, product categories, payment methods, and units from API...')
+  
+  try {
+    // Fetch settings
+    const settingsUrl = `${baseUrl}/settings`
+    const settingsResponse = await fetch(settingsUrl, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${userToken}`,
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      }
+    })
+    
+    if (!settingsResponse.ok) {
+      const errorText = await settingsResponse.text().catch(() => '')
+      throw new Error(`Settings fetch failed: ${settingsResponse.status} ${errorText}`)
+    }
+    
+    const settingsData = await settingsResponse.json()
+    console.log('[DB] Settings API response:', settingsData)
+    
+    if (!settingsData.success || !settingsData.data || !settingsData.data.attributes) {
+      throw new Error('Invalid settings response format')
+    }
+    
+    const attributes = settingsData.data.attributes
+    const countries = attributes.countries || []
+    
+    // Save settings
+    const settingsRecord = upsertSettings({
+      currency: attributes.currency,
+      email: attributes.email,
+      company_name: attributes.company_name,
+      phone: attributes.phone,
+      default_language: attributes.default_language,
+      default_customer: attributes.default_customer,
+      default_warehouse: attributes.default_warehouse,
+      address: attributes.address,
+      logo: attributes.logo,
+      show_phone: attributes.show_phone,
+      show_address: attributes.show_address,
+      show_customer: attributes.show_customer,
+      show_email: attributes.show_email,
+      show_tax_discount_shipping: attributes.show_tax_discount_shipping,
+      show_note: attributes.show_note,
+      show_barcode_in_receipt: attributes.show_barcode_in_receipt,
+      show_logo_in_receipt: attributes.show_logo_in_receipt,
+      protect_cart_product_delete: attributes.protect_cart_product_delete,
+      protect_cart_product_reduce: attributes.protect_cart_product_reduce,
+      enable_shipping: attributes.enable_shipping,
+      enable_tax: attributes.enable_tax,
+      enable_discount: attributes.enable_discount,
+      warehouse_name: attributes.warehouse_name,
+      customer_name: attributes.customer_name,
+      currency_symbol: attributes.currency_symbol
+    })
+    
+    // Save countries if provided
+    if (countries.length > 0) {
+      console.log(`[DB] Saving ${countries.length} countries...`)
+      upsertCountries(countries)
+    }
+    
+    // Fetch config
+    const configUrl = `${baseUrl}/config`
+    const configResponse = await fetch(configUrl, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${userToken}`,
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      }
+    })
+    
+    if (!configResponse.ok) {
+      const errorText = await configResponse.text().catch(() => '')
+      console.warn(`[DB] Config fetch failed: ${configResponse.status} ${errorText}`)
+      // Don't throw error for config fetch failure, just log warning
+    } else {
+      const configData = await configResponse.json()
+      console.log('[DB] Config API response:', configData)
+      
+      if (configData.success && configData.data) {
+        // Save config
+        upsertConfig({
+          permissions: JSON.stringify(configData.data.permissions || []),
+          is_currency_right: configData.data.is_currency_right || '0',
+          open_register: configData.data.open_register || false
+        })
+        
+        console.log('[DB] Config saved successfully')
+      }
+    }
+    
+    // Fetch warehouses
+    const warehousesUrl = `${baseUrl}/warehouses`
+    const warehousesResponse = await fetch(warehousesUrl, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${userToken}`,
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      }
+    })
+    
+    if (!warehousesResponse.ok) {
+      const errorText = await warehousesResponse.text().catch(() => '')
+      console.warn(`[DB] Warehouses fetch failed: ${warehousesResponse.status} ${errorText}`)
+      // Don't throw error for warehouses fetch failure, just log warning
+    } else {
+      const warehousesData = await warehousesResponse.json()
+      console.log('[DB] Warehouses API response:', warehousesData)
+      
+      if (warehousesData.data && Array.isArray(warehousesData.data)) {
+        // Extract warehouse attributes from the response
+        const warehouses = warehousesData.data.map((warehouse: any) => ({
+          id: warehouse.id,
+          name: warehouse.attributes.name,
+          phone: warehouse.attributes.phone,
+          country: warehouse.attributes.country,
+          city: warehouse.attributes.city,
+          email: warehouse.attributes.email,
+          zip_code: warehouse.attributes.zip_code,
+          state: warehouse.attributes.state,
+          address: warehouse.attributes.address
+        }))
+        
+        // Save warehouses
+        console.log(`[DB] Saving ${warehouses.length} warehouses...`)
+        upsertWarehouses(warehouses)
+        console.log('[DB] Warehouses saved successfully')
+      }
+    }
+    
+    // Fetch product categories
+    const categoriesUrl = `${baseUrl}/product-categories`
+    const categoriesResponse = await fetch(categoriesUrl, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${userToken}`,
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      }
+    })
+    
+    if (!categoriesResponse.ok) {
+      const errorText = await categoriesResponse.text().catch(() => '')
+      console.warn(`[DB] Product categories fetch failed: ${categoriesResponse.status} ${errorText}`)
+      // Don't throw error for categories fetch failure, just log warning
+    } else {
+      const categoriesData = await categoriesResponse.json()
+      console.log('[DB] Product categories API response:', categoriesData)
+      
+      if (categoriesData.data && Array.isArray(categoriesData.data)) {
+        // Extract category attributes from the response
+        const categories = categoriesData.data.map((category: any) => ({
+          id: category.id,
+          name: category.attributes.name,
+          image: category.attributes.image ? JSON.stringify(category.attributes.image) : null,
+          products_count: category.attributes.products_count || 0
+        }))
+        
+        // Save product categories
+        console.log(`[DB] Saving ${categories.length} product categories...`)
+        upsertProductCategories(categories)
+        console.log('[DB] Product categories saved successfully')
+      }
+    }
+    
+    // Fetch payment methods
+    const paymentMethodsUrl = `${baseUrl}/get-business-payment-methods`
+    const paymentMethodsResponse = await fetch(paymentMethodsUrl, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${userToken}`,
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      }
+    })
+    
+    if (!paymentMethodsResponse.ok) {
+      const errorText = await paymentMethodsResponse.text().catch(() => '')
+      console.warn(`[DB] Payment methods fetch failed: ${paymentMethodsResponse.status} ${errorText}`)
+      // Don't throw error for payment methods fetch failure, just log warning
+    } else {
+      const paymentMethodsData = await paymentMethodsResponse.json()
+      console.log('[DB] Payment methods API response:', paymentMethodsData)
+      
+      if (paymentMethodsData.success && paymentMethodsData.data && Array.isArray(paymentMethodsData.data)) {
+        // Extract payment method data from the response
+        const paymentMethods = paymentMethodsData.data.map((method: any) => ({
+          id: method.id,
+          name: method.name,
+          display_name: method.display_name,
+          active: method.active,
+          business_profile_id: method.business_profile_id,
+          user_id: method.user_id
+        }))
+        
+        // Save payment methods
+        console.log(`[DB] Saving ${paymentMethods.length} payment methods...`)
+        upsertPaymentMethods(paymentMethods)
+        console.log('[DB] Payment methods saved successfully')
+      }
+    }
+    
+    // Fetch units
+    const unitsUrl = `${baseUrl}/units`
+    const unitsResponse = await fetch(unitsUrl, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${userToken}`,
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
+      }
+    })
+    
+    if (!unitsResponse.ok) {
+      const errorText = await unitsResponse.text().catch(() => '')
+      console.warn(`[DB] Units fetch failed: ${unitsResponse.status} ${errorText}`)
+      // Don't throw error for units fetch failure, just log warning
+    } else {
+      const unitsData = await unitsResponse.json()
+      console.log('[DB] Units API response:', unitsData)
+      
+      if (unitsData.data && Array.isArray(unitsData.data)) {
+        // Extract unit data from the response
+        const units = unitsData.data.map((unit: any) => ({
+          id: unit.id,
+          name: unit.attributes.name,
+          short_name: unit.attributes.short_name,
+          base_unit: unit.attributes.base_unit,
+          is_default: unit.attributes.base_unit_name?.is_default === 1,
+          business_profile_id: unit.attributes.base_unit_name?.business_profile_id || 0,
+          user_id: unit.attributes.base_unit_name?.user_id || 0
+        }))
+        
+        // Save units
+        console.log(`[DB] Saving ${units.length} units...`)
+        upsertUnits(units)
+        console.log('[DB] Units saved successfully')
+      }
+    }
+    
+    console.log('[DB] Settings, countries, config, warehouses, product categories, payment methods, and units saved successfully')
+    return { settings: settingsRecord, config: getConfig()! }
+    
+  } catch (error: unknown) {
+    console.error('[DB] Failed to fetch settings and config:', error)
+    throw error
+  }
+}
+
+// Add product sync IPC handlers
+function registerProductSyncIpcHandlers(): void {
+  ipcMain.handle(
+    'products:sync:start',
+    async (_event, { baseUrl, userToken }: { baseUrl: string; userToken: string }) => {
+      try {
+        await syncProductsFromRemote(baseUrl, userToken)
+        return { success: true }
+      } catch (error: any) {
+        throw new Error(`Product sync failed: ${error.message}`)
+      }
+    }
+  )
 
   ipcMain.handle('products:sync:progress', () => {
     return getProductSyncProgress()
@@ -839,7 +2121,7 @@ function registerProductSyncIpcHandlers(): void {
 
 function registerDatabaseIpcHandlers(): void {
   console.log('[DB] Registering IPC handlers...')
-  
+
   ipcMain.handle('db:products:list', (_event, category?: string, limit?: number) => {
     return listProducts(category, limit)
   })
@@ -848,9 +2130,52 @@ function registerDatabaseIpcHandlers(): void {
     return searchProductByCode(code)
   })
 
+  ipcMain.handle('db:products:search', (_event, query: string, limit?: number) => {
+    return searchProducts(query, limit)
+  })
+
   ipcMain.handle('db:products:upsertMany', (_event, products: ProductRecord[]) => {
     upsertProducts(products)
     return { success: true }
+  })
+
+  // Sales IPC handlers
+  ipcMain.handle('db:sales:create', (_event, sale: any) => {
+    return createSale(sale)
+  })
+
+  ipcMain.handle('db:sales:getPending', () => {
+    return getPendingSales()
+  })
+
+  ipcMain.handle('db:sales:getUnsyncedCount', () => {
+    return getUnsyncedSalesCount()
+  })
+
+  ipcMain.handle(
+    'db:sales:updateSyncStatus',
+    (_event, saleId: string, status: string, error?: string) => {
+      updateSaleSyncStatus(saleId, status as any, error)
+      return { success: true }
+    }
+  )
+
+  ipcMain.handle('db:sales:deleteSynced', (_event, saleId: string) => {
+    deleteSyncedSale(saleId)
+    return { success: true }
+  })
+
+  ipcMain.handle('db:sales:getByDateRange', (_event, startDate: string, endDate: string) => {
+    return getSalesByDateRange(startDate, endDate)
+  })
+
+  ipcMain.handle('db:sales:sync', async (_event, baseUrl: string, userToken: string) => {
+    try {
+      await syncSalesToRemote(baseUrl, userToken)
+      return { success: true }
+    } catch (error: any) {
+      throw new Error(`Sales sync failed: ${error.message}`)
+    }
   })
 
   ipcMain.handle('db:path', () => {
@@ -861,9 +2186,9 @@ function registerDatabaseIpcHandlers(): void {
     const baseUrl = process.env.BASE_URL || ''
     console.log('[DB] Login attempt for:', credentials.email)
     console.log('[DB] BASE_URL from env:', baseUrl)
-    
+
     const user = findUserByEmailOrUsername(credentials.email)
-    
+
     if (user) {
       console.log('[DB] User found locally')
       const ok = verifyPassword(credentials.password, user.password_salt, user.password_hash)
@@ -885,14 +2210,14 @@ function registerDatabaseIpcHandlers(): void {
         throw new Error('Invalid credentials')
       }
     }
-    
+
     // User not found locally, try remote login
     console.log('[DB] User not found locally, checking for remote login')
     if (!baseUrl) {
       console.log('[DB] No BASE_URL configured for remote login')
       throw new Error('User not found locally and no backend configured')
     }
-    
+
     try {
       console.log('[DB] Attempting remote login for new user')
       const remote = await remoteLogin(baseUrl, credentials)
@@ -905,11 +2230,14 @@ function registerDatabaseIpcHandlers(): void {
   })
 
   // Dev helper: seed a user directly from a provided API response payload
-  ipcMain.handle('auth:seedFromResponse', (_event, payload: { response: any; password: string }) => {
-    console.log('[DB] Seeding user from response...')
-    const stored = upsertUserFromRemote(payload.response, payload.password)
-    return { user: toUserPayload(stored) }
-  })
+  ipcMain.handle(
+    'auth:seedFromResponse',
+    (_event, payload: { response: any; password: string }) => {
+      console.log('[DB] Seeding user from response...')
+      const stored = upsertUserFromRemote(payload.response, payload.password)
+      return { user: toUserPayload(stored) }
+    }
+  )
 
   // Helper to get raw response data for a user
   ipcMain.handle('auth:getRawResponse', (_event, emailOrUsername: string) => {
@@ -923,6 +2251,140 @@ function registerDatabaseIpcHandlers(): void {
       console.error('[DB] Failed to parse raw response:', error)
       return null
     }
+  })
+
+  // Settings IPC handlers
+  ipcMain.handle('db:settings:get', () => {
+    return getSettings()
+  })
+
+  ipcMain.handle('db:settings:fetch', async (_event, baseUrl: string, userToken: string) => {
+    return fetchAndSaveSettings(baseUrl, userToken)
+  })
+
+  ipcMain.handle('db:countries:get', () => {
+    return getCountries()
+  })
+
+  ipcMain.handle('db:countries:getActive', () => {
+    return getActiveCountries()
+  })
+
+  // Config IPC handlers
+  ipcMain.handle('db:config:get', () => {
+    return getConfig()
+  })
+
+  ipcMain.handle('db:config:getPermissions', () => {
+    return getUserPermissions()
+  })
+
+  ipcMain.handle('db:config:hasPermission', (_event, permission: string) => {
+    return hasPermission(permission)
+  })
+
+  ipcMain.handle('db:config:isCurrencyRight', () => {
+    return isCurrencyRight()
+  })
+
+  ipcMain.handle('db:config:isOpenRegister', () => {
+    return isOpenRegister()
+  })
+
+  // Warehouse IPC handlers
+  ipcMain.handle('db:warehouses:get', () => {
+    return getWarehouses()
+  })
+
+  ipcMain.handle('db:warehouses:getById', (_event, id: number) => {
+    return getWarehouseById(id)
+  })
+
+  ipcMain.handle('db:warehouses:getByName', (_event, name: string) => {
+    return getWarehouseByName(name)
+  })
+
+  ipcMain.handle('db:warehouses:getDefault', () => {
+    return getDefaultWarehouse()
+  })
+
+  // Product Categories IPC handlers
+  ipcMain.handle('db:productCategories:get', () => {
+    return getProductCategories()
+  })
+
+  ipcMain.handle('db:productCategories:getById', (_event, id: number) => {
+    return getProductCategoryById(id)
+  })
+
+  ipcMain.handle('db:productCategories:getByName', (_event, name: string) => {
+    return getProductCategoryByName(name)
+  })
+
+  ipcMain.handle('db:productCategories:getWithProducts', () => {
+    return getProductCategoriesWithProducts()
+  })
+
+  ipcMain.handle('db:productCategories:search', (_event, searchTerm: string) => {
+    return searchProductCategories(searchTerm)
+  })
+
+  // Payment Methods IPC handlers
+  ipcMain.handle('db:paymentMethods:get', () => {
+    return getPaymentMethods()
+  })
+
+  ipcMain.handle('db:paymentMethods:getAll', () => {
+    return getAllPaymentMethods()
+  })
+
+  ipcMain.handle('db:paymentMethods:getById', (_event, id: number) => {
+    return getPaymentMethodById(id)
+  })
+
+  ipcMain.handle('db:paymentMethods:getByName', (_event, name: string) => {
+    return getPaymentMethodByName(name)
+  })
+
+  ipcMain.handle('db:paymentMethods:getActive', () => {
+    return getActivePaymentMethods()
+  })
+
+  ipcMain.handle('db:paymentMethods:getByBusinessProfile', (_event, businessProfileId: number) => {
+    return getPaymentMethodsByBusinessProfile(businessProfileId)
+  })
+
+  // Units IPC handlers
+  ipcMain.handle('db:units:get', () => {
+    return getUnits()
+  })
+
+  ipcMain.handle('db:units:getById', (_event, id: number) => {
+    return getUnitById(id)
+  })
+
+  ipcMain.handle('db:units:getByName', (_event, name: string) => {
+    return getUnitByName(name)
+  })
+
+  ipcMain.handle('db:units:getByShortName', (_event, shortName: string) => {
+    return getUnitByShortName(shortName)
+  })
+
+  ipcMain.handle('db:units:getDefault', () => {
+    return getDefaultUnits()
+  })
+
+  ipcMain.handle('db:units:getByBusinessProfile', (_event, businessProfileId: number) => {
+    return getUnitsByBusinessProfile(businessProfileId)
+  })
+
+  ipcMain.handle('db:units:getBaseUnits', () => {
+    return getBaseUnits()
+  })
+
+  ipcMain.handle('db:units:getByBaseUnit', (_event, baseUnitId: number) => {
+    return getUnitsByBaseUnit(baseUnitId)
   })
 
   // Register product sync handlers
