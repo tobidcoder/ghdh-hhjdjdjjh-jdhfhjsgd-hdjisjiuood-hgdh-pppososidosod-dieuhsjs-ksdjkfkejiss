@@ -1,16 +1,18 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useProductsStore } from '@renderer/store/products'
 import { useAuthStore } from '@renderer/store/auth'
 import { Badge } from '@renderer/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@renderer/components/ui/card'
 import { Progress } from './ui/progress'
 import { Button } from './ui/button'
+import { ChevronDown, ChevronRight, RefreshCw, AlertCircle, CheckCircle, Clock } from 'lucide-react'
 import { getBaseUrl } from '@renderer/config/env'
 
 export const ProductSyncStatus: React.FC = () => {
   const { syncProgress, isSyncing, syncError, checkSyncProgress, startSync, resetSync } =
     useProductsStore()
   const { user } = useAuthStore()
+  const [isExpanded, setIsExpanded] = useState(false)
 
   useEffect(() => {
     // Check sync progress on mount
@@ -39,6 +41,13 @@ export const ProductSyncStatus: React.FC = () => {
     return 'secondary'
   }
 
+  const getStatusIcon = () => {
+    if (isSyncing) return <RefreshCw className="w-4 h-4 animate-spin" />
+    if (syncError) return <AlertCircle className="w-4 h-4 text-red-600" />
+    if (syncProgress?.is_completed) return <CheckCircle className="w-4 h-4 text-green-600" />
+    return <Clock className="w-4 h-4 text-orange-600" />
+  }
+
   const handleManualSync = async () => {
     if (!user?.token) return
 
@@ -65,60 +74,91 @@ export const ProductSyncStatus: React.FC = () => {
     }
   }
 
+  const toggleExpanded = () => {
+    setIsExpanded(!isExpanded)
+  }
+
   return (
     <Card className="w-full max-w-md">
-      <CardHeader className="pb-3">
+      <CardHeader className="pb-0 cursor-pointer" onClick={toggleExpanded}>
         <CardTitle className="flex items-center justify-between text-sm">
-          Product Synchronization
-          <Badge variant={getStatusColor()}>{getStatusText()}</Badge>
+          <div className="flex items-center space-x-2">
+            {isExpanded ? (
+              <ChevronDown className="w-4 h-4 text-gray-500" />
+            ) : (
+              <ChevronRight className="w-4 h-4 text-gray-500" />
+            )}
+            <span>Product Synchronization</span>
+          </div>
+          <Badge variant={getStatusColor()}>
+            {getStatusIcon()}
+            <span className="ml-1">{getStatusText()}</span>
+          </Badge>
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3">
-        {syncError && <div className="text-sm text-red-600 bg-red-50 p-2 rounded">{syncError}</div>}
 
-        {user?.token && (
-          <div className="flex gap-2">
-            <Button onClick={handleManualSync} disabled={isSyncing} size="sm" variant="outline">
-              {isSyncing ? 'Syncing...' : 'Manual Sync'}
-            </Button>
-            <Button onClick={checkSyncProgress} size="sm" variant="ghost">
-              Refresh Status
-            </Button>
-            <Button onClick={handleResetSync} size="sm" variant="destructive">
-              Reset Sync
-            </Button>
-          </div>
-        )}
-
+      {/* Collapsed View - Always Visible */}
+      <div className="px-4 pb-0">
         {syncProgress && (
-          <div className="space-y-2">
-            <div className="flex justify-between text-xs text-gray-600">
-              <span>Progress</span>
-              <span>{getProgressPercentage()}%</span>
+          <div className="flex items-center space-x-3">
+            <div className="flex-1">
+              <div className="flex justify-between text-xs text-gray-600 mb-1">
+                <span>Progress</span>
+                <span>{getProgressPercentage()}%</span>
+              </div>
+              <Progress value={getProgressPercentage()} className="h-2" />
             </div>
-            <Progress value={getProgressPercentage()} className="h-2" />
-
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              <div>
-                <span className="text-gray-600">Page:</span>
-                <span className="ml-1 font-medium">
-                  {syncProgress.current_page} / {syncProgress.last_page}
-                </span>
-              </div>
-              <div>
-                <span className="text-gray-600">Products:</span>
-                <span className="ml-1 font-medium">{syncProgress.total_products}</span>
-              </div>
+            <div className="text-xs text-gray-600 text-right">
+              <div>Page {syncProgress.current_page}/{syncProgress.last_page}</div>
+              <div>{syncProgress.total_products} products</div>
             </div>
-
-            {syncProgress.last_sync_at && (
-              <div className="text-xs text-gray-500">
-                Last sync: {new Date(syncProgress.last_sync_at).toLocaleString()}
-              </div>
-            )}
           </div>
         )}
-      </CardContent>
+      </div>
+
+      {/* Expanded View - Only Visible When Expanded */}
+      {isExpanded && (
+        <CardContent className="space-y-3 pt-0">
+          {syncError && <div className="text-sm text-red-600 bg-red-50 p-2 rounded">{syncError}</div>}
+
+          {user?.token && (
+            <div className="flex gap-2">
+              <Button onClick={handleManualSync} disabled={isSyncing} size="sm" variant="outline">
+                {isSyncing ? 'Syncing...' : 'Manual Sync'}
+              </Button>
+              <Button onClick={checkSyncProgress} size="sm" variant="ghost">
+                Refresh Status
+              </Button>
+              <Button onClick={handleResetSync} size="sm" variant="destructive">
+                Reset Sync
+              </Button>
+            </div>
+          )}
+
+          {syncProgress && (
+            <div className="space-y-2">
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div>
+                  <span className="text-gray-600">Page:</span>
+                  <span className="ml-1 font-medium">
+                    {syncProgress.current_page} / {syncProgress.last_page}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-gray-600">Products:</span>
+                  <span className="ml-1 font-medium">{syncProgress.total_products}</span>
+                </div>
+              </div>
+
+              {syncProgress.last_sync_at && (
+                <div className="text-xs text-gray-500">
+                  Last sync: {new Date(syncProgress.last_sync_at).toLocaleString()}
+                </div>
+              )}
+            </div>
+          )}
+        </CardContent>
+      )}
     </Card>
   )
 }

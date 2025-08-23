@@ -4,22 +4,16 @@ import { useProductsStore } from '@renderer/store/products'
 import { useSalesStore } from '@renderer/store/sales'
 import { useSettingsStore } from '@renderer/store/settings'
 import salesSyncService from '@renderer/services/salesSyncService'
-import { formatPriceBySymbol } from '@renderer/lib/currencyUtils'
-import { ProductSyncStatus } from '@renderer/components/ProductSyncStatus'
-import { SalesSyncStatus } from '@renderer/components/SalesSyncStatus'
-import { Products } from '@renderer/components/Products'
-
-import { Badge } from '@renderer/components/ui/badge'
-import { Button } from '@renderer/components/ui/button'
-import { Input } from '@renderer/components/ui/input'
-import { Card, CardContent, CardHeader, CardTitle } from '@renderer/components/ui/card'
-import { Wifi, WifiOff, CreditCard, Search } from 'lucide-react'
+import { DashboardHeader } from '@renderer/components/DashboardHeader'
+import { TransactionPanel } from '@renderer/components/TransactionPanel'
+import { PaymentSummary } from '@renderer/components/PaymentSummary'
+import { ProductSearchPanel } from '@renderer/components/ProductSearchPanel'
 
 export const Dashboard: React.FC = () => {
   const { user, logout } = useAuthStore()
   const { searchProductByCode, addToCart, cartItems, searchProducts } = useProductsStore()
   const { createSale, unsyncedCount } = useSalesStore()
-  const { productCategories, fetchProductCategories, getCurrencySymbol } = useSettingsStore()
+  const { productCategories, fetchProductCategories } = useSettingsStore()
   const [currentTime, setCurrentTime] = React.useState(new Date())
   const [isOnline] = React.useState(true) // Mock online status
   const [searchCode, setSearchCode] = React.useState('')
@@ -101,39 +95,22 @@ export const Dashboard: React.FC = () => {
               return
             }
           } catch (error) {
-            console.error('Failed to search for exact product code:', error)
+            console.error('Error searching by product code:', error)
           } finally {
             setIsSearchingCode(false)
           }
         }
 
-        // If no exact code match or query doesn't look like a code, perform regular search
+        // If no exact match found, perform regular search
         searchProducts(productSearchQuery)
       } else {
+        // If search query is empty, refresh to show all products
         useProductsStore.getState().refresh()
       }
-    }, 300) // 300ms delay
+    }, 500) // 500ms debounce
 
     return () => clearTimeout(timeoutId)
   }, [productSearchQuery, searchProducts, addToCart])
-
-  const formatDate = (date: Date): string => {
-    return date.toLocaleDateString('en-US', {
-      weekday: 'short',
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric'
-    })
-  }
-
-  const formatTime = (date: Date): string => {
-    return date.toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: false
-    })
-  }
 
   const handleProductSearch = async (): Promise<void> => {
     if (!searchCode.trim()) return
@@ -236,387 +213,52 @@ export const Dashboard: React.FC = () => {
 
   return (
     <div className="h-screen bg-gray-50 flex flex-col">
-      {/* Header Bar */}
-      <div className="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between">
-        <div className="flex items-center space-x-6">
-          <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-lg">X</span>
-            </div>
-            <span className="text-xl font-bold text-gray-900">XSEEN</span>
-          </div>
-          <span className="text-gray-600">POS : XSeen POS</span>
-        </div>
+      <DashboardHeader
+        currentTime={currentTime}
+        user={user}
+        isOnline={isOnline}
+        unsyncedCount={unsyncedCount}
+        onLogout={logout}
+      />
 
-        <div className="flex items-center space-x-6 text-sm text-gray-600">
-          <span>Shift Date: {formatDate(currentTime)}</span>
-          <span>Invoice No: 1</span>
-          <span>Clerk: {user?.name || user?.username || 'User'}</span>
-          <span>Time: {formatTime(currentTime)}</span>
-          {unsyncedCount > 0 && (
-            <Badge variant="secondary" className="bg-orange-100 text-orange-800">
-              {unsyncedCount} sales pending sync
-            </Badge>
-          )}
-        </div>
+      <div className="flex-1 flex overflow-hidden">
+      <div className="">
 
-        <div className="flex items-center space-x-2">
-          <Badge
-            variant={isOnline ? 'default' : 'secondary'}
-            className="flex items-center space-x-1"
-          >
-            {isOnline ? <Wifi className="w-3 h-3" /> : <WifiOff className="w-3 h-3" />}
-            <span>{isOnline ? 'Connected' : 'Disconnected'}</span>
-          </Badge>
-          <Button variant="ghost" size="sm" onClick={logout}>
-            Logout
-          </Button>
+        <TransactionPanel
+          cartItems={cartItems}
+          searchCode={searchCode}
+          searchResult={searchResult}
+          onSearchCodeChange={setSearchCode}
+          onProductSearch={handleProductSearch}
+          onKeyPress={handleKeyPress}
+          onClearCart={() => useProductsStore.getState().clearCart()}
+        />
+
+        <div className="w-96 bg-white border-l overflow-y-auto border-gray-200 flex flex-col">
+          <PaymentSummary
+            cartItems={cartItems}
+            onCheckout={handleCheckout}
+          />
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* Left Panel - Transaction and Customer Details */}
-        <div className="w-96 bg-white border-r overflow-y-auto border-gray-200 flex flex-col">
-          {/* Transaction Lines */}
-          <div className="flex-1 p-4">
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="text-sm">Transaction Lines</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                <div className="grid grid-cols-6 gap-2 text-xs font-medium text-gray-600 border-b border-gray-200 pb-2">
-                  <span>LINE</span>
-                  <span className="col-span-2">DESCRIPTION</span>
-                  <span>PRICE</span>
-                  <span>QTY</span>
-                  <span>AMOUNT</span>
-                </div>
-
-                {/* Cart items */}
-                {cartItems.length === 0 ? (
-                  <div className="text-center text-gray-500 py-4 text-xs">No items in cart</div>
-                ) : (
-                  cartItems.map((item, index) => (
-                    <div key={item.id} className="grid grid-cols-6 gap-2 text-xs py-1">
-                      <span>{index + 1}</span>
-                      <span className="col-span-2">{item.name}</span>
-                      <span>{formatPriceBySymbol(item.price, getCurrencySymbol())}</span>
-                      <span>{item.quantity}</span>
-                      <span>{formatPriceBySymbol(item.price * item.quantity, getCurrencySymbol())}</span>
-                    </div>
-                  ))
-                )}
-
-                {/* Add item input */}
-                <div className="pt-2 space-y-2">
-                  <Input
-                    placeholder="Search by product code..."
-                    className="text-xs h-8"
-                    value={searchCode}
-                    onChange={(e) => setSearchCode(e.target.value)}
-                    onKeyPress={handleKeyPress}
-                  />
-                  <Button onClick={handleProductSearch} size="sm" className="w-full text-xs h-8">
-                    Search & Add
-                  </Button>
-
-                  {/* Search Result */}
-                  {searchResult && (
-                    <div
-                      className={`text-xs p-2 rounded ${
-                        searchResult.type === 'error'
-                          ? 'bg-red-100 text-red-800'
-                          : 'bg-green-100 text-green-800'
-                      }`}
-                    >
-                      {searchResult.type === 'error'
-                        ? searchResult.error
-                        : `Added: ${searchResult.product.name}`}
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Action Buttons */}
-            <div className="mt-4 space-y-2">
-              {/* <Button variant="outline" size="sm" className="w-full justify-start">
-                <Calculator className="w-4 h-4 mr-2" />
-                EXIT
-              </Button>
-              <Button variant="outline" size="sm" className="w-full justify-start">
-                <CreditCard className="w-4 h-4 mr-2" />
-                CR NOTE
-              </Button>
-              <Button variant="outline" size="sm" className="w-full justify-start">
-                REFUND
-              </Button>
-              <Button variant="outline" size="sm" className="w-full justify-start">
-                OPTIONS
-              </Button> */}
-              <Button variant="outline" size="sm" className="w-full justify-start">
-                HOLD
-              </Button>
-              {/* <Button variant="outline" size="sm" className="w-full justify-start">
-                VOID
-              </Button>
-              <Button variant="outline" size="sm" className="w-full justify-start">
-                CANCEL
-              </Button>
-              <Button variant="outline" size="sm" className="w-full justify-start">
-                DISCOUNT
-              </Button>
-              <Button variant="outline" size="sm" className="w-full justify-start">
-                SERVICE
-              </Button> */}
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full justify-start text-red-600 hover:text-red-700"
-                onClick={() => useProductsStore.getState().clearCart()}
-              >
-                CLEAR CART
-              </Button>
-            </div>
-
-            {/* Customer and Payment Summary */}
-            <div className="mt-4 space-y-3">
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm">Customer & Payment</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  <Input placeholder="CUSTOMER" className="text-xs h-8" />
-
-                  <div className="space-y-1 text-xs">
-                    <div className="flex justify-between">
-                      <span>Gross Amount:</span>
-                      <span>
-                        {formatPriceBySymbol(
-                          cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0),
-                          getCurrencySymbol()
-                        )}
-                      </span>
-                    </div>
-                    <div className="flex justify-between text-orange-600">
-                      <span>Tax Amount:</span>
-                      <span>
-                        {formatPriceBySymbol(
-                          cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0) * 0.15,
-                          getCurrencySymbol()
-                        )}
-                      </span>
-                    </div>
-                    <div className="flex justify-between text-blue-600 font-medium">
-                      <span>Grand Total:</span>
-                      <span>
-                        {formatPriceBySymbol(
-                          cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0) * 1.15,
-                          getCurrencySymbol()
-                        )}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Paid:</span>
-                      <span>{formatPriceBySymbol(0, getCurrencySymbol())}</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Numeric Keypad */}
-              {/* <Card>
-                <CardContent className="p-3">
-                  <div className="grid grid-cols-3 gap-2">
-                    {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(num => (
-                      <Button key={num} variant="outline" size="sm" className="h-10">
-                        {num}
-                      </Button>
-                    ))}
-                    <Button variant="outline" size="sm" className="h-10">0</Button>
-                    <Button variant="outline" size="sm" className="h-10">.</Button>
-                    <Button variant="outline" size="sm" className="h-10">*</Button>
-                  </div>
-                  
-                  <div className="mt-2 flex space-x-2">
-                    <div className="flex items-center space-x-2">
-                      <input type="checkbox" id="keyboard" className="w-3 h-3" />
-                      <label htmlFor="keyboard" className="text-xs">KEYBOARD</label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <input type="checkbox" id="reference" className="w-3 h-3" />
-                      <label htmlFor="reference" className="text-xs">REFERENCE</label>
-                    </div>
-                  </div>
-                  
-                  <div className="mt-2 flex space-x-2">
-                    <Button variant="outline" size="sm" className="h-8 w-8 p-0">
-                      <ArrowUp className="w-4 h-4" />
-                    </Button>
-                    <Button variant="outline" size="sm" className="h-8 w-8 p-0">
-                      <ArrowDown className="w-4 h-4" />
-                    </Button>
-                    <Button variant="outline" size="sm" className="h-8 w-8 p-0">
-                      <Plus className="w-4 h-4" />
-                    </Button>
-                    <Button variant="outline" size="sm" className="h-8 w-8 p-0">
-                      <Minus className="w-4 h-4" />
-                    </Button>
-                    <Button className="flex-1 h-8 text-xs">
-                      ENTER →
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card> */}
-
-              {/* Balance and Pay */}
-              <div className="flex space-x-2">
-                <div className="flex-1 bg-red-100 border border-red-300 rounded p-2 text-center">
-                  <div className="text-xs text-red-800 font-medium">Balance</div>
-                  <div className="text-lg font-bold text-red-900">
-                    {formatPriceBySymbol(
-                      cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0) * 1.15,
-                      getCurrencySymbol()
-                    )}
-                  </div>
-                </div>
-                <Button
-                  className="flex-1 bg-orange-500 hover:bg-orange-600 text-white"
-                  onClick={handleCheckout}
-                  disabled={cartItems.length === 0}
-                >
-                  <CreditCard className="w-4 h-4 mr-2" />
-                  PAY
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Right Panel - Products and Sync Status */}
-        <div className="flex-1 flex flex-col bg-gray-50">
-          {/* Sync Status */}
-          <div className="p-4 space-y-4">
-            <ProductSyncStatus />
-            <SalesSyncStatus />
-          </div>
-
-          {/* Product Search and Filter */}
-          <div className="px-4 pb-4">
-            {/* Auto-add notification */}
-            {autoAddNotification && (
-              <div className="mb-3 p-3 bg-green-100 border border-green-300 rounded-md flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                  <span className="text-sm text-green-800">
-                    <span className="font-medium">{autoAddNotification.product.name}</span>{' '}
-                    automatically added to cart and search cleared
-                  </span>
-                </div>
-                <button
-                  onClick={() => setAutoAddNotification(null)}
-                  className="text-green-600 hover:text-green-800"
-                >
-                  ✕
-                </button>
-              </div>
-            )}
-
-            <div className="flex space-x-4">
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <Input
-                  placeholder="Search Product"
-                  className={`h-10 pl-10 pr-10 transition-all duration-200 ${
-                    isSearchCleared ? 'bg-blue-50 border-blue-300' : ''
-                  }`}
-                  value={productSearchQuery}
-                  onChange={(e) => setProductSearchQuery(e.target.value)}
-                  onKeyPress={handleProductListKeyPress}
-                />
-                {isSearchingCode && (
-                  <div className="absolute right-10 top-1/2 transform -translate-y-1/2">
-                    <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-                  </div>
-                )}
-                {productSearchQuery && (
-                  <button
-                    onClick={() => setProductSearchQuery('')}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 hover:text-gray-600"
-                  >
-                    ✕
-                  </button>
-                )}
-              </div>
-              {/* Product code hint */}
-              {productSearchQuery && looksLikeProductCode(productSearchQuery) && (
-                <div className="mt-1 text-xs text-blue-600 flex items-center space-x-1">
-                  <Search className="w-3 h-3" />
-                  <span>Searching for exact product code...</span>
-                </div>
-              )}
-              <div className="flex flex-col space-y-1">
-                <select 
-                  className="px-3 py-2 border border-gray-300 rounded-md text-sm bg-white"
-                  value={selectedCategory?.toString() || 'all'}
-                  onChange={(e) => handleCategoryChange(e.target.value)}
-                >
-                  <option value="all">All Categories</option>
-                  {productCategories.map((category) => (
-                    <option key={category.id} value={category.id.toString()}>
-                      {category.name}
-                    </option>
-                  ))}
-                </select>
-                {selectedCategory && (
-                  <div className="text-xs text-blue-600 font-medium">
-                    Filtering: {productCategories.find(cat => cat.id === selectedCategory)?.name}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Products Grid */}
-          <div className="flex-1 px-4 pb-4 overflow-auto">
-            <Products />
-          </div>
-
-          {/* Pagination Controls */}
-          <div className="px-4 pb-4">
-            <div className="flex items-center justify-center space-x-2">
-              <Button variant="outline" size="sm" className="h-8 w-8 p-0">
-                <span className="text-xs">⟪</span>
-              </Button>
-              <Button variant="outline" size="sm" className="h-8 w-8 p-0">
-                <span className="text-xs">⟨</span>
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-8 w-8 p-0 bg-orange-500 text-white border-orange-500"
-              >
-                1
-              </Button>
-              <Button variant="outline" size="sm" className="h-8 w-8 p-0">
-                2
-              </Button>
-              <Button variant="outline" size="sm" className="h-8 w-8 p-0">
-                3
-              </Button>
-              <Button variant="outline" size="sm" className="h-8 w-8 p-0">
-                4
-              </Button>
-              <Button variant="outline" size="sm" className="h-8 w-8 p-0">
-                <span className="text-xs">⟩</span>
-              </Button>
-              <Button variant="outline" size="sm" className="h-8 w-8 p-0">
-                <span className="text-xs">⟫</span>
-              </Button>
-            </div>
-          </div>
-        </div>
+        <ProductSearchPanel
+          productSearchQuery={productSearchQuery}
+          selectedCategory={selectedCategory}
+          productCategories={productCategories}
+          autoAddNotification={autoAddNotification}
+          isSearchingCode={isSearchingCode}
+          isSearchCleared={isSearchCleared}
+          onProductSearchQueryChange={setProductSearchQuery}
+          onCategoryChange={handleCategoryChange}
+          onClearAutoAddNotification={() => setAutoAddNotification(null)}
+          onClearProductSearch={() => {
+            setProductSearchQuery('')
+            useProductsStore.getState().setSearchQuery('')
+          }}
+          onProductListKeyPress={handleProductListKeyPress}
+          looksLikeProductCode={looksLikeProductCode}
+        />
       </div>
     </div>
   )

@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { useProductsStore } from '@renderer/store/products'
 import { useSalesStore } from '@renderer/store/sales'
-import { useSettingsStore } from '@renderer/store/settings'
 import { Card, CardContent } from '@renderer/components/ui/card'
 import { Badge } from '@renderer/components/ui/badge'
 import { Package, Cloud } from 'lucide-react'
@@ -100,7 +99,6 @@ interface ProductCardProps {
 
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const { addToCart } = useProductsStore()
-  const { getCurrencySymbol } = useSettingsStore()
   const [isHovered, setIsHovered] = useState(false)
 
   // Parse raw response to get additional product info
