@@ -2,11 +2,15 @@ import React, { useEffect, useState } from 'react'
 import { useProductsStore } from '@renderer/store/products'
 import { useAuthStore } from '@renderer/store/auth'
 import { Badge } from '@renderer/components/ui/badge'
-import { Card, CardContent, CardHeader, CardTitle } from '@renderer/components/ui/card'
 import { Progress } from './ui/progress'
 import { Button } from './ui/button'
-import { ChevronDown, ChevronRight, RefreshCw, AlertCircle, CheckCircle, Clock } from 'lucide-react'
-
+import {  RefreshCw, AlertCircle, CheckCircle, Clock } from 'lucide-react'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTrigger
+} from '@renderer/components/ui/dialog'
 
 export const ProductSyncStatus: React.FC = () => {
   const { syncProgress, isSyncing, syncError, checkSyncProgress, startSync, resetSync } =
@@ -19,13 +23,15 @@ export const ProductSyncStatus: React.FC = () => {
     checkSyncProgress()
   }, [checkSyncProgress])
 
-  if (!syncProgress && !isSyncing && !syncError) {
-    return null
-  }
+  // if (!syncProgress && !isSyncing && !syncError) {
+  //   return null
+  // }
 
   const getProgressPercentage = () => {
     if (!syncProgress) return 0
-    return Math.round((syncProgress.current_page / syncProgress.last_page) * 100)
+    if (syncProgress.is_completed) return 100
+    const current_page = syncProgress.current_page - 1
+    return Math.round((current_page / syncProgress.last_page) * 100)
   }
 
   const getStatusText = () => {
@@ -53,7 +59,7 @@ export const ProductSyncStatus: React.FC = () => {
 
     try {
       console.log('Starting manual sync...')
-      await startSync(user.token)
+      await startSync()
     } catch (error) {
       console.error('Manual sync failed:', error)
     }
@@ -73,47 +79,48 @@ export const ProductSyncStatus: React.FC = () => {
   }
 
   return (
-    <Card className="w-full max-w-md">
-      <CardHeader className="pb-0 cursor-pointer" onClick={toggleExpanded}>
-        <CardTitle className="flex items-center justify-between text-sm">
-          <div className="flex items-center space-x-2">
-            {isExpanded ? (
-              <ChevronDown className="w-4 h-4 text-gray-500" />
-            ) : (
-              <ChevronRight className="w-4 h-4 text-gray-500" />
-            )}
-            <span>Product Synchronization</span>
-          </div>
+    <>
+      <Dialog>
+        <DialogTrigger>
           <Badge variant={getStatusColor()}>
             {getStatusIcon()}
             <span className="ml-1">{getStatusText()}</span>
           </Badge>
-        </CardTitle>
-      </CardHeader>
+        </DialogTrigger>
+        <DialogContent>
+          <DialogHeader>
+            <div className="flex gap-5 items-center space-x-2">
+              <span>Product Synchronization</span>
+              <Badge variant={getStatusColor()}>
+                {getStatusIcon()}
+                <span className="ml-1">{getStatusText()}</span>
+              </Badge>
+            </div>
+          </DialogHeader>
 
-      {/* Collapsed View - Always Visible */}
-      <div className="px-4 pb-0">
-        {syncProgress && (
-          <div className="flex items-center space-x-3">
-            <div className="flex-1">
-              <div className="flex justify-between text-xs text-gray-600 mb-1">
-                <span>Progress</span>
-                <span>{getProgressPercentage()}%</span>
+          <div className="px-4 pb-0">
+            {syncProgress && (
+              <div className="flex items-center space-x-3">
+                <div className="flex-1">
+                  <div className="flex justify-between text-xs text-gray-600 mb-1">
+                    <span>Progress</span>
+                    <span>{getProgressPercentage()}%</span>
+                  </div>
+                  <Progress value={getProgressPercentage()} className="h-2" />
+                </div>
+                <div className="text-xs text-gray-600 text-right">
+                  <div>
+                    Page {syncProgress.current_page - 1}/{syncProgress.last_page}
+                  </div>
+                  <div>{syncProgress.total_products} products</div>
+                </div>
               </div>
-              <Progress value={getProgressPercentage()} className="h-2" />
-            </div>
-            <div className="text-xs text-gray-600 text-right">
-              <div>Page {syncProgress.current_page}/{syncProgress.last_page}</div>
-              <div>{syncProgress.total_products} products</div>
-            </div>
+            )}
           </div>
-        )}
-      </div>
 
-      {/* Expanded View - Only Visible When Expanded */}
-      {isExpanded && (
-        <CardContent className="space-y-3 pt-0">
-          {syncError && <div className="text-sm text-red-600 bg-red-50 p-2 rounded">{syncError}</div>}
+          {syncError && (
+            <div className="text-sm text-red-600 bg-red-50 p-2 rounded">{syncError}</div>
+          )}
 
           {user?.token && (
             <div className="flex gap-2">
@@ -135,7 +142,7 @@ export const ProductSyncStatus: React.FC = () => {
                 <div>
                   <span className="text-gray-600">Page:</span>
                   <span className="ml-1 font-medium">
-                    {syncProgress.current_page} / {syncProgress.last_page}
+                    {syncProgress.current_page - 1} / {syncProgress.last_page}
                   </span>
                 </div>
                 <div>
@@ -151,8 +158,8 @@ export const ProductSyncStatus: React.FC = () => {
               )}
             </div>
           )}
-        </CardContent>
-      )}
-    </Card>
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }

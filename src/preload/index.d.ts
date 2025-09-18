@@ -61,7 +61,7 @@ declare global {
         ) => Promise<{ success: boolean }>
         deleteSyncedSale: (saleId: string) => Promise<{ success: boolean }>
         getSalesByDateRange: (startDate: string, endDate: string) => Promise<Array<any>>
-        syncSales: (userToken: string) => Promise<{ success: boolean }>
+        syncSales: () => Promise<{ success: boolean; error?: string }>
         // Settings API
         getSettings: () => Promise<{
           id: string
@@ -93,7 +93,7 @@ declare global {
           created_at: string
           updated_at: string
         } | null>
-        fetchSettings: (userToken: string) => Promise<{
+        getFrontSettings: () => Promise<{
           id: string
           currency: string
           email: string
@@ -103,46 +103,45 @@ declare global {
           default_customer: string
           default_warehouse: string
           address: string
-          logo: string | null
-          show_phone: string
-          show_address: string
-          show_customer: string
-          show_email: string
-          show_tax_discount_shipping: string
-          show_note: string | null
-          show_barcode_in_receipt: string
-          show_logo_in_receipt: string
           protect_cart_product_delete: string
           protect_cart_product_reduce: string
           enable_shipping: string
           enable_tax: string
           enable_discount: string
+          logo: string | null
           warehouse_name: string
           customer_name: string
           currency_symbol: string
+          roles: string | null
+          connected_accounts: string | null
           created_at: string
           updated_at: string
-        }>
-        getCountries: () => Promise<Array<{
-          id: number
-          name: string
-          short_code: string
-          phone_code: number
-          active: number
-          logo_url: string | null
-          created_at: string
-          updated_at: string
-        }>>
-        getActiveCountries: () => Promise<Array<{
-          id: number
-          name: string
-          short_code: string
-          phone_code: number
-          active: number
-          logo_url: string | null
-          created_at: string
-          updated_at: string
-        }>>
+        } | null>
+        fetchSettings: () => Promise<void>
+        getCountries: () => Promise<
+          Array<{
+            id: number
+            name: string
+            short_code: string
+            phone_code: number
+            active: number
+            logo_url: string | null
+            created_at: string
+            updated_at: string
+          }>
+        >
+        getActiveCountries: () => Promise<
+          Array<{
+            id: number
+            name: string
+            short_code: string
+            phone_code: number
+            active: number
+            logo_url: string | null
+            created_at: string
+            updated_at: string
+          }>
+        >
         // Config API
         getConfig: () => Promise<{
           id: string
@@ -157,19 +156,21 @@ declare global {
         isCurrencyRight: () => Promise<boolean>
         isOpenRegister: () => Promise<boolean>
         // Warehouse API
-        getWarehouses: () => Promise<Array<{
-          id: number
-          name: string
-          phone: string
-          country: string
-          city: string
-          email: string
-          zip_code: string | null
-          state: string
-          address: string
-          created_at: string
-          updated_at: string
-        }>>
+        getWarehouses: () => Promise<
+          Array<{
+            id: number
+            name: string
+            phone: string
+            country: string
+            city: string
+            email: string
+            zip_code: string | null
+            state: string
+            address: string
+            created_at: string
+            updated_at: string
+          }>
+        >
         getWarehouseById: (id: number) => Promise<{
           id: number
           name: string
@@ -210,14 +211,16 @@ declare global {
           updated_at: string
         } | null>
         // Product Categories API
-        getProductCategories: () => Promise<Array<{
-          id: number
-          name: string
-          image: string | null
-          products_count: number
-          created_at: string
-          updated_at: string
-        }>>
+        getProductCategories: () => Promise<
+          Array<{
+            id: number
+            name: string
+            image: string | null
+            products_count: number
+            created_at: string
+            updated_at: string
+          }>
+        >
         getProductCategoryById: (id: number) => Promise<{
           id: number
           name: string
@@ -234,48 +237,56 @@ declare global {
           created_at: string
           updated_at: string
         } | null>
-        getProductCategoriesWithProducts: () => Promise<Array<{
-          id: number
-          name: string
-          image: string | null
-          products_count: number
-          created_at: string
-          updated_at: string
-        }>>
-        searchProductCategories: (searchTerm: string) => Promise<Array<{
-          id: number
-          name: string
-          image: string | null
-          products_count: number
-          created_at: string
-          updated_at: string
-        }>>
+        getProductCategoriesWithProducts: () => Promise<
+          Array<{
+            id: number
+            name: string
+            image: string | null
+            products_count: number
+            created_at: string
+            updated_at: string
+          }>
+        >
+        searchProductCategories: (searchTerm: string) => Promise<
+          Array<{
+            id: number
+            name: string
+            image: string | null
+            products_count: number
+            created_at: string
+            updated_at: string
+          }>
+        >
         // Payment Methods API
-        getPaymentMethods: () => Promise<Array<{
-          id: number
-          name: string
-          display_name: string
-          active: boolean
-          business_profile_id: number
-          user_id: number
-          created_at: string
-          updated_at: string
-        }>>
-        getAllPaymentMethods: () => Promise<Array<{
-          id: number
-          name: string
-          display_name: string
-          active: boolean
-          business_profile_id: number
-          user_id: number
-          created_at: string
-          updated_at: string
-        }>>
+        getPaymentMethods: () => Promise<
+          Array<{
+            id: number
+            name: string
+            display_name: string
+            is_active: boolean
+            business_profile_id: number
+            user_id: number
+            created_at: string
+            updated_at: string
+          }>
+        >
+        getAllPaymentMethods: () => Promise<
+          Array<{
+            id: number
+            name: string
+            display_name: string
+            is_active: boolean
+            business_profile_id: number
+            user_id: number
+            created_at: string
+            updated_at: string
+          }>
+        >
         getPaymentMethodById: (id: number) => Promise<{
           id: number
           name: string
           display_name: string
-          active: boolean
+          is_active: boolean
           business_profile_id: number
           user_id: number
           created_at: string
@@ -285,44 +296,50 @@ declare global {
           id: number
           name: string
           display_name: string
-          active: boolean
+          is_active: boolean
           business_profile_id: number
           user_id: number
           created_at: string
           updated_at: string
         } | null>
-        getActivePaymentMethods: () => Promise<Array<{
-          id: number
-          name: string
-          display_name: string
-          active: boolean
-          business_profile_id: number
-          user_id: number
-          created_at: string
-          updated_at: string
-        }>>
-        getPaymentMethodsByBusinessProfile: (businessProfileId: number) => Promise<Array<{
-          id: number
-          name: string
-          display_name: string
-          active: boolean
-          business_profile_id: number
-          user_id: number
-          created_at: string
-          updated_at: string
-        }>>
+        getActivePaymentMethods: () => Promise<
+          Array<{
+            id: number
+            name: string
+            display_name: string
+            is_active: boolean
+            business_profile_id: number
+            user_id: number
+            created_at: string
+            updated_at: string
+          }>
+        >
+        getPaymentMethodsByBusinessProfile: (businessProfileId: number) => Promise<
+          Array<{
+            id: number
+            name: string
+            display_name: string
+            is_active: boolean
+            business_profile_id: number
+            user_id: number
+            created_at: string
+            updated_at: string
+          }>
+        >
         // Units API
-        getUnits: () => Promise<Array<{
-          id: number
-          name: string
-          short_name: string
-          base_unit: number
-          is_default: boolean
-          business_profile_id: number
-          user_id: number
-          created_at: string
-          updated_at: string
-        }>>
+        getUnits: () => Promise<
+          Array<{
+            id: number
+            name: string
+            short_name: string
+            base_unit: number
+            is_default: boolean
+            business_profile_id: number
+            user_id: number
+            created_at: string
+            updated_at: string
+          }>
+        >
         getUnitById: (id: number) => Promise<{
           id: number
           name: string
@@ -356,50 +373,63 @@ declare global {
           created_at: string
           updated_at: string
         } | null>
-        getDefaultUnits: () => Promise<Array<{
-          id: number
-          name: string
-          short_name: string
-          base_unit: number
-          is_default: boolean
-          business_profile_id: number
-          user_id: number
-          created_at: string
-          updated_at: string
-        }>>
-        getUnitsByBusinessProfile: (businessProfileId: number) => Promise<Array<{
-          id: number
-          name: string
-          short_name: string
-          base_unit: number
-          is_default: boolean
-          business_profile_id: number
-          user_id: number
-          created_at: string
-          updated_at: string
-        }>>
-        getBaseUnits: () => Promise<Array<{
-          id: number
-          name: string
-          short_name: string
-          base_unit: number
-          is_default: boolean
-          business_profile_id: number
-          user_id: number
-          created_at: string
-          updated_at: string
-        }>>
-        getUnitsByBaseUnit: (baseUnitId: number) => Promise<Array<{
-          id: number
-          name: string
-          short_name: string
-          base_unit: number
-          is_default: boolean
-          business_profile_id: number
-          user_id: number
-          created_at: string
-          updated_at: string
-        }>>
+        getDefaultUnits: () => Promise<
+          Array<{
+            id: number
+            name: string
+            short_name: string
+            base_unit: number
+            is_default: boolean
+            business_profile_id: number
+            user_id: number
+            created_at: string
+            updated_at: string
+          }>
+        >
+        getUnitsByBusinessProfile: (businessProfileId: number) => Promise<
+          Array<{
+            id: number
+            name: string
+            short_name: string
+            base_unit: number
+            is_default: boolean
+            business_profile_id: number
+            user_id: number
+            created_at: string
+            updated_at: string
+          }>
+        >
+        getBaseUnits: () => Promise<
+          Array<{
+            id: number
+            name: string
+            short_name: string
+            base_unit: number
+            is_default: boolean
+            business_profile_id: number
+            user_id: number
+            created_at: string
+            updated_at: string
+          }>
+        >
+        getUnitsByBaseUnit: (baseUnitId: number) => Promise<
+          Array<{
+            id: number
+            name: string
+            short_name: string
+            base_unit: number
+            is_default: boolean
+            business_profile_id: number
+            user_id: number
+            created_at: string
+            updated_at: string
+          }>
+        >
+        // Hold API
+        saveHold: (hold: any) => Promise<{ success: boolean; id?: string }>
+        getHolds: () => Promise<Array<any>>
+        getHoldById: (id: string) => Promise<any>
+        deleteHold: (id: string) => Promise<{ success: boolean }>
       }
       auth: {
         login: (payload: { email: string; password: string }) => Promise<{
@@ -427,7 +457,7 @@ declare global {
       }
       products: {
         sync: {
-          start: (payload: { userToken: string }) => Promise<{ success: boolean }>
+          start: () => Promise<{ success: boolean; error?: string }>
           progress: () => Promise<{
             id: string
             current_page: number
@@ -439,9 +469,42 @@ declare global {
           reset: () => Promise<{ success: boolean }>
         }
       }
+      loginSync: {
+        perform: () => Promise<{
+          success: boolean
+          steps: Array<{
+            step: string
+            completed: boolean
+            error?: string
+          }>
+          totalSteps: number
+          completedSteps: number
+        }>
+        performQuick: () => Promise<{
+          success: boolean
+          steps: Array<{
+            step: string
+            completed: boolean
+            error?: string
+          }>
+          totalSteps: number
+          completedSteps: number
+        }>
+        isEssentialDataAvailable: () => Promise<boolean>
+      }
       env: {
         get: (key: string) => Promise<string>
         list: () => Promise<Record<string, string | undefined>>
+      }
+      print: {
+        receipt: (
+          htmlContent: string,
+          options?: { silent?: boolean; deviceName?: string }
+        ) => Promise<{ success: boolean; data?: any; error?: string }>
+        openPreview: (htmlContent: string) => Promise<{ success: boolean }>
+        current: (
+          options?: { silent?: boolean; deviceName?: string }
+        ) => Promise<{ success: boolean; data?: any; error?: string }>
       }
     }
   }

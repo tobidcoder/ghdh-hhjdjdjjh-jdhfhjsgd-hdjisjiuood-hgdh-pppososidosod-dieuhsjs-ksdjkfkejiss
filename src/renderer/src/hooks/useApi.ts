@@ -1,18 +1,12 @@
 import { useState, useCallback } from 'react'
+import { api as axiosApi, ApiResponse, ApiError } from '@renderer/lib/axios'
 import { getBaseUrl } from '@renderer/config/env'
 import { useAuthStore } from '@renderer/store/auth'
 
-interface ApiResponse<T = any> {
-  data: T
-  message?: string
-  success?: boolean
-}
-
-interface ApiError {
-  message: string
-  status?: number
-}
-
+/**
+ * @deprecated This hook is deprecated. Use useUnifiedApi or useAxiosApi instead.
+ * This hook will be removed in a future version.
+ */
 interface UseApiOptions {
   onSuccess?: (data: any) => void
   onError?: (error: ApiError) => void
@@ -33,7 +27,7 @@ export const useApi = () => {
       setError(null)
 
       try {
-        // Get base URL from environment or use a default
+        // Use axios instead of fetch for better error handling and interceptors
         const baseUrl = await getBaseUrl()
         const url = `${baseUrl}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`
 
@@ -47,31 +41,24 @@ export const useApi = () => {
           headers['Authorization'] = `Bearer ${user.token}`
         }
 
-        const response = await fetch(url, {
+        // Use axios for the request
+        const response = await axiosApi.request({
+          url,
+          method: options.method as any || 'GET',
           headers,
+          data: options.body ? JSON.parse(options.body as string) : undefined,
           ...options
         })
 
-        if (!response.ok) {
-          const errorText = await response.text().catch(() => 'Unknown error')
-          const apiError: ApiError = {
-            message: errorText,
-            status: response.status
-          }
-          setError(apiError)
-          apiOptions.onError?.(apiError)
-          throw apiError
-        }
+        const result: ApiResponse<T> = response
 
-        const data = await response.json()
-        const result: ApiResponse<T> = data
-
-        apiOptions.onSuccess?.(data)
+        apiOptions.onSuccess?.(result.data)
         return result
       } catch (err: any) {
         const apiError: ApiError = {
           message: err.message || 'Network error',
-          status: err.status
+          status: err.status,
+          code: err.code
         }
         setError(apiError)
         apiOptions.onError?.(apiError)
@@ -80,7 +67,7 @@ export const useApi = () => {
         setLoading(false)
       }
     },
-    []
+    [user?.token]
   )
 
   const get = useCallback(

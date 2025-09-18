@@ -1,9 +1,6 @@
 import React from 'react'
-import { Button } from '@renderer/components/ui/button'
 import { Input } from '@renderer/components/ui/input'
 import { Search } from 'lucide-react'
-import { ProductSyncStatus } from '@renderer/components/ProductSyncStatus'
-import { SalesSyncStatus } from '@renderer/components/SalesSyncStatus'
 import { Products } from '@renderer/components/Products'
 
 interface ProductCategory {
@@ -48,13 +45,7 @@ export const ProductSearchPanel: React.FC<ProductSearchPanelProps> = ({
   looksLikeProductCode
 }) => {
   return (
-    <div className="flex-1 flex flex-col bg-gray-50">
-      {/* Sync Status */}
-      <div className="p-3 gap-3 flex ">
-        <ProductSyncStatus />
-        <SalesSyncStatus />
-      </div>
-
+    <div className="flex-1 pt-3 flex flex-col bg-gray-50">
       {/* Product Search and Filter */}
       <div className="px-4 pb-4">
         {/* Auto-add notification */}
@@ -110,7 +101,7 @@ export const ProductSearchPanel: React.FC<ProductSearchPanelProps> = ({
             </div>
           )}
           <div className="flex flex-col space-y-1">
-            <select 
+            <select
               className="px-3 py-2 border border-gray-300 rounded-md text-sm bg-white"
               value={selectedCategory?.toString() || 'all'}
               onChange={(e) => onCategoryChange(e.target.value)}
@@ -124,7 +115,7 @@ export const ProductSearchPanel: React.FC<ProductSearchPanelProps> = ({
             </select>
             {selectedCategory && (
               <div className="text-xs text-blue-600 font-medium">
-                Filtering: {productCategories.find(cat => cat.id === selectedCategory)?.name}
+                Filtering: {productCategories.find((cat) => cat.id === selectedCategory)?.name}
               </div>
             )}
           </div>
@@ -134,40 +125,6 @@ export const ProductSearchPanel: React.FC<ProductSearchPanelProps> = ({
       {/* Products Grid */}
       <div className="flex-1 px-4 pb-4 overflow-auto">
         <Products />
-      </div>
-
-      {/* Pagination Controls */}
-      <div className="px-4 pb-4">
-        <div className="flex items-center justify-center space-x-2">
-          <Button variant="outline" size="sm" className="h-8 w-8 p-0">
-            <span className="text-xs">⟪</span>
-          </Button>
-          <Button variant="outline" size="sm" className="h-8 w-8 p-0">
-            <span className="text-xs">⟨</span>
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-8 w-8 p-0 bg-orange-500 text-white border-orange-500"
-          >
-            1
-          </Button>
-          <Button variant="outline" size="sm" className="h-8 w-8 p-0">
-            2
-          </Button>
-          <Button variant="outline" size="sm" className="h-8 w-8 p-0">
-            3
-          </Button>
-          <Button variant="outline" size="sm" className="h-8 w-8 p-0">
-            4
-          </Button>
-          <Button variant="outline" size="sm" className="h-8 w-8 p-0">
-            <span className="text-xs">⟩</span>
-          </Button>
-          <Button variant="outline" size="sm" className="h-8 w-8 p-0">
-            <span className="text-xs">⟫</span>
-          </Button>
-        </div>
       </div>
     </div>
   )

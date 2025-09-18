@@ -1,4 +1,5 @@
-import { useApi } from '@renderer/hooks/useApi'
+import { useAxiosApi } from '@renderer/hooks/useAxiosApi'
+import { setAuthToken } from '@renderer/lib/axios'
 
 export interface LoginCredentials {
   username: string
@@ -26,15 +27,26 @@ export interface LoginResponse {
 }
 
 export const useAuthService = () => {
-  const api = useApi()
+  const api = useAxiosApi()
 
   const login = async (credentials: LoginCredentials): Promise<LoginResponse> => {
     const response = await api.post<LoginResponse['data']>('/login', credentials)
+    
+    // Store the token for future requests
+    if (response.data?.token) {
+      setAuthToken(response.data.token)
+    }
+    
     return response as LoginResponse
+  }
+
+  const logout = () => {
+    setAuthToken(null)
   }
 
   return {
     login,
+    logout,
     loading: api.loading,
     error: api.error,
     clearError: api.clearError

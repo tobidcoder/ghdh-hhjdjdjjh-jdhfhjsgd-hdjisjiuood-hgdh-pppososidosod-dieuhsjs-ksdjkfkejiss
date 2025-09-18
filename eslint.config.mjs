@@ -24,7 +24,9 @@ export default tseslint.config(
     },
     rules: {
       ...eslintPluginReactHooks.configs.recommended.rules,
-      ...eslintPluginReactRefresh.configs.vite.rules
+      ...eslintPluginReactRefresh.configs.vite.rules,
+      allowFunctionsWithoutTypeParameters: true
+
     }
   },
   eslintConfigPrettier

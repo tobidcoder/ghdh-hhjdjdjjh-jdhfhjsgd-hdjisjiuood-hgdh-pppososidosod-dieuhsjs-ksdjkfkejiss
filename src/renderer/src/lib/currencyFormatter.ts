@@ -1,28 +1,28 @@
 interface CurrencyOptions {
-  currency?: string;
-  locale?: string;
-  showSymbol?: boolean;
-  showCode?: boolean;
-  minimumFractionDigits?: number;
-  maximumFractionDigits?: number;
+  currency?: string
+  locale?: string
+  showSymbol?: boolean
+  showCode?: boolean
+  minimumFractionDigits?: number
+  maximumFractionDigits?: number
 }
 
-type CurrencyInput = 
-  | number 
-  | string 
-  | null 
-  | undefined 
+type CurrencyInput =
+  | number
+  | string
+  | null
+  | undefined
   | { amount: number; currency?: string }
   | { value: number; currency?: string }
-  | { price: number; currency?: string };
+  | { price: number; currency?: string }
 
 /**
  * Universal currency formatter that handles any input type and returns standardized formatting
- * 
+ *
  * @param input - Number, string, object with amount/value/price, or null/undefined
  * @param options - Formatting options
  * @returns Formatted currency string
- * 
+ *
  * @example
  * formatCurrency(1234.56) // "$1,234.56"
  * formatCurrency("1234.56") // "$1,234.56"
@@ -39,17 +39,31 @@ function formatCurrency(input: CurrencyInput, options: CurrencyOptions = {}): st
     showCode = false,
     minimumFractionDigits = 2,
     maximumFractionDigits = 2
-  } = options;
+  } = options
 
   // Extract numeric value from any input type
-  const amount = extractAmount(input);
+  const amount = extractAmount(input)
 
   // Handle edge cases
   if (!isFinite(amount)) {
-    return formatAmount(0, { currency, locale, showSymbol, showCode, minimumFractionDigits, maximumFractionDigits });
+    return formatAmount(0, {
+      currency,
+      locale,
+      showSymbol,
+      showCode,
+      minimumFractionDigits,
+      maximumFractionDigits
+    })
   }
 
-  return formatAmount(amount, { currency, locale, showSymbol, showCode, minimumFractionDigits, maximumFractionDigits });
+  return formatAmount(amount, {
+    currency,
+    locale,
+    showSymbol,
+    showCode,
+    minimumFractionDigits,
+    maximumFractionDigits
+  })
 }
 
 /**
@@ -58,40 +72,41 @@ function formatCurrency(input: CurrencyInput, options: CurrencyOptions = {}): st
 function extractAmount(input: CurrencyInput): number {
   // Handle null/undefined
   if (input === null || input === undefined) {
-    return 0;
+    return 0
   }
 
   // Handle number input
   if (typeof input === 'number') {
-    return input;
+    return input
   }
 
   // Handle string input
   if (typeof input === 'string') {
-    return parseStringAmount(input);
+    return parseStringAmount(input)
   }
 
   // Handle object input
   if (typeof input === 'object') {
     // Try different common property names
-    const amount = (input as any).amount ?? 
-                   (input as any).value ?? 
-                   (input as any).price ?? 
-                   (input as any).total ?? 
-                   (input as any).cost ?? 
-                   (input as any).sum;
-    
+    const amount =
+      (input as any).amount ??
+      (input as any).value ??
+      (input as any).price ??
+      (input as any).total ??
+      (input as any).cost ??
+      (input as any).sum
+
     if (typeof amount === 'number') {
-      return amount;
+      return amount
     }
-    
+
     if (typeof amount === 'string') {
-      return parseStringAmount(amount);
+      return parseStringAmount(amount)
     }
   }
 
   // Fallback
-  return 0;
+  return 0
 }
 
 /**
@@ -99,7 +114,7 @@ function extractAmount(input: CurrencyInput): number {
  */
 function parseStringAmount(str: string): number {
   if (!str || typeof str !== 'string') {
-    return 0;
+    return 0
   }
 
   // Remove common currency symbols and formatting
@@ -108,35 +123,46 @@ function parseStringAmount(str: string): number {
     .replace(/[^\d.-]/g, '') // Keep only digits, decimals, and minus
     .replace(/^-+/, '-') // Keep only one minus at start
     .replace(/-+$/, '') // Remove trailing minus
-    .trim();
+    .trim()
 
   // Handle empty string after cleaning
   if (!cleanString) {
-    return 0;
+    return 0
   }
 
   // Handle multiple decimals (keep only the last one)
-  const parts = cleanString.split('.');
+  const parts = cleanString.split('.')
   if (parts.length > 2) {
-    const integerPart = parts.slice(0, -1).join('');
-    const decimalPart = parts[parts.length - 1];
-    const reconstructed = `${integerPart}.${decimalPart}`;
-    const parsed = parseFloat(reconstructed);
-    return isNaN(parsed) ? 0 : parsed;
+    const integerPart = parts.slice(0, -1).join('')
+    const decimalPart = parts[parts.length - 1]
+    const reconstructed = `${integerPart}.${decimalPart}`
+    const parsed = parseFloat(reconstructed)
+    return isNaN(parsed) ? 0 : parsed
   }
 
-  const parsed = parseFloat(cleanString);
-  return isNaN(parsed) ? 0 : parsed;
+  const parsed = parseFloat(cleanString)
+  return isNaN(parsed) ? 0 : parsed
 }
 
 /**
  * Format the numeric amount with proper currency formatting
  */
 function formatAmount(
-  amount: number, 
-  options: Required<Pick<CurrencyOptions, 'currency' | 'locale' | 'showSymbol' | 'showCode' | 'minimumFractionDigits' | 'maximumFractionDigits'>>
+  amount: number,
+  options: Required<
+    Pick<
+      CurrencyOptions,
+      | 'currency'
+      | 'locale'
+      | 'showSymbol'
+      | 'showCode'
+      | 'minimumFractionDigits'
+      | 'maximumFractionDigits'
+    >
+  >
 ): string {
-  const { currency, locale, showSymbol, showCode, minimumFractionDigits, maximumFractionDigits } = options;
+  const { currency, locale, showSymbol, showCode, minimumFractionDigits, maximumFractionDigits } =
+    options
 
   try {
     const formatter = new Intl.NumberFormat(locale, {
@@ -145,42 +171,44 @@ function formatAmount(
       minimumFractionDigits,
       maximumFractionDigits,
       useGrouping: true
-    });
+    })
 
-    let formatted = formatter.format(amount);
+    let formatted = formatter.format(amount)
 
     // Add currency code if requested
     if (showCode && !showSymbol) {
-      formatted += ` ${currency}`;
+      formatted += ` ${currency}`
     } else if (showCode && showSymbol) {
-      formatted += ` ${currency}`;
+      formatted += ` ${currency}`
     }
 
-    return formatted;
+    return formatted
   } catch (error) {
     // Fallback formatting if Intl.NumberFormat fails
-    const rounded = Math.round(amount * 100) / 100;
-    const parts = rounded.toString().split('.');
-    const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-    const decimalPart = (parts[1] || '').padEnd(minimumFractionDigits, '0').slice(0, maximumFractionDigits);
-    
-    let result = minimumFractionDigits > 0 ? `${integerPart}.${decimalPart}` : integerPart;
-    
+    const rounded = Math.round(amount * 100) / 100
+    const parts = rounded.toString().split('.')
+    const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+    const decimalPart = (parts[1] || '')
+      .padEnd(minimumFractionDigits, '0')
+      .slice(0, maximumFractionDigits)
+
+    let result = minimumFractionDigits > 0 ? `${integerPart}.${decimalPart}` : integerPart
+
     if (showSymbol) {
-      result = `₦${result}`; // Default to NGN symbol
+      result = `₦${result}` // Default to NGN symbol
     }
-    
+
     if (showCode) {
-      result += ` ${currency}`;
+      result += ` ${currency}`
     }
-    
-    return result;
+
+    return result
   }
 }
 
 // Export the main function
-export default formatCurrency;
-export { formatCurrency, type CurrencyInput, type CurrencyOptions };
+export default formatCurrency
+export { formatCurrency, type CurrencyInput, type CurrencyOptions }
 
 // Usage examples:
 /*

@@ -14,8 +14,20 @@ import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import { initDatabase, closeDatabase } from './db'
+import { registerDatabaseIpcHandlers, registerProductSyncIpcHandlers } from './handlers/ipcHandlers'
 
-function createWindow(): void {
+async function createWindow(): Promise<void> {
+  try {
+    // Initialize database first
+    await initDatabase()
+    console.log('[MAIN] Database initialized successfully')
+  } catch (error) {
+    console.error('[MAIN] Failed to initialize database:', error)
+    // If database fails to initialize, don't start the app
+    app.quit()
+    return
+  }
+
   // Create the browser window.
   const mainWindow = new BrowserWindow({
     width: 900,
@@ -69,31 +81,9 @@ app.whenReady().then(() => {
   // IPC test
   ipcMain.on('ping', () => console.log('pong'))
 
-  // Environment variable handler
-  ipcMain.handle('env:get', (_event, key: string) => {
-    const value = process.env[key] || ''
-    console.log(`[ENV] Requested ${key}:`, value)
-    console.log(
-      `[ENV] All env vars:`,
-      Object.keys(process.env).filter((k) => k.includes('BASE') || k.includes('URL'))
-    )
-    return value
-  })
-
-  // Debug: List all environment variables
-  ipcMain.handle('env:list', () => {
-    const envVars = Object.keys(process.env).filter(
-      (key) => key.includes('BASE') || key.includes('URL') || key.includes('API')
-    )
-    console.log('[ENV] Available env vars:', envVars)
-    return envVars.reduce(
-      (acc, key) => {
-        acc[key] = process.env[key]
-        return acc
-      },
-      {} as Record<string, string | undefined>
-    )
-  })
+  // Register IPC handlers
+  registerDatabaseIpcHandlers()
+  registerProductSyncIpcHandlers()
 
   // Initialize offline database
   initDatabase()

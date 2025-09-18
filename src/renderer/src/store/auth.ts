@@ -1,6 +1,5 @@
 import { create } from 'zustand'
 import { getBaseUrl } from '@renderer/config/env'
-import { useSettingsStore } from './settings'
 
 export interface AuthUser {
   id: string
@@ -16,6 +15,12 @@ interface AuthState {
   loginSource: 'local' | 'remote' | null
   isSubmitting: boolean
   error: string | null
+  syncProgress: {
+    isSyncing: boolean
+    currentStep: string
+    completedSteps: number
+    totalSteps: number
+  } | null
   login: (payload: { email: string; password: string }) => Promise<void>
   logout: () => void
   clearError: () => void
@@ -28,19 +33,17 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   loginSource: null,
   isSubmitting: false,
   error: null,
+  syncProgress: null,
   login: async (payload) => {
     set({ isSubmitting: true, error: null })
     try {
       const result = await window.api.auth.login(payload)
       set({ user: result.user, loginSource: result.source, isSubmitting: false })
-      
+
       // Fetch settings and start product sync after successful login
       console.log('[Auth] Login successful, starting post-login tasks...')
       try {
-        await Promise.all([
-          get().fetchSettingsOnLogin(),
-          get().checkAndStartProductSync()
-        ])
+        await Promise.all([get().fetchSettingsOnLogin(), get().checkAndStartProductSync()])
         console.log('[Auth] All post-login tasks completed successfully')
       } catch (error) {
         console.error('[Auth] Error in post-login tasks:', error)
@@ -66,7 +69,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       // If no progress exists or sync is not completed, start sync
       if (!progress || !progress.is_completed) {
         console.log('[Auth] Starting product sync after login...')
-        await window.api.products.sync.start({ userToken: user.token })
+        await window.api.products.sync.start()
       } else {
         console.log('[Auth] Product sync already completed')
       }
@@ -75,67 +78,57 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
   },
 
+  // Fetch all essential data on login using comprehensive sync
   fetchSettingsOnLogin: async () => {
-    console.log('[Auth] fetchSettingsOnLogin called')
-    const { user, loginSource } = get()
-    console.log('[Auth] User:', user?.username, 'Login source:', loginSource, 'Has token:', !!user?.token)
-    if (!user?.token) {
-      console.log('[Auth] No user token, returning early')
-      return
-    }
-
     try {
-      const baseUrl = await getBaseUrl()
-      console.log('[Auth] Base URL:', baseUrl)
+      console.log('[Auth] Starting comprehensive login sync...')
       
-      // Always try to fetch fresh settings from API if we have a base URL and token
-      if (baseUrl && user.token) {
-        console.log('[Auth] Attempting to fetch fresh settings from API...')
-        try {
-          await useSettingsStore.getState().fetchSettingsFromAPI(baseUrl, user.token)
-          console.log('[Auth] Settings and config fetched successfully from API')
-        } catch (apiError) {
-          console.log('[Auth] API fetch failed, falling back to local settings:', apiError)
-                  // Fall back to local settings if API fetch fails
-        await useSettingsStore.getState().fetchSettings()
-        await useSettingsStore.getState().fetchConfig()
-        await useSettingsStore.getState().fetchWarehouses()
-        await useSettingsStore.getState().fetchProductCategories()
-        await useSettingsStore.getState().fetchPaymentMethods()
-        await useSettingsStore.getState().fetchUnits()
-        }
+      // Set initial sync progress
+      set({ 
+        syncProgress: { 
+          isSyncing: true, 
+          currentStep: 'Starting sync...', 
+          completedSteps: 0, 
+          totalSteps: 8 
+        } 
+      })
+      
+      // Use the comprehensive login sync that fetches all GET endpoints
+      const result = await window.api.loginSync.perform()
+      
+      if (result.success) {
+        console.log('[Auth] All data synced successfully:', result.completedSteps, '/', result.totalSteps, 'steps completed')
+        set({ 
+          syncProgress: { 
+            isSyncing: false, 
+            currentStep: 'Sync completed', 
+            completedSteps: result.completedSteps, 
+            totalSteps: result.totalSteps 
+          } 
+        })
       } else {
-        // No base URL or token, just load local settings
-        console.log('[Auth] Loading local settings (no API access)...')
-        await useSettingsStore.getState().fetchSettings()
-        await useSettingsStore.getState().fetchConfig()
-        await useSettingsStore.getState().fetchWarehouses()
-        await useSettingsStore.getState().fetchProductCategories()
-        await useSettingsStore.getState().fetchPaymentMethods()
-        await useSettingsStore.getState().fetchUnits()
+        console.warn('[Auth] Login sync completed with some failures:', result.steps.filter(s => s.error))
+        set({ 
+          syncProgress: { 
+            isSyncing: false, 
+            currentStep: 'Sync completed with errors', 
+            completedSteps: result.completedSteps, 
+            totalSteps: result.totalSteps 
+          } 
+        })
       }
-
-      // Also fetch countries, warehouses, product categories, payment methods, and units data
-      await useSettingsStore.getState().fetchActiveCountries()
-      await useSettingsStore.getState().fetchWarehouses()
-      await useSettingsStore.getState().fetchProductCategories()
-      await useSettingsStore.getState().fetchPaymentMethods()
-      await useSettingsStore.getState().fetchUnits()
       
+      console.log('[Auth] Initial data sync completed')
     } catch (error) {
-      console.error('[Auth] Failed to fetch settings on login:', error)
-      // Don't throw error - settings fetch failure shouldn't prevent login
-      // Just load local settings as fallback
-      try {
-        await useSettingsStore.getState().fetchSettings()
-        await useSettingsStore.getState().fetchConfig()
-        await useSettingsStore.getState().fetchWarehouses()
-        await useSettingsStore.getState().fetchProductCategories()
-        await useSettingsStore.getState().fetchPaymentMethods()
-        await useSettingsStore.getState().fetchUnits()
-      } catch (fallbackError) {
-        console.error('[Auth] Failed to load local settings as fallback:', fallbackError)
-      }
+      console.error('[Auth] Initial data sync failed:', error)
+      set({ 
+        syncProgress: { 
+          isSyncing: false, 
+          currentStep: 'Sync failed', 
+          completedSteps: 0, 
+          totalSteps: 8 
+        } 
+      })
     }
   }
 }))

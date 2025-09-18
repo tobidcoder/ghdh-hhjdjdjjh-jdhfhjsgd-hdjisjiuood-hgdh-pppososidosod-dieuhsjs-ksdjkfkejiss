@@ -31,6 +31,31 @@ export interface Settings {
   updated_at: string
 }
 
+export interface FrontSettings {
+  id: string
+  currency: string
+  email: string
+  company_name: string
+  phone: string
+  default_language: string
+  default_customer: string
+  default_warehouse: string
+  address: string
+  protect_cart_product_delete: string
+  protect_cart_product_reduce: string
+  enable_shipping: string
+  enable_tax: string
+  enable_discount: string
+  logo: string | null
+  warehouse_name: string
+  customer_name: string
+  currency_symbol: string
+  roles: string | null // JSON string of roles array
+  connected_accounts: string | null // JSON string of connected accounts array
+  created_at: string
+  updated_at: string
+}
+
 export interface Country {
   id: number
   name: string
@@ -78,7 +103,7 @@ export interface PaymentMethod {
   id: number
   name: string
   display_name: string
-  active: boolean
+  is_active: boolean
   business_profile_id: number
   user_id: number
   created_at: string
@@ -99,6 +124,7 @@ export interface Unit {
 
 interface SettingsState {
   settings: Settings | null
+  frontSettings: FrontSettings | null
   countries: Country[]
   activeCountries: Country[]
   config: Config | null
@@ -108,10 +134,11 @@ interface SettingsState {
   units: Unit[]
   isLoading: boolean
   error: string | null
-  
+
   // Actions
   fetchSettings: () => Promise<void>
-  fetchSettingsFromAPI: (baseUrl: string, userToken: string) => Promise<void>
+  fetchFrontSettings: () => Promise<void>
+  fetchSettingsFromAPI: () => Promise<void>
   fetchCountries: () => Promise<void>
   fetchActiveCountries: () => Promise<void>
   fetchConfig: () => Promise<void>
@@ -120,7 +147,7 @@ interface SettingsState {
   fetchPaymentMethods: () => Promise<void>
   fetchUnits: () => Promise<void>
   clearError: () => void
-  
+
   // Helper getters
   getCurrencySymbol: () => string
   getCompanyInfo: () => {
@@ -133,30 +160,30 @@ interface SettingsState {
   getTaxEnabled: () => boolean
   getShippingEnabled: () => boolean
   getDiscountEnabled: () => boolean
-  
+
   // Config helper getters
   getPermissions: () => string[]
   hasPermission: (permission: string) => boolean
   isCurrencyRight: () => boolean
   isOpenRegister: () => boolean
-  
+
   // Warehouse helper getters
   getWarehouseById: (id: number) => Warehouse | null
   getWarehouseByName: (name: string) => Warehouse | null
   getDefaultWarehouse: () => Warehouse | null
-  
+
   // Product Categories helper getters
   getProductCategoryById: (id: number) => ProductCategory | null
   getProductCategoryByName: (name: string) => ProductCategory | null
   getProductCategoriesWithProducts: () => ProductCategory[]
   searchProductCategories: (searchTerm: string) => ProductCategory[]
-  
+
   // Payment Methods helper getters
   getPaymentMethodById: (id: number) => PaymentMethod | null
   getPaymentMethodByName: (name: string) => PaymentMethod | null
   getActivePaymentMethods: () => PaymentMethod[]
   getPaymentMethodsByBusinessProfile: (businessProfileId: number) => PaymentMethod[]
-  
+
   // Units helper getters
   getUnitById: (id: number) => Unit | null
   getUnitByName: (name: string) => Unit | null
@@ -169,6 +196,7 @@ interface SettingsState {
 
 export const useSettingsStore = create<SettingsState>((set, get) => ({
   settings: null,
+  frontSettings: null,
   countries: [],
   activeCountries: [],
   config: null,
@@ -190,14 +218,26 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     }
   },
 
-  fetchSettingsFromAPI: async (userToken: string): Promise<void> => {
+  fetchFrontSettings: async (): Promise<void> => {
     try {
       set({ isLoading: true, error: null })
-      const settings = await window.api.db.fetchSettings(userToken)
-      set({ settings, isLoading: false })
+      const frontSettings = await window.api.db.getFrontSettings()
+      set({ frontSettings, isLoading: false })
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch front settings'
+      set({ error: errorMessage, isLoading: false })
+    }
+  },
+
+  fetchSettingsFromAPI: async (): Promise<void> => {
+    try {
+      set({ isLoading: true, error: null })
+      await window.api.db.fetchSettings()
+      set({ isLoading: false })
       console.log('[Settings] Settings fetched and saved from API')
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch settings from API'
+      const errorMessage =
+        error instanceof Error ? error.message : 'Failed to fetch settings from API'
       set({ error: errorMessage, isLoading: false })
       throw error // Re-throw so calling code can handle it
     }
@@ -218,7 +258,8 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
       const activeCountries = await window.api.db.getActiveCountries()
       set({ activeCountries })
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch active countries'
+      const errorMessage =
+        error instanceof Error ? error.message : 'Failed to fetch active countries'
       set({ error: errorMessage })
     }
   },
@@ -248,17 +289,25 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
       const productCategories = await window.api.db.getProductCategories()
       set({ productCategories })
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch product categories'
+      const errorMessage =
+        error instanceof Error ? error.message : 'Failed to fetch product categories'
       set({ error: errorMessage })
     }
   },
 
   fetchPaymentMethods: async (): Promise<void> => {
     try {
-      const paymentMethods = await window.api.db.getPaymentMethods()
+      const paymentMethodsData = await window.api.db.getPaymentMethods()
+      const paymentMethods = paymentMethodsData.map((method) => ({
+        ...method,
+        is_active: method.is_active == 1 ? true : false // Convert 1/0 to true/false
+      }))
       set({ paymentMethods })
+      // console.log('[Settings] Fetched payment methods:', paymentMethods)
+      set({ paymentMethods: paymentMethods })
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch payment methods'
+      const errorMessage =
+        error instanceof Error ? error.message : 'Failed to fetch payment methods'
       set({ error: errorMessage })
     }
   },
@@ -313,7 +362,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   getPermissions: (): string[] => {
     const { config } = get()
     if (!config?.permissions) return []
-    
+
     try {
       return JSON.parse(config.permissions)
     } catch (error) {
@@ -340,18 +389,18 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   // Warehouse helper getters
   getWarehouseById: (id: number): Warehouse | null => {
     const { warehouses } = get()
-    return warehouses.find(warehouse => warehouse.id === id) || null
+    return warehouses.find((warehouse) => warehouse.id === id) || null
   },
 
   getWarehouseByName: (name: string): Warehouse | null => {
     const { warehouses } = get()
-    return warehouses.find(warehouse => warehouse.name === name) || null
+    return warehouses.find((warehouse) => warehouse.name === name) || null
   },
 
   getDefaultWarehouse: (): Warehouse | null => {
     const { warehouses } = get()
     // Try to get 'main-branch' first, then fall back to the first one
-    let warehouse = warehouses.find(w => w.name === 'main-branch')
+    let warehouse = warehouses.find((w) => w.name === 'main-branch')
     if (!warehouse && warehouses.length > 0) {
       warehouse = warehouses[0]
     }
@@ -361,84 +410,82 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   // Product Categories helper getters
   getProductCategoryById: (id: number): ProductCategory | null => {
     const { productCategories } = get()
-    return productCategories.find(category => category.id === id) || null
+    return productCategories.find((category) => category.id === id) || null
   },
 
   getProductCategoryByName: (name: string): ProductCategory | null => {
     const { productCategories } = get()
-    return productCategories.find(category => category.name === name) || null
+    return productCategories.find((category) => category.name === name) || null
   },
 
   getProductCategoriesWithProducts: (): ProductCategory[] => {
     const { productCategories } = get()
-    return productCategories.filter(category => category.products_count > 0)
+    return productCategories.filter((category) => category.products_count > 0)
   },
 
   searchProductCategories: (searchTerm: string): ProductCategory[] => {
     const { productCategories } = get()
     if (!searchTerm.trim()) return productCategories
     const term = searchTerm.toLowerCase()
-    return productCategories.filter(category => 
-      category.name.toLowerCase().includes(term)
-    )
+    return productCategories.filter((category) => category.name.toLowerCase().includes(term))
   },
 
   // Payment Methods helper getters
   getPaymentMethodById: (id: number): PaymentMethod | null => {
     const { paymentMethods } = get()
-    return paymentMethods.find(method => method.id === id) || null
+    return paymentMethods.find((method) => method.id === id) || null
   },
 
   getPaymentMethodByName: (name: string): PaymentMethod | null => {
     const { paymentMethods } = get()
-    return paymentMethods.find(method => method.name === name) || null
+    return paymentMethods.find((method) => method.name === name) || null
   },
 
   getActivePaymentMethods: (): PaymentMethod[] => {
     const { paymentMethods } = get()
-    return paymentMethods.filter(method => method.active)
+    return paymentMethods.filter((method) => method.is_active)
   },
 
   getPaymentMethodsByBusinessProfile: (businessProfileId: number): PaymentMethod[] => {
     const { paymentMethods } = get()
-    return paymentMethods.filter(method => 
-      method.business_profile_id === businessProfileId && method.active
+    return paymentMethods.filter(
+      (method) => method.business_profile_id === businessProfileId && method.is_active
     )
   },
 
   // Units helper getters
   getUnitById: (id: number): Unit | null => {
     const { units } = get()
-    return units.find(unit => unit.id === id) || null
+    return units.find((unit) => unit.id === id) || null
   },
 
   getUnitByName: (name: string): Unit | null => {
     const { units } = get()
-    return units.find(unit => unit.name === name) || null
+    return units.find((unit) => unit.name === name) || null
   },
 
   getUnitByShortName: (shortName: string): Unit | null => {
     const { units } = get()
-    return units.find(unit => unit.short_name === shortName) || null
+    return units.find((unit) => unit.short_name === shortName) || null
   },
 
   getDefaultUnits: (): Unit[] => {
     const { units } = get()
-    return units.filter(unit => unit.is_default)
+    return units.filter((unit) => unit.is_default)
   },
 
   getUnitsByBusinessProfile: (businessProfileId: number): Unit[] => {
     const { units } = get()
-    return units.filter(unit => unit.business_profile_id === businessProfileId)
+    return units.filter((unit) => unit.business_profile_id === businessProfileId)
   },
 
   getBaseUnits: (): Unit[] => {
     const { units } = get()
-    return units.filter(unit => unit.base_unit === unit.id)
+    return units.filter((unit) => unit.base_unit === unit.id)
   },
 
   getUnitsByBaseUnit: (baseUnitId: number): Unit[] => {
     const { units } = get()
-    return units.filter(unit => unit.base_unit === baseUnitId)
+    return units.filter((unit) => unit.base_unit === baseUnitId)
   }
 }))

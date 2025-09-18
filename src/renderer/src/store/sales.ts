@@ -16,6 +16,19 @@ export interface Sale {
   sync_status: 'pending' | 'syncing' | 'synced' | 'failed'
   sync_attempts: number
   last_sync_error: string | null
+  // New API compatibility fields
+  ref: string | null
+  date: string
+  customer_id: number
+  warehouse_id: number
+  sale_items: string | null
+  grand_total: string | null
+  discount: number
+  shipping: number
+  tax_rate: number
+  note: string | null
+  status: number
+  hold_ref_no: string | null
 }
 
 interface SalesState {
@@ -33,7 +46,7 @@ interface SalesState {
     >
   ) => Promise<Sale>
   getUnsyncedCount: () => Promise<void>
-  syncSales: (userToken: string) => Promise<void>
+  syncSales: () => Promise<void>
   clearError: () => void
 }
 
@@ -66,10 +79,10 @@ export const useSalesStore = create<SalesState>((set, get) => ({
     }
   },
 
-  syncSales: async (userToken: string) => {
+  syncSales: async () => {
     set({ isSyncing: true, syncError: null })
     try {
-      await window.api.db.syncSales(userToken)
+      await window.api.db.syncSales()
       // Update unsynced count after sync
       await get().getUnsyncedCount()
       set({ isSyncing: false })

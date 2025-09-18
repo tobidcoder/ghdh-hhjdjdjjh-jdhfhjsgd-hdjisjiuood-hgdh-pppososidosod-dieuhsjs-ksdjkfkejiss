@@ -4,7 +4,23 @@ import { useAuthStore } from '@renderer/store/auth'
 import { Button } from '@renderer/components/ui/button'
 import { Badge } from '@renderer/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@renderer/components/ui/card'
-import { Upload, CheckCircle, AlertCircle, Clock, RefreshCw, ChevronDown, ChevronRight } from 'lucide-react'
+import {
+  Upload,
+  CheckCircle,
+  AlertCircle,
+  Clock,
+  RefreshCw,
+  ChevronDown,
+  ChevronRight
+} from 'lucide-react'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger
+} from '@renderer/components/ui/dialog'
 
 export const SalesSyncStatus: React.FC = () => {
   const { unsyncedCount, isSyncing, syncError, getUnsyncedCount, syncSales, clearError } =
@@ -28,7 +44,7 @@ export const SalesSyncStatus: React.FC = () => {
     }
 
     try {
-      await syncSales(user.token)
+      await syncSales()
     } catch (error: any) {
       console.error('Sales sync failed:', error)
     }
@@ -60,40 +76,39 @@ export const SalesSyncStatus: React.FC = () => {
   }
 
   return (
-    <Card className="w-full max-w-md">
-      <CardHeader className="pb-0 cursor-pointer" onClick={toggleExpanded}>
-        <CardTitle className="text-sm flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            {isExpanded ? (
-              <ChevronDown className="w-4 h-4 text-gray-500" />
-            ) : (
-              <ChevronRight className="w-4 h-4 text-gray-500" />
-            )}
-            <span>Sales Sync Status</span>
-          </div>
+    <>
+      
+      <Dialog>
+        <DialogTrigger>
           <Badge variant="outline" className={getStatusColor()}>
             {getStatusIcon()}
             <span className="ml-1">{getStatusText()}</span>
           </Badge>
-        </CardTitle>
-      </CardHeader>
+        </DialogTrigger>
+        <DialogContent>
+          <DialogHeader>
+            <div className="flex items-center gap-5 space-x-2">
 
-      {/* Collapsed View - Always Visible */}
-      <div className="px-4 pb-0">
-        <div className="flex items-center justify-between text-sm">
-          <span>Unsynced Sales:</span>
-          <span className="font-medium">{unsyncedCount}</span>
-        </div>
-        {syncError && (
-          <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-xs text-red-800">
-            <span>Error: {syncError}</span>
+              <span>Sales Sync Status</span>
+            <Badge variant="outline" className={getStatusColor()}>
+              {getStatusIcon()}
+              <span className="ml-1">{getStatusText()}</span>
+            </Badge>
+            </div>
+          </DialogHeader>
+
+          <div className="px-4 pb-0">
+            <div className="flex items-center justify-between text-sm">
+              <span>Unsynced Sales:</span>
+              <span className="font-medium">{unsyncedCount}</span>
+            </div>
+            {syncError && (
+              <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-xs text-red-800">
+                <span>Error: {syncError}</span>
+              </div>
+            )}
           </div>
-        )}
-      </div>
 
-      {/* Expanded View - Only Visible When Expanded */}
-      {isExpanded && (
-        <CardContent className="space-y-3 pt-0">
           {syncError && (
             <div className="p-2 bg-red-50 border border-red-200 rounded text-xs text-red-800">
               <div className="flex items-center justify-between">
@@ -127,8 +142,8 @@ export const SalesSyncStatus: React.FC = () => {
               button above.
             </div>
           )}
-        </CardContent>
-      )}
-    </Card>
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }

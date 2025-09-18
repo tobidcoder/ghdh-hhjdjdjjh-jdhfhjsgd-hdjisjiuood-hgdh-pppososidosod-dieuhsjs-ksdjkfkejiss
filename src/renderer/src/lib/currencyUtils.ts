@@ -59,11 +59,11 @@ export function formatUSD(amount: number, options: Partial<CurrencyOptions> = {}
  * @returns Formatted currency string
  */
 export function formatPriceBySymbol(
-  amount: number, 
-//   currencySymbol: string, 
+  amount: number,
+  //   currencySymbol: string,
   options: Partial<CurrencyOptions> = {}
 ): string {
-//   const currency = currencySymbol === '₦' ? 'NGN' : 'USD'
+  //   const currency = currencySymbol === '₦' ? 'NGN' : 'USD'
   return formatCurrency(amount, {
     ...defaultCurrencyOptions,
     // currency,
@@ -91,7 +91,10 @@ export function formatPriceOnly(amount: number, options: Partial<CurrencyOptions
  * @param options - Optional formatting overrides
  * @returns Formatted currency string with 2 decimal places
  */
-export function formatPriceStandard(amount: number, options: Partial<CurrencyOptions> = {}): string {
+export function formatPriceStandard(
+  amount: number,
+  options: Partial<CurrencyOptions> = {}
+): string {
   return formatCurrency(amount, {
     ...defaultCurrencyOptions,
     minimumFractionDigits: 2,
@@ -123,8 +126,8 @@ export function formatPriceWhole(amount: number, options: Partial<CurrencyOption
  * @returns Formatted currency string with custom decimal places
  */
 export function formatPriceWithDecimals(
-  amount: number, 
-  decimals: number, 
+  amount: number,
+  decimals: number,
   options: Partial<CurrencyOptions> = {}
 ): string {
   return formatCurrency(amount, {

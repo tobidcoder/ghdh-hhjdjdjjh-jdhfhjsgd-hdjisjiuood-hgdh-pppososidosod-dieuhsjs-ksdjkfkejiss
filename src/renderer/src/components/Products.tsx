@@ -2,17 +2,11 @@ import React, { useEffect } from 'react'
 import { useProductsStore } from '@renderer/store/products'
 import { useSalesStore } from '@renderer/store/sales'
 import { Card, CardContent } from '@renderer/components/ui/card'
-import { Badge, Package } from 'lucide-react'
+import { Package } from 'lucide-react'
 import { formatPriceBySymbol } from '@renderer/lib/currencyUtils'
 
 export const Products: React.FC = () => {
-  const {
-    products,
-    isLoading,
-    error,
-    refresh,
-    searchQuery
-  } = useProductsStore()
+  const { products, isLoading, error, refresh, searchQuery } = useProductsStore()
   const { unsyncedCount } = useSalesStore()
 
   useEffect(() => {
@@ -105,12 +99,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             <h3 className="font-medium text-sm text-gray-900 line-clamp-2 leading-tight">
               {product.name}
             </h3>
-            <p className="text-lg font-bold text-gray-900">
-              {formatPriceBySymbol(product.price)}
-            </p>
-            {product.code && (
-              <p className="text-xs text-gray-500 font-mono">#{product.code}</p>
-            )}
+            <p className="text-lg font-bold text-gray-900">{formatPriceBySymbol(product.price)}</p>
+            {product.code && <p className="text-xs text-gray-500 font-mono">#{product.code}</p>}
           </div>
 
           {/* <div className="flex items-center justify-between">

@@ -49,7 +49,7 @@ interface ProductsState {
   searchProducts: (query: string) => Promise<void>
 
   // Product sync actions
-  startSync: (userToken: string) => Promise<void>
+  startSync: () => Promise<void>
   checkSyncProgress: () => Promise<void>
   resetSync: () => Promise<void>
   clearError: () => void
@@ -115,10 +115,10 @@ export const useProductsStore = create<ProductsState>((set, get) => ({
   },
 
   // Product sync actions
-  startSync: async (userToken: string) => {
+  startSync: async () => {
     set({ isSyncing: true, syncError: null })
     try {
-      await window.api.products.sync.start({ userToken })
+      await window.api.products.sync.start()
       // Check progress after starting
       await get().checkSyncProgress()
     } catch (err: any) {

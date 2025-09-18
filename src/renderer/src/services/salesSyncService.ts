@@ -1,5 +1,4 @@
 import { useSalesStore } from '@renderer/store/sales'
-import { useAuthStore } from '@renderer/store/auth'
 
 class SalesSyncService {
   private syncInterval: NodeJS.Timeout | null = null
@@ -36,53 +35,35 @@ class SalesSyncService {
     console.log('[SalesSyncService] Stopped automatic sales sync')
   }
 
-  private async checkAndSync() {
+  private async checkAndSync(): Promise<void> {
     try {
-      const authStore = useAuthStore.getState()
+      console.log('[SalesSyncService] Checking for unsynced sales...')
       const salesStore = useSalesStore.getState()
-
-      // Check if user is authenticated
-      if (!authStore.user?.token) {
-        console.log('[SalesSyncService] No auth token, skipping sync')
-        return
+      
+      // First update the count
+      await salesStore.getUnsyncedCount()
+      
+      // Then check the current count from state
+      if (salesStore.unsyncedCount > 0) {
+        console.log(`[SalesSyncService] Found ${salesStore.unsyncedCount} unsynced sales, starting sync...`)
+        await salesStore.syncSales()
+        console.log('[SalesSyncService] Sales sync completed')
+      } else {
+        console.log('[SalesSyncService] No unsynced sales found')
       }
-
-      // Check if there are unsynced sales
-      const unsyncedCount = salesStore.unsyncedCount
-      if (unsyncedCount === 0) {
-        console.log('[SalesSyncService] No unsynced sales')
-        return
-      }
-
-      console.log(`[SalesSyncService] Found ${unsyncedCount} unsynced sales, attempting sync...`)
-
-      // Attempt to sync sales
-      await salesStore.syncSales(authStore.user.token)
-
-      console.log('[SalesSyncService] Sales sync completed successfully')
-    } catch (error: any) {
-      console.error('[SalesSyncService] Sales sync failed:', error.message)
-
-      // If sync fails, it might be due to network issues
-      // The service will retry on the next interval
+    } catch (error) {
+      console.error('[SalesSyncService] Error during sales sync:', error)
     }
   }
 
-  // Manual sync method
-  async manualSync() {
+  async manualSync(): Promise<void> {
     try {
-      const authStore = useAuthStore.getState()
+      console.log('[SalesSyncService] Manual sales sync requested...')
       const salesStore = useSalesStore.getState()
-
-      if (!authStore.user?.token) {
-        throw new Error('No authentication token available')
-      }
-
-      await salesStore.syncSales(authStore.user.token)
-      return { success: true }
-    } catch (error: any) {
-      console.error('[SalesSyncService] Manual sync failed:', error)
-      throw error
+      await salesStore.syncSales()
+      console.log('[SalesSyncService] Manual sales sync completed')
+    } catch (error) {
+      console.error('[SalesSyncService] Error during manual sales sync:', error)
     }
   }
 

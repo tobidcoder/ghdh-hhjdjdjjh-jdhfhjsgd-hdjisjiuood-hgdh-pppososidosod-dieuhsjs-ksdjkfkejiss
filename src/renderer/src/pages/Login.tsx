@@ -4,14 +4,12 @@ import { Button } from '../components/ui/button'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@renderer/store/auth'
 
-
 const Login: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const navigate = useNavigate()
-  const { login, isSubmitting, error, user, clearError } = useAuthStore()
-
+  const { login, isSubmitting, error, user, clearError, syncProgress } = useAuthStore()
 
   useEffect(() => {
     if (user) {
@@ -124,6 +122,22 @@ const Login: React.FC = () => {
               <div>{error}</div>
             </div>
           ) : null}
+          {syncProgress?.isSyncing ? (
+            <div className="text-blue-600 text-sm bg-blue-50 p-3 rounded-md" role="alert">
+              <div className="font-medium">Syncing Data...</div>
+              <div className="mt-2">
+                <div className="text-xs text-gray-600 mb-1">
+                  {syncProgress.currentStep} ({syncProgress.completedSteps}/{syncProgress.totalSteps})
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div 
+                    className="bg-blue-600 h-2 rounded-full transition-all duration-300" 
+                    style={{ width: `${(syncProgress.completedSteps / syncProgress.totalSteps) * 100}%` }}
+                  ></div>
+                </div>
+              </div>
+            </div>
+          ) : null}
           <div className="flex justify-end mb-2">
             <a href="#" className="text-blue-500 text-sm hover:underline">
               Forgot Password ?
@@ -131,10 +145,10 @@ const Login: React.FC = () => {
           </div>
           <Button
             type="submit"
-            disabled={isSubmitting}
-            className="w-full bg-[#052315] text-white rounded-md py-2 mt-2 hover:bg-[#09351f]"
+            disabled={isSubmitting || syncProgress?.isSyncing}
+            className="w-full bg-[#052315] text-white rounded-md py-2 mt-2 hover:bg-[#09351f] disabled:opacity-50"
           >
-            {isSubmitting ? 'Signing in…' : 'Login'}
+            {isSubmitting ? 'Signing in…' : syncProgress?.isSyncing ? 'Syncing data…' : 'Login'}
           </Button>
         </form>
       </div>
