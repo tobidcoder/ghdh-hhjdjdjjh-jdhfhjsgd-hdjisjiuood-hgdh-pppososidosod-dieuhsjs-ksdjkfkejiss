@@ -4,6 +4,7 @@ import { Button } from '@renderer/components/ui/button'
 import { Wifi, WifiOff } from 'lucide-react'
 import { SalesSyncStatus } from './SalesSyncStatus'
 import { ProductSyncStatus } from './ProductSyncStatus'
+import Logo from '@renderer/assets/images/cheetah-dark-logo.png'
 
 interface DashboardHeaderProps {
   currentTime: Date
@@ -45,12 +46,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   return (
     <div className="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between">
       <div className="flex items-center space-x-6">
-        <div className="flex items-center space-x-2">
-          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold text-lg"></span>
-          </div>
-          <span className="text-xl font-bold text-gray-900">Cheetah</span>
-        </div>
+        <img src={Logo} alt="logo" width={130} />
         <span className="text-gray-600">POS : {settings?.company_name}</span>
       </div>
 
@@ -61,12 +57,6 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
         <span>Time: {formatTime(currentTime)}</span>
         <SalesSyncStatus />
         <ProductSyncStatus />
-
-        {/* {unsyncedCount > 0 && (
-          <Badge variant="secondary" className="bg-orange-100 text-orange-800">
-            {unsyncedCount} sales pending sync
-          </Badge>
-        )} */}
       </div>
 
       <div className="flex items-center space-x-2">

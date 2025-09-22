@@ -44,8 +44,9 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
   // Calculate totals
   const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0)
-  const taxAmount = subtotal * 0.15 // 15% tax
-  const totalAmount = subtotal + taxAmount
+  // const taxAmount = subtotal * 0.15 // 15% tax
+  const totalAmount = subtotal 
+  // + taxAmount
   const changeReturn = parseFloat(receivedAmount) - totalAmount
 
   // Fetch payment methods when modal opens
@@ -68,7 +69,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
       if (paymentMethods.length > 0) {
         const activeMethods = paymentMethods.filter((method) => method.is_active)
         if (activeMethods.length > 0) {
-          setPaymentType(activeMethods[0].id)
+          setPaymentType(String(activeMethods[0].id))
         }
       }
     }
@@ -194,7 +195,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
               <label className="block text-sm font-medium text-gray-700">Payment Status:</label>
               <select
                 value={paymentStatus}
-                onChange={(e) => setPaymentStatus(e.target.value)}
+                onChange={(e) => setPaymentStatus(Number(e.target.value))}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
               >
                 <option value={1}>Paid</option>
@@ -221,12 +222,12 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                 <span className="font-semibold text-gray-800">{formatPriceBySymbol(subtotal)}</span>
               </div>
 
-              <div className="flex items-center justify-between">
+              {/* <div className="flex items-center justify-between">
                 <span className="text-gray-600">Order Tax</span>
                 <span className="font-semibold text-gray-800">
                   {formatPriceBySymbol(taxAmount)} (15.00%)
                 </span>
-              </div>
+              </div> */}
 
               <div className="flex items-center justify-between">
                 <span className="text-gray-600">Discount</span>

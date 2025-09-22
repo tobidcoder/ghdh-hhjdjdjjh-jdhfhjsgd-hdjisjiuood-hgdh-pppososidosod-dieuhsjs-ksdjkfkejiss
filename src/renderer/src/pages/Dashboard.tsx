@@ -184,7 +184,9 @@ export const Dashboard: React.FC = () => {
   const handlePaymentSubmit = async (paymentData: any): Promise<void> => {
     try {
       const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0)
-      const taxAmount = subtotal * 0.15 // 15% tax
+      // const taxAmount = subtotal * 0.15 // 15% tax
+      // const totalAmount = subtotal + taxAmount
+      const taxAmount = 0 
       const totalAmount = subtotal + taxAmount
 
       // Generate invoice number (you might want to make this more sophisticated)
@@ -240,7 +242,8 @@ export const Dashboard: React.FC = () => {
         grand_total: totalAmount.toString(),
         discount: 0,
         shipping: 0,
-        tax_rate: 0.15, // 15% tax rate
+        // tax_rate: 0.15, // 15% tax rate
+        tax_rate: 0,
         status: 1, // Active status
         hold_ref_no: null // Use null instead of empty string
       }
