@@ -72,10 +72,12 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
         <span>
           Time: <span className="text-[#052315]">{formatTime(currentTime)}</span>
         </span>
+      </div>
+
+      <div className="flex items-center space-x-3">
         <SalesSyncStatus />
         <ProductSyncStatus />
       </div>
-
       <div className="flex items-center space-x-2">
         <Badge variant={isOnline ? 'default' : 'secondary'} className="flex items-center space-x-1">
           {isOnline ? <Wifi className="w-3 h-3" /> : <WifiOff className="w-3 h-3" />}
