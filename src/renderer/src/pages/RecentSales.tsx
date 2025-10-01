@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Button } from '@renderer/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@renderer/components/ui/card'
 import { Badge } from '@renderer/components/ui/badge'
-import { ArrowLeft, Calendar, Filter, BarChart3, CheckCircle, Clock, AlertCircle, RefreshCw, XCircle } from 'lucide-react'
+import { ArrowLeft, Calendar, Filter, CheckCircle, Clock,  RefreshCw, XCircle } from 'lucide-react'
 import { useAuthStore } from '@renderer/store/auth'
 import { SaleDetailsModal } from '@renderer/components/SaleDetailsModal'
 // import {  } from '@renderer/services/apiService'
@@ -158,7 +158,7 @@ const RecentSales: React.FC = () => {
   //   }
   // }
 
-  const handleSyncSale = async (sale: SaleRecord) => {
+  const handleSyncSale = async () => {
     try {
       // Call the electron API to sync sale
       await syncSales()

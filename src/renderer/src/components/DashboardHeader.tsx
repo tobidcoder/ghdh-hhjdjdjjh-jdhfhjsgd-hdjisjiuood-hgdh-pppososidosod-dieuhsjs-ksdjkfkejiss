@@ -14,17 +14,15 @@ interface DashboardHeaderProps {
   isOnline: boolean
   unsyncedCount: number
   onLogout: () => void
-  saleRef: string
 }
 
 export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   currentTime,
-  settings,
+  // settings,
   user,
   isOnline,
   // unsyncedCount,
   onLogout,
-  saleRef
 }) => {
   const navigate = useNavigate()
 

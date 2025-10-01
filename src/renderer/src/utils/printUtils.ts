@@ -1,5 +1,5 @@
 import JsBarcode from 'jsbarcode'
-import { useSettingsStore } from '../store/settings'
+// import { useSettingsStore } from '../store/settings'
 
 export const printReceipt = async (receiptData: any): Promise<void> => {
   console.log('[PRINT] Starting printReceipt function with data:', receiptData)

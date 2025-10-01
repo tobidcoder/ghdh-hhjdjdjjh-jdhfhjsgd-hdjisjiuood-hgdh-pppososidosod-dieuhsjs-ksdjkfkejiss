@@ -290,7 +290,6 @@ export const Dashboard: React.FC = () => {
         isOnline={isOnline}
         unsyncedCount={unsyncedCount}
         onLogout={logout}
-        saleRef={saleRef}
       />
       <div className="flex-1 overflow-y-scrl flex overflow-hidden">
         <div className="">
