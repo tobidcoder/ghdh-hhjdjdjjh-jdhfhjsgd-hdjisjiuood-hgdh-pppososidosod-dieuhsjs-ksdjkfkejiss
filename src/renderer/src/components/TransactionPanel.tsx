@@ -145,7 +145,7 @@ export const TransactionPanel: React.FC<TransactionPanelProps> = ({
               Invoice Number : <span className="text-[#052315]  "> {saleRef}</span>
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2 max-h-[40vh] overflow-y-auto">
+          <CardContent className="space-y-2 max-h-[40dvh] overflow-y-auto">
             <div className="grid grid-cols-7 gap-2 text-xs font-medium text-gray-600 border-b border-gray-200 pb-2">
               <span>LINE</span>
               <span className="col-span-2">DESCRIPTION</span>

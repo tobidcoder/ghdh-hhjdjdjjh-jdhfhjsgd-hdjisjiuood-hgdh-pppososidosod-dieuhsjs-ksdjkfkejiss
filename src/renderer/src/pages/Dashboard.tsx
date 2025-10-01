@@ -291,8 +291,10 @@ export const Dashboard: React.FC = () => {
         unsyncedCount={unsyncedCount}
         onLogout={logout}
       />
-      <div className="flex-1 overflow-y-scrl flex overflow-hidden">
-        <div className="">
+      <div className="flex-1  flex overflow-hidden">
+        <div className="flex bg-white flex-col items-end h-[100%]">
+          <div>
+
           <TransactionPanel
             cartItems={cartItems}
             onClearCart={() => useProductsStore.getState().clearCart()}
@@ -301,7 +303,10 @@ export const Dashboard: React.FC = () => {
             onAddItem={(product) => useProductsStore.getState().addToCart(product)}
             saleRef={saleRef}
           />
-          <div className="w-full bg-white border-l border-gray-200 flex flex-col">
+          </div>
+          <div className="h-[100%]"></div>
+
+          <div className="w-full bg-white border-l border-gray-200 flex flex-col mb-4">
             <PaymentSummary cartItems={cartItems} onCheckout={handleCheckout} />
           </div>
         </div>

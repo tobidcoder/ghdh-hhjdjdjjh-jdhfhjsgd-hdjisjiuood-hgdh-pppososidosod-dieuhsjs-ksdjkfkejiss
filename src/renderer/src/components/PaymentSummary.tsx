@@ -24,9 +24,9 @@ export const PaymentSummary: React.FC<PaymentSummaryProps> = ({ cartItems, onChe
   const totalAmount = subtotal + taxAmount
 
   return (
-    <div className="mt-4  overflow-y-scroll h-full w-full space-y-3 px-4 ">
+    <div className="mt-4   h-full w-full space-y-3 px-4 ">
       <Card>
-        <CardHeader className="pb-2">
+        <CardHeader className="">
           <CardTitle className="text-sm">Customer & Payment</CardTitle>
         </CardHeader>
         <CardContent className="space-y-2">
@@ -60,11 +60,12 @@ export const PaymentSummary: React.FC<PaymentSummaryProps> = ({ cartItems, onChe
           <div className="text-lg font-bold text-red-900">{formatPriceBySymbol(totalAmount)}</div>
         </div> */}
         <Button
-          className="flex-1 cursor-pointer bg-green-800 text-white hover:bg-green-900 disabled:bg-gray-400 disabled:cursor-not-allowed"
+          className="flex-1  py-6 cursor-pointer bg-green-800 text-white hover:bg-green-900 disabled:bg-gray-400 disabled:cursor-not-allowed"
           onClick={onCheckout}
           disabled={cartItems.length === 0}
+          size={'lg'}
         >
-          <CreditCard className="w-4 h-4 mr-2" />
+          <CreditCard  className="mr-2" />
           PAY
         </Button>
       </div>
