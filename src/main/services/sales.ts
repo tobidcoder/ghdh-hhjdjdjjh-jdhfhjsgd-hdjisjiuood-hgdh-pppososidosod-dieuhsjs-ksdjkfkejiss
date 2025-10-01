@@ -1,7 +1,7 @@
 import { getDatabase } from '../database/connection'
 import { SaleRecord } from '../database/types'
 import { getBaseUrl } from '../database/connection'
-import { requireCurrentUserToken } from './auth'
+import { requireCurrentUserToken, requireCurrentUserId } from './auth'
 
 // Sales functions
 export function createSale(sale: any): SaleRecord {
@@ -12,6 +12,7 @@ export function createSale(sale: any): SaleRecord {
 
   const now = new Date().toISOString()
   const saleId = sale.ref
+  const currentUserId = requireCurrentUserId()
 
   const stmt = database.prepare(`
     INSERT INTO sales (
@@ -19,8 +20,8 @@ export function createSale(sale: any): SaleRecord {
       total_amount, payment_method, payment_status, items, created_at, synced_at,
       sync_status, sync_attempts, last_sync_error, ref, date, customer_id,
       warehouse_id, sale_items, grand_total, discount, shipping, tax_rate,
-      note, status, hold_ref_no
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      note, status, hold_ref_no, user_id
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `)
 
   stmt.run(
@@ -50,7 +51,8 @@ export function createSale(sale: any): SaleRecord {
     sale.tax_rate || 0,
     sale.note || null,
     sale.status || 1,
-    sale.hold_ref_no || null
+    sale.hold_ref_no || null,
+    currentUserId
   )
 
   return getSaleById(saleId)!
@@ -62,9 +64,10 @@ export function getPendingSales(): SaleRecord[] {
     throw new Error('Database not initialized')
   }
 
+  const currentUserId = requireCurrentUserId()
   return database
-    .prepare("SELECT * FROM sales WHERE sync_status != 'synced' ORDER BY created_at DESC")
-    .all() as SaleRecord[]
+    .prepare("SELECT * FROM sales WHERE sync_status != 'synced' AND user_id = ? ORDER BY created_at DESC")
+    .all(currentUserId) as SaleRecord[]
 }
 
 export function getUnsyncedSalesCount(): number {
@@ -73,9 +76,10 @@ export function getUnsyncedSalesCount(): number {
     throw new Error('Database not initialized')
   }
 
+  const currentUserId = requireCurrentUserId()
   const result = database
-    .prepare("SELECT COUNT(*) as count FROM sales WHERE sync_status != 'synced'")
-    .get() as { count: number }
+    .prepare("SELECT COUNT(*) as count FROM sales WHERE sync_status != 'synced' AND user_id = ?")
+    .get(currentUserId) as { count: number }
   return result.count
 }
 
@@ -108,7 +112,8 @@ export function deleteSyncedSale(saleId: string): void {
     throw new Error('Database not initialized')
   }
 
-  database.prepare('DELETE FROM sales WHERE id = ? AND sync_status = "synced"').run(saleId)
+  const currentUserId = requireCurrentUserId()
+  database.prepare('DELETE FROM sales WHERE id = ? AND sync_status = "synced" AND user_id = ?').run(saleId, currentUserId)
 }
 
 export function getSalesByDateRange(startDate: string, endDate: string): SaleRecord[] {
@@ -117,15 +122,16 @@ export function getSalesByDateRange(startDate: string, endDate: string): SaleRec
     throw new Error('Database not initialized')
   }
 
+  const currentUserId = requireCurrentUserId()
   return database
     .prepare(
       `
     SELECT * FROM sales
-    WHERE date BETWEEN ? AND ?
+    WHERE date BETWEEN ? AND ? AND user_id = ?
     ORDER BY date DESC
   `
     )
-    .all(startDate, endDate) as SaleRecord[]
+    .all(startDate, endDate, currentUserId) as SaleRecord[]
 }
 
 export function getSaleById(saleId: string): SaleRecord | null {
@@ -134,7 +140,8 @@ export function getSaleById(saleId: string): SaleRecord | null {
     throw new Error('Database not initialized')
   }
 
-  const result = database.prepare('SELECT * FROM sales WHERE id = ?').get(saleId) as
+  const currentUserId = requireCurrentUserId()
+  const result = database.prepare('SELECT * FROM sales WHERE id = ? AND user_id = ?').get(saleId, currentUserId) as
     | SaleRecord
     | undefined
   return result || null

@@ -1,24 +1,24 @@
-import React, { useState } from 'react'
+import React from 'react'
 import { useSalesStore } from '@renderer/store/sales'
 import { useAuthStore } from '@renderer/store/auth'
 import { Button } from '@renderer/components/ui/button'
 import { Badge } from '@renderer/components/ui/badge'
-import { Card, CardContent, CardHeader, CardTitle } from '@renderer/components/ui/card'
+// import { Card, CardContent, CardHeader, CardTitle } from '@renderer/components/ui/card'
 import {
   Upload,
   CheckCircle,
   AlertCircle,
   Clock,
   RefreshCw,
-  ChevronDown,
-  ChevronRight
+  // ChevronDown,
+  // ChevronRight
 } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
+  // DialogDescription,
   DialogHeader,
-  DialogTitle,
+  // DialogTitle,
   DialogTrigger
 } from '@renderer/components/ui/dialog'
 
@@ -26,7 +26,7 @@ export const SalesSyncStatus: React.FC = () => {
   const { unsyncedCount, isSyncing, syncError, getUnsyncedCount, syncSales, clearError } =
     useSalesStore()
   const { user } = useAuthStore()
-  const [isExpanded, setIsExpanded] = useState(false)
+  // const [isExpanded, setIsExpanded] = useState(false)
 
   React.useEffect(() => {
     // Get initial unsynced count
@@ -71,13 +71,13 @@ export const SalesSyncStatus: React.FC = () => {
     return 'bg-orange-100 text-orange-800'
   }
 
-  const toggleExpanded = () => {
-    setIsExpanded(!isExpanded)
-  }
+  // const toggleExpanded = () => {
+  //   setIsExpanded(!isExpanded)
+  // }
 
   return (
     <>
-      
+
       <Dialog>
         <DialogTrigger>
           <Badge variant="outline" className={getStatusColor()}>

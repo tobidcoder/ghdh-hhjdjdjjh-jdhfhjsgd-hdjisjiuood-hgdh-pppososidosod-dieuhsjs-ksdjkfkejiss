@@ -23,10 +23,13 @@ export const Dashboard: React.FC = () => {
     updateCartItemQuantity
   } = useProductsStore()
   const { createSale, unsyncedCount } = useSalesStore()
-  const { productCategories, fetchProductCategories, settings } = useSettingsStore()
+  const { productCategories, fetchProductCategories } = useSettingsStore()
   const [currentTime, setCurrentTime] = useState(new Date())
   const [isOnline, setIsOnline] = useState(false) // Mock online status
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null)
+  const [settings, setSettings] = useState(
+    JSON.parse(localStorage.getItem('cheetah_settings') || '{}')
+  )
   const [autoAddNotification, setAutoAddNotification] = useState<{
     product: { id: string; name: string; price: number; code: string | null }
     visible: boolean
@@ -48,6 +51,7 @@ export const Dashboard: React.FC = () => {
   }, [cartItems.length])
 
   useEffect(() => {
+    setSettings(JSON.parse(localStorage.getItem('cheetah_settings') || '{}'))
     // Initial check
     setIsOnline(navigator.onLine)
 
@@ -186,7 +190,7 @@ export const Dashboard: React.FC = () => {
       const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0)
       // const taxAmount = subtotal * 0.15 // 15% tax
       // const totalAmount = subtotal + taxAmount
-      const taxAmount = 0 
+      const taxAmount = 0
       const totalAmount = subtotal + taxAmount
 
       // Generate invoice number (you might want to make this more sophisticated)
@@ -245,13 +249,14 @@ export const Dashboard: React.FC = () => {
         // tax_rate: 0.15, // 15% tax rate
         tax_rate: 0,
         status: 1, // Active status
-        hold_ref_no: null // Use null instead of empty string
+        hold_ref_no: null ,// Use null instead of empty string
+        user_id: user!.id, // Add required user_id field from auth store
       }
 
       await createSale(saleData)
 
       // Generate and print receipt
-      const receiptData = generateReceiptData(saleRef, cartItems, paymentData, settings)
+      const receiptData = generateReceiptData(saleRef, cartItems, paymentData, settings, saleRef)
       await printReceipt(receiptData)
 
       // Clear cart after successful sale
@@ -295,6 +300,7 @@ export const Dashboard: React.FC = () => {
             onRemoveFromCart={removeFromCart}
             onUpdateQuantity={updateCartItemQuantity}
             onAddItem={(product) => useProductsStore.getState().addToCart(product)}
+            saleRef={saleRef}
           />
           <div className="w-full bg-white border-l border-gray-200 flex flex-col">
             <PaymentSummary cartItems={cartItems} onCheckout={handleCheckout} />

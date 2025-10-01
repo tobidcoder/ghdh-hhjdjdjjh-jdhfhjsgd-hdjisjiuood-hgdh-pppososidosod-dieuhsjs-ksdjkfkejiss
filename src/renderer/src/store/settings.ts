@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { getSettingsFromStorage, saveSettingsToStorage } from '@renderer/utils/localStorage'
 
 export interface Settings {
   id: string
@@ -161,6 +162,17 @@ interface SettingsState {
   getShippingEnabled: () => boolean
   getDiscountEnabled: () => boolean
 
+  // Receipt visibility helper getters
+  getShowBarcodeInReceipt: () => boolean
+  getShowLogoInReceipt: () => boolean
+  getShowAddress: () => boolean
+  getShowPhone: () => boolean
+  getShowEmail: () => boolean
+  getShowCustomer: () => boolean
+  getShowTaxDiscountShipping: () => boolean
+  getShowNote: () => boolean
+
+
   // Config helper getters
   getPermissions: () => string[]
   hasPermission: (permission: string) => boolean
@@ -210,7 +222,24 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   fetchSettings: async (): Promise<void> => {
     try {
       set({ isLoading: true, error: null })
+      
+      // First, try to get settings from localStorage
+      const cachedSettings = getSettingsFromStorage()
+      if (cachedSettings) {
+        console.log('[Settings] Using cached settings from localStorage')
+        set({ settings: cachedSettings, isLoading: false })
+        return
+      }
+      
+      // If no cached settings, fetch from database
+      console.log('[Settings] No cached settings found, fetching from database')
       const settings = await window.api.db.getSettings()
+      
+      // Save to localStorage for future use
+      if (settings) {
+        saveSettingsToStorage(settings)
+      }
+      
       set({ settings, isLoading: false })
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to fetch settings'
@@ -300,7 +329,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
       const paymentMethodsData = await window.api.db.getPaymentMethods()
       const paymentMethods = paymentMethodsData.map((method) => ({
         ...method,
-        is_active: method.is_active == 1 ? true : false // Convert 1/0 to true/false
+        is_active: method.is_active == '1', // Convert 1/0 to true/false
       }))
       set({ paymentMethods })
       // console.log('[Settings] Fetched payment methods:', paymentMethods)
@@ -329,7 +358,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   // Helper getters
   getCurrencySymbol: (): string => {
     const { settings } = get()
-    return settings?.currency_symbol || '$'
+    return settings?.currency_symbol || '₦'
   },
 
   getCompanyInfo: () => {
@@ -345,17 +374,61 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
 
   getTaxEnabled: (): boolean => {
     const { settings } = get()
-    return settings?.enable_tax === '1'
+    return settings?.enable_tax == '1'
   },
 
   getShippingEnabled: (): boolean => {
     const { settings } = get()
-    return settings?.enable_shipping === '1'
+    return settings?.enable_shipping == '1'
   },
 
   getDiscountEnabled: (): boolean => {
     const { settings } = get()
-    return settings?.enable_discount === '1'
+    return settings?.enable_discount == '1'
+  },
+
+  // Receipt visibility helper getters
+  getShowPhone: (): boolean => {
+    const { settings } = get()
+    return settings?.show_phone == '1'
+  },
+
+  getShowAddress: (): boolean => {
+    const { settings } = get()
+    return settings?.show_address == '1'
+  },
+
+  getShowCustomer: (): boolean => {
+    const { settings } = get()
+    return settings?.show_customer == '1'
+  },
+
+  getShowEmail: (): boolean => {
+    const { settings } = get()
+    return settings?.show_email == '1'
+  },
+
+  getShowBarcodeInReceipt: (): boolean => {
+    const { settings } = get()
+    return settings?.show_barcode_in_receipt == '1'
+  },
+
+  getShowLogoInReceipt: (): boolean => {
+    const { settings } = get()
+    return settings?.show_logo_in_receipt == '1'
+  },
+
+  getShowNote: (): boolean => {
+    const { settings } = get()
+    // If show_note is null, default to true (show by default)
+    // If show_note is '0', return false (hidden)
+    // If show_note is '1', return true (shown)
+    return settings?.show_note !== '0'
+  },
+
+  getShowTaxDiscountShipping: (): boolean => {
+    const { settings } = get()
+    return settings?.show_tax_discount_shipping == '1'
   },
 
   // Config helper getters

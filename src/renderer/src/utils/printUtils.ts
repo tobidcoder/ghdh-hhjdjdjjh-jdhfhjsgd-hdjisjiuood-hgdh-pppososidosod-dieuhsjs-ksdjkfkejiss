@@ -1,10 +1,38 @@
+import JsBarcode from 'jsbarcode'
+import { useSettingsStore } from '../store/settings'
+
 export const printReceipt = async (receiptData: any): Promise<void> => {
   console.log('[PRINT] Starting printReceipt function with data:', receiptData)
   try {
+    // Fetch payment method display name if paymentMethod is an ID
+    let paymentMethodDisplayName = receiptData.saleData.paymentMethod
+
+    if (typeof receiptData.saleData.paymentMethod === 'number' ||
+        (typeof receiptData.saleData.paymentMethod === 'string' && !isNaN(Number(receiptData.saleData.paymentMethod)))) {
+      try {
+        const paymentMethod = await window.api.db.getPaymentMethodById(Number(receiptData.saleData.paymentMethod))
+        if (paymentMethod && paymentMethod.display_name) {
+          paymentMethodDisplayName = paymentMethod.display_name
+        }
+      } catch (error) {
+        console.error('[PRINT] Failed to fetch payment method display name:', error)
+        // Keep the original value as fallback
+      }
+    }
+
+    // Update receiptData with the display name
+    const updatedReceiptData = {
+      ...receiptData,
+      saleData: {
+        ...receiptData.saleData,
+        paymentMethod: paymentMethodDisplayName
+      }
+    }
+
     // Generate receipt HTML content
-    const receiptHTML = generateReceiptHTML(receiptData)
+    const receiptHTML = generateReceiptHTML(updatedReceiptData)
     console.log('[PRINT] Generated receipt HTML:', receiptHTML.substring(0, 200) + '...')
-    
+
     // Create the complete HTML document for printing
     const htmlContent = `
       <!DOCTYPE html>
@@ -13,8 +41,8 @@ export const printReceipt = async (receiptData: any): Promise<void> => {
           <title>Receipt</title>
           <style>
             @media print {
-              body { 
-                margin: 0; 
+              body {
+                margin: 0;
                 padding: 0;
                 background: white;
               }
@@ -73,7 +101,7 @@ export const printReceipt = async (receiptData: any): Promise<void> => {
 
             .items-header {
               display: grid;
-              grid-template-columns: 3fr 1fr 1fr 1fr;
+              grid-template-columns: 7fr 1fr 4fr 4fr;
               gap: 5px;
               font-weight: bold;
               border-bottom: 1px solid #ccc;
@@ -84,7 +112,7 @@ export const printReceipt = async (receiptData: any): Promise<void> => {
 
             .item-row {
               display: grid;
-              grid-template-columns: 3fr 1fr 1fr 1fr;
+              grid-template-columns: 7fr 1fr 4fr 4fr;
               gap: 5px;
               padding: 3px 0;
               border-bottom: 1px solid #eee;
@@ -122,6 +150,26 @@ export const printReceipt = async (receiptData: any): Promise<void> => {
               text-align: center;
               border-top: 1px solid #ccc;
               padding-top: 10px;
+            }
+
+            .note-section {
+              text-align: left;
+              margin-bottom: 10px;
+              padding: 5px;
+              background: #f9f9f9;
+              border: 1px solid #ddd;
+            }
+
+            .note-label {
+              font-weight: bold;
+              font-size: 10px;
+              margin-bottom: 3px;
+            }
+
+            .note-content {
+              font-size: 9px;
+              margin: 0;
+              word-wrap: break-word;
             }
 
             .barcode {
@@ -175,8 +223,51 @@ export const printReceipt = async (receiptData: any): Promise<void> => {
 const generateReceiptHTML = (receiptData: any): string => {
   const { saleData, cartItems, companyInfo } = receiptData
   const subtotal = cartItems.reduce((sum: number, item: any) => sum + item.price * item.quantity, 0)
-  const taxAmount = subtotal * 0.15
+  const taxAmount = 0
+  // const taxAmount = subtotal * 0.15
   const totalAmount = subtotal + taxAmount
+  const settings = JSON.parse(localStorage.getItem('cheetah_settings') || '{}')
+  const showBarcode = settings.show_barcode_in_receipt == "1"
+  // const showLogo = settings.show_logo_in_receipt == "1"
+  const showPhone = settings.show_phone == "1"
+  const showAddress = settings.show_address == "1"
+  const showCustomer = settings.show_customer == "1"
+  const showEmail = settings.show_email == "1"
+  const showNote = settings.show_note == "1"
+  // const showTaxDiscountShipping = settings.show_tax_discount_shipping == "1"
+  const taxEnabled = settings.enable_tax =="1"
+  const discountEnabled = settings.enable_discount =="1"
+  const shippingEnabled = settings.enable_shipping =="1"
+
+
+  // Get settings for field visibility
+  // const {
+  //   getShowPhone,
+  //   getShowAddress,
+  //   getShowCustomer,
+  //   getShowEmail,
+  //   // getShowBarcodeInReceipt,
+  //   // getShowLogoInReceipt,
+  //   getShowNote,
+  //   // getShowTaxDiscountShipping,
+  //   getTaxEnabled,
+  //   getDiscountEnabled,
+  //   getShippingEnabled
+  // } = useSettingsStore.getState()
+
+  // const showPhone = getShowPhone()
+  // const showAddress = getShowAddress()
+  // const showCustomer = getShowCustomer()
+  // const showEmail = getShowEmail()
+
+
+  // const showBarcodeInReceipt = getShowBarcodeInReceipt()
+  // const showLogoInReceipt = getShowLogoInReceipt()
+  // const showNote = getShowNote()
+  // const showTaxDiscountShipping = getShowTaxDiscountShipping()
+  // const taxEnabled = getTaxEnabled()
+  // const discountEnabled = getDiscountEnabled()
+  // const shippingEnabled = getShippingEnabled()
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
@@ -192,7 +283,40 @@ const generateReceiptHTML = (receiptData: any): string => {
   }
 
   const formatPrice = (price: number) => {
-    return `₦ ${price.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+    return `₦${price.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  }
+
+  // Generate barcode SVG
+  const generateBarcodeSVG = (value: string): string => {
+    try {
+      // Create a temporary canvas element
+      const canvas = document.createElement('canvas')
+      JsBarcode(canvas, value, {
+        format: 'CODE128',
+        width: 1.5,
+        height: 50,
+        displayValue: false,
+        background: '#ffffff',
+        lineColor: '#000000'
+      })
+
+      // Convert canvas to SVG (simplified approach)
+      const svg = `<svg width="100%" height="50" xmlns="http://www.w3.org/2000/svg">
+        <rect width="100%" height="100%" fill="white"/>
+        <image href="${canvas.toDataURL()}" width="100%" height="50"/>
+      </svg>`
+      return svg
+    } catch (error) {
+      console.error('Error generating barcode:', error)
+      return `<div style="width: 150px; height: 40px; background: #f0f0f0; display: flex; align-items: center; justify-content: center; font-size: 8px;">[BARCODE ERROR]</div>`
+    }
+  }
+
+  // Get payment method display name (no longer needed as we handle it in printReceipt)
+  const getPaymentMethodDisplayName = (paymentMethodId: string | number): string => {
+    // This function is now just a fallback for the HTML template
+    // The actual lookup is done in printReceipt function
+    return String(paymentMethodId)
   }
 
   return `
@@ -202,11 +326,11 @@ const generateReceiptHTML = (receiptData: any): string => {
         <h1>${companyInfo.name}</h1>
         <p>${formatDate(saleData.date)}</p>
         <p>Branch: ${companyInfo.branch}</p>
+        ${showAddress ? `<p>${companyInfo.address}</p>` : ''}
         <p>Cashier: ${companyInfo.cashier}</p>
-        <p>${companyInfo.address}</p>
-        <p>Phone: ${companyInfo.phone}</p>
-        <p>${companyInfo.email}</p>
-        <p>Customer: ${saleData.customerName || 'walk-in-customer'}</p>
+        ${showPhone ? `<p>Phone: ${companyInfo.phone}</p>` : ''}
+        ${showEmail ? `<p>Email: ${companyInfo.email}</p>` : ''}
+        ${showCustomer ? `<p>Customer: ${saleData.customerName || 'walk-in-customer'}</p>` : ''}
       </div>
 
       <!-- Divider -->
@@ -221,14 +345,18 @@ const generateReceiptHTML = (receiptData: any): string => {
           <div class="text-right">Total</div>
         </div>
 
-        ${cartItems.map((item: any) => `
+        ${cartItems
+          .map(
+            (item: any) => `
           <div class="item-row">
             <div class="item-name">${item.name}</div>
             <div class="text-center">${item.quantity}</div>
             <div class="text-right">${formatPrice(item.price)}</div>
             <div class="text-right">${formatPrice(item.price * item.quantity)}</div>
           </div>
-        `).join('')}
+        `
+          )
+          .join('')}
       </div>
 
       <!-- Summary Section -->
@@ -237,21 +365,40 @@ const generateReceiptHTML = (receiptData: any): string => {
           <span>Total Amount:</span>
           <span>${formatPrice(subtotal)}</span>
         </div>
+        ${
+          taxEnabled
+            ? `
         <div class="summary-row">
-          <span>Order Tax:</span>
-          <span>${formatPrice(taxAmount)} (15.00%)</span>
+          <span>Tax:</span>
+          <span>${formatPrice(taxAmount)}</span>
         </div>
+        `
+            : ''
+        }
+        ${
+          discountEnabled
+            ? `
         <div class="summary-row">
           <span>Discount:</span>
           <span>${formatPrice(0)}</span>
         </div>
+        `
+            : ''
+        }
+        ${
+          shippingEnabled
+            ? `
         <div class="summary-row">
           <span>Shipping:</span>
           <span>${formatPrice(0)}</span>
         </div>
+        `
+            : ''
+        }
+
         <div class="summary-row">
           <span>Payment Method:</span>
-          <span>${saleData.paymentMethod}</span>
+          <span>${getPaymentMethodDisplayName(saleData.paymentMethod)}</span>
         </div>
         <div class="summary-row">
           <span>Change:</span>
@@ -267,10 +414,26 @@ const generateReceiptHTML = (receiptData: any): string => {
 
       <!-- Footer -->
       <div class="receipt-footer">
-        <div class="barcode">
-          [BARCODE]
+        ${
+          showNote && saleData.note
+            ? `
+        <div class="note-section">
+          <p class="note-label">Note:</p>
+          <p class="note-content">${saleData.note}</p>
         </div>
-        <p class="barcode-text">${saleData.invoiceNumber}</p>
+        `
+            : ''
+        }
+        ${
+          showBarcode
+            ? `
+        <div class="barcode">
+          ${generateBarcodeSVG(saleData.ref || saleData.invoiceNumber)}
+        </div>
+        `
+        : ''
+      }
+      <p class="barcode-text">${saleData.ref || saleData.invoiceNumber}</p>
         <p class="powered-by">Powered by: www.usecheetah.com</p>
       </div>
     </div>
@@ -281,7 +444,8 @@ export const generateReceiptData = (
   invoiceNumber: string,
   cartItems: any[],
   paymentData: any,
-  companyInfo: any
+  companyInfo: any,
+  saleRef?: string
 ) => {
   const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0)
   const taxAmount = subtotal * 0.15
@@ -296,7 +460,8 @@ export const generateReceiptData = (
       paymentStatus: paymentData.paymentStatus,
       note: paymentData.note,
       receivedAmount: paymentData.receivedAmount,
-      changeReturn: paymentData.changeReturn
+      changeReturn: paymentData.changeReturn,
+      ref: saleRef || invoiceNumber // Add ref field for barcode
     },
     cartItems,
     companyInfo: {

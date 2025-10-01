@@ -60,6 +60,7 @@ export interface SaleRecord {
   note: string | null
   status: number
   hold_ref_no: string | null
+  user_id: string // ID of the user who created this sale
 }
 
 export interface UserRecord {
@@ -891,14 +892,15 @@ export function createSale(
   const database = requireDb()
   const id = crypto.randomUUID()
   const now = new Date().toISOString()
+  const currentUserId = requireCurrentUserId()
 
   const stmt = database.prepare(`
     INSERT INTO sales (
       id, invoice_number, customer_name, customer_phone, subtotal, tax_amount, 
       total_amount, payment_method, payment_status, items, created_at, 
       sync_status, sync_attempts, ref, date, customer_id, warehouse_id, sale_items,
-      grand_total, discount, shipping, tax_rate, note, status, hold_ref_no
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      grand_total, discount, shipping, tax_rate, note, status, hold_ref_no, user_id
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `)
 
   stmt.run(
@@ -926,7 +928,8 @@ export function createSale(
     sale.tax_rate || 0,
     sale.note || null,
     sale.status || 1,
-    sale.hold_ref_no || null
+    sale.hold_ref_no || null,
+    currentUserId
   )
 
   return {
@@ -956,22 +959,25 @@ export function createSale(
     tax_rate: sale.tax_rate || 0,
     note: sale.note || null,
     status: sale.status || 1,
-    hold_ref_no: sale.hold_ref_no || null
+    hold_ref_no: sale.hold_ref_no || null,
+    user_id: currentUserId
   }
 }
 
 export function getPendingSales(): SaleRecord[] {
   const database = requireDb()
+  const currentUserId = requireCurrentUserId()
   return database
-    .prepare('SELECT * FROM sales WHERE sync_status IN (?, ?) ORDER BY created_at ASC')
-    .all('pending', 'failed') as SaleRecord[]
+    .prepare('SELECT * FROM sales WHERE sync_status IN (?, ?) AND user_id = ? ORDER BY created_at ASC')
+    .all('pending', 'failed', currentUserId) as SaleRecord[]
 }
 
 export function getUnsyncedSalesCount(): number {
   const database = requireDb()
+  const currentUserId = requireCurrentUserId()
   const result = database
-    .prepare('SELECT COUNT(*) as count FROM sales WHERE sync_status IN (?, ?)')
-    .get('pending', 'failed') as { count: number }
+    .prepare('SELECT COUNT(*) as count FROM sales WHERE sync_status IN (?, ?) AND user_id = ?')
+    .get('pending', 'failed', currentUserId) as { count: number }
   return result.count
 }
 
@@ -1004,14 +1010,16 @@ export function updateSaleSyncStatus(
 
 export function deleteSyncedSale(saleId: string): void {
   const database = requireDb()
-  database.prepare('DELETE FROM sales WHERE id = ? AND sync_status = ?').run(saleId, 'synced')
+  const currentUserId = requireCurrentUserId()
+  database.prepare('DELETE FROM sales WHERE id = ? AND sync_status = ? AND user_id = ?').run(saleId, 'synced', currentUserId)
 }
 
 export function getSalesByDateRange(startDate: string, endDate: string): SaleRecord[] {
   const database = requireDb()
+  const currentUserId = requireCurrentUserId()
   return database
-    .prepare('SELECT * FROM sales WHERE created_at BETWEEN ? AND ? ORDER BY created_at DESC')
-    .all(startDate, endDate) as SaleRecord[]
+    .prepare('SELECT * FROM sales WHERE created_at BETWEEN ? AND ? AND user_id = ? ORDER BY created_at DESC')
+    .all(startDate, endDate, currentUserId) as SaleRecord[]
 }
 
 export async function syncSalesToRemote(): Promise<void> {
@@ -2557,6 +2565,24 @@ function getCurrentUserToken(): string | null {
   const result = database.prepare('SELECT token FROM users WHERE token IS NOT NULL AND LENGTH(token) > 0 LIMIT 1').get() as { token: string } | undefined
   console.log('[DB] Token lookup result:', { hasResult: !!result, tokenLength: result?.token?.length || 0 })
   return result?.token || null
+}
+
+// Helper function to get current user ID
+function getCurrentUserId(): string | null {
+  const database = requireDb()
+  const result = database
+    .prepare('SELECT id FROM users WHERE token IS NOT NULL AND LENGTH(token) > 0 LIMIT 1')
+    .get() as { id: string } | undefined
+  return result?.id || null
+}
+
+// Helper function to require current user ID
+function requireCurrentUserId(): string {
+  const userId = getCurrentUserId()
+  if (!userId) {
+    throw new Error('No user ID available. Please log in again.')
+  }
+  return userId
 }
 
 // Helper function to require current user token

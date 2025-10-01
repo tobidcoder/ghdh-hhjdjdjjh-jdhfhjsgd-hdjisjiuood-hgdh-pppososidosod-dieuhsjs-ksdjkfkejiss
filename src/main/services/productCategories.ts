@@ -1,7 +1,7 @@
 import { getDatabase } from '../database/connection'
 import { ProductCategoryRecord } from '../database/types'
-import { getBaseUrl } from '../database/connection'
-import { requireCurrentUserToken } from './auth'
+// import { getBaseUrl } from '../database/connection'
+// import { requireCurrentUserToken } from './auth'
 import { apiClient } from './apiClient'
 
 export function upsertProductCategories(categories: ProductCategoryRecord[]): void {

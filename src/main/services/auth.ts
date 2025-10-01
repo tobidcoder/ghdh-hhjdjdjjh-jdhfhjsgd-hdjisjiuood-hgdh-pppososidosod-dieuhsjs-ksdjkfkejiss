@@ -278,6 +278,28 @@ export function getCurrentUserToken(): string | null {
   return result?.token || null
 }
 
+// Helper to get current user ID (used by other services)
+export function getCurrentUserId(): string | null {
+  const database = getDatabase()
+  if (!database) {
+    return null
+  }
+
+  const result = database
+    .prepare('SELECT id FROM users WHERE token IS NOT NULL AND LENGTH(token) > 0 LIMIT 1')
+    .get() as { id: string } | undefined
+  return result?.id || null
+}
+
+// Helper to require current user ID (used by other services)
+export function requireCurrentUserId(): string {
+  const userId = getCurrentUserId()
+  if (!userId) {
+    throw new Error('No user ID available. Please log in again.')
+  }
+  return userId
+}
+
 // Helper to require current user token (used by other services)
 export function requireCurrentUserToken(): string {
   const token = getCurrentUserToken()

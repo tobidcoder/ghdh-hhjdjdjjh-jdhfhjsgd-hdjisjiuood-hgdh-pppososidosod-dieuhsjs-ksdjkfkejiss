@@ -1,10 +1,11 @@
 import React from 'react'
 import { Badge } from '@renderer/components/ui/badge'
 import { Button } from '@renderer/components/ui/button'
-import { Wifi, WifiOff } from 'lucide-react'
+import { Wifi, WifiOff, BarChart3 } from 'lucide-react'
 import { SalesSyncStatus } from './SalesSyncStatus'
 import { ProductSyncStatus } from './ProductSyncStatus'
 import Logo from '@renderer/assets/images/cheetah-dark-logo.png'
+import { useNavigate } from 'react-router-dom'
 
 interface DashboardHeaderProps {
   currentTime: Date
@@ -21,10 +22,12 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
   settings,
   user,
   isOnline,
-  unsyncedCount,
+  // unsyncedCount,
   onLogout,
   saleRef
 }) => {
+  const navigate = useNavigate()
+
   const formatDate = (date: Date): string => {
     return date.toLocaleDateString('en-US', {
       weekday: 'short',
@@ -39,7 +42,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
       hour: '2-digit',
       minute: '2-digit',
       second: '2-digit',
-      hour12: false
+      hour12: true
     })
   }
 
@@ -47,14 +50,30 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({
     <div className="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between">
       <div className="flex items-center space-x-6">
         <img src={Logo} alt="logo" width={130} />
-        <span className="text-gray-600">POS : {settings?.company_name}</span>
+        {/* <span className="text-[#b2d93b] font-bold">
+          POS : <span className="text-[#052315]">{settings?.company_name} </span>
+        </span> */}
       </div>
+      <Button
+        variant="secondary"
+        size="sm"
+        onClick={() => navigate('/recent-sales')}
+        className="border-[#052315] text-[#052315] hover:bg-[#052315]/10 cursor-pointer"
+      >
+        <BarChart3 className="w-4 h-4 mr-2" />
+        Recent Sales
+      </Button>
 
-      <div className="flex items-center space-x-6 text-sm text-gray-600">
-        <span>Shift Date: {formatDate(currentTime)}</span>
-        <span>Invoice No: {saleRef}</span>
-        <span>Clerk: {user?.name || user?.username || 'User'}</span>
-        <span>Time: {formatTime(currentTime)}</span>
+      <div className="flex items-center space-x-6 text-sm text-[#b2d93b] font-bold">
+        <span>
+          Shift Date: <span className="text-[#052315] ">{formatDate(currentTime)}</span>
+        </span>
+        <span>
+          Clerk: <span className="text-[#052315]">{user?.name || user?.username || 'User'}</span>
+        </span>
+        <span>
+          Time: <span className="text-[#052315]">{formatTime(currentTime)}</span>
+        </span>
         <SalesSyncStatus />
         <ProductSyncStatus />
       </div>

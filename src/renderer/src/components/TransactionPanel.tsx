@@ -9,7 +9,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
+  DialogTrigger
 } from '@renderer/components/ui/dialog'
 import { Input } from '@renderer/components/ui/input'
 import { Label } from '@renderer/components/ui/label'
@@ -29,6 +29,7 @@ interface TransactionPanelProps {
   onRemoveFromCart: (productId: string) => void
   onUpdateQuantity: (productId: string, quantity: number) => void
   onAddItem: (product: any) => void
+  saleRef: string
 }
 
 export const TransactionPanel: React.FC<TransactionPanelProps> = ({
@@ -36,14 +37,15 @@ export const TransactionPanel: React.FC<TransactionPanelProps> = ({
   onClearCart,
   onRemoveFromCart,
   onUpdateQuantity,
-  onAddItem
+  onAddItem,
+  saleRef
 }) => {
   const [holdName, setHoldName] = useState('')
   const [isHoldDialogOpen, setIsHoldDialogOpen] = useState(false)
   const [isViewHoldsOpen, setIsViewHoldsOpen] = useState(false)
   const [holds, setHolds] = useState<any[]>([])
   const [isLoadingHolds, setIsLoadingHolds] = useState(false)
-  
+
   const total = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0)
 
   const handleSaveHold = async () => {
@@ -63,7 +65,7 @@ export const TransactionPanel: React.FC<TransactionPanelProps> = ({
         items: cartItems,
         totalAmount: total
       })
-      
+
       toast.success('Hold saved successfully')
       setHoldName('')
       setIsHoldDialogOpen(false)
@@ -94,7 +96,7 @@ export const TransactionPanel: React.FC<TransactionPanelProps> = ({
     try {
       // Clear current cart and load hold items
       onClearCart()
-      
+
       // Add each item from the hold to the cart
       hold.items.forEach((item: CartItem) => {
         // Convert CartItem back to Product format for onAddItem
@@ -104,19 +106,19 @@ export const TransactionPanel: React.FC<TransactionPanelProps> = ({
           price: item.price,
           code: item.code
         }
-        
+
         // Add the item multiple times based on quantity
         for (let i = 0; i < item.quantity; i++) {
           onAddItem(product)
         }
       })
-      
+
       // Delete the hold after successfully loading it
       await apiService.deleteHold(hold.id)
-      
+
       toast.success(`Hold "${hold.name}" loaded and removed from holds`)
       setIsViewHoldsOpen(false)
-      
+
       // Refresh the holds list in case the dialog is opened again
       await loadHolds()
     } catch (error: any) {
@@ -138,9 +140,11 @@ export const TransactionPanel: React.FC<TransactionPanelProps> = ({
       {/* Transaction Lines */}
       <div className="flex-1 p-4">
         <Card>
-          {/* <CardHeader className="pb-3"> */}
-          {/* <CardTitle className="text-sm">Transaction Lines</CardTitle> */}
-          {/* </CardHeader> */}
+          <CardHeader className="">
+            <CardTitle className="text-sm text-[#b2d93b] font-bold">
+              Invoice Number : <span className="text-[#052315]  "> {saleRef}</span>
+            </CardTitle>
+          </CardHeader>
           <CardContent className="space-y-2 max-h-[40vh] overflow-y-auto">
             <div className="grid grid-cols-7 gap-2 text-xs font-medium text-gray-600 border-b border-gray-200 pb-2">
               <span>LINE</span>
@@ -150,7 +154,6 @@ export const TransactionPanel: React.FC<TransactionPanelProps> = ({
               <span>AMOUNT</span>
               <span></span>
             </div>
-
             {/* Cart items */}
             {cartItems.length === 0 ? (
               <div className="text-center text-gray-500 py-4 text-xs">No items in cart</div>
@@ -210,7 +213,6 @@ export const TransactionPanel: React.FC<TransactionPanelProps> = ({
                 </div>
               </>
             )}
-
             {/* Add item input */}
             {/* <div className="pt-2 space-y-2">
               <Input
@@ -267,15 +269,10 @@ export const TransactionPanel: React.FC<TransactionPanelProps> = ({
                 />
               </div>
               <div className="flex justify-end space-x-2">
-                <Button
-                  variant="outline"
-                  onClick={() => setIsHoldDialogOpen(false)}
-                >
+                <Button variant="outline" onClick={() => setIsHoldDialogOpen(false)}>
                   Cancel
                 </Button>
-                <Button onClick={handleSaveHold}>
-                  Save Hold
-                </Button>
+                <Button onClick={handleSaveHold}>Save Hold</Button>
               </div>
             </div>
           </DialogContent>
@@ -311,10 +308,7 @@ export const TransactionPanel: React.FC<TransactionPanelProps> = ({
                         </p>
                       </div>
                       <div className="flex space-x-2">
-                        <Button
-                          size="sm"
-                          onClick={() => handleLoadHold(hold)}
-                        >
+                        <Button size="sm" onClick={() => handleLoadHold(hold)}>
                           Load
                         </Button>
                         <Button

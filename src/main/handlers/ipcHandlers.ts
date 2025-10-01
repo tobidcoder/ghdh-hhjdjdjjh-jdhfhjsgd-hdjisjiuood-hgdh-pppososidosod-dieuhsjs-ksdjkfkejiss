@@ -578,7 +578,7 @@ export function registerDatabaseIpcHandlers(): void {
 
   // Environment variable handlers
   ipcMain.handle('env:get', (_event, key: string) => {
-    const value = process.env[key] || ''
+    const value = process.env[key] 
     console.log(`[ENV] Requested ${key}:`, value)
     console.log(
       `[ENV] All env vars:`,
@@ -668,7 +668,7 @@ export function registerDatabaseIpcHandlers(): void {
     console.log('[PRINT] Starting receipt print process...')
     let printWindow: BrowserWindow | null = null
     let tempFilePath: string | undefined
-    
+
     try {
       // Create a new BrowserWindow for printing
       printWindow = new BrowserWindow({
@@ -685,7 +685,7 @@ export function registerDatabaseIpcHandlers(): void {
       })
 
       console.log('[PRINT] Created print window')
-      
+
       // Focus the window to ensure it's visible
       printWindow.focus()
 
@@ -711,21 +711,21 @@ export function registerDatabaseIpcHandlers(): void {
       // Create a temporary HTML file instead of using data URL
       const tempFileName = `receipt_${Date.now()}.html`
       tempFilePath = join(tmpdir(), tempFileName)
-      
+
       console.log('[PRINT] Creating temporary file:', tempFilePath)
       writeFileSync(tempFilePath, htmlContent, 'utf8')
-      
+
       console.log('[PRINT] Loading HTML content from file...')
       await printWindow.loadFile(tempFilePath)
       console.log('[PRINT] loadFile completed, waiting for did-finish-load...')
-      
+
       // Wait for content to load
       await loadPromise
 
       // Wait for the window to be ready and content to be fully rendered
       console.log('[PRINT] Waiting for content to render...')
       await new Promise(resolve => setTimeout(resolve, 3000))
-      
+
       // Ensure the window is ready for printing
       await printWindow.webContents.executeJavaScript(`
         new Promise((resolve) => {
@@ -736,7 +736,7 @@ export function registerDatabaseIpcHandlers(): void {
           }
         });
       `)
-      
+
       console.log('[PRINT] Content is ready for printing')
 
       // Direct print with options (supports silent printing)
@@ -757,7 +757,7 @@ export function registerDatabaseIpcHandlers(): void {
       } catch (cleanupError) {
         console.warn('[PRINT] Failed to clean up temporary file:', cleanupError)
       }
-      
+
       // Close the print window after a longer delay to allow user to see preview
       setTimeout(() => {
         if (printWindow && !printWindow.isDestroyed()) {
@@ -765,17 +765,17 @@ export function registerDatabaseIpcHandlers(): void {
           console.log('[PRINT] Print window closed')
         }
       }, 10000) // Increased to 10 seconds
-      
+
       return { success: true, data: 'PDF generated and opened' }
     } catch (error: any) {
       console.error('[PRINT] Failed to print receipt:', error.message)
       console.error('[PRINT] Error stack:', error.stack)
-      
+
       // Clean up the window if it exists
       if (printWindow && !printWindow.isDestroyed()) {
         printWindow.close()
       }
-      
+
       // Clean up temporary file if it exists
       try {
         if (tempFilePath) {
@@ -785,7 +785,7 @@ export function registerDatabaseIpcHandlers(): void {
       } catch (cleanupError) {
         console.warn('[PRINT] Failed to clean up temporary file on error:', cleanupError)
       }
-      
+
       return { success: false, error: error.message }
     }
   })

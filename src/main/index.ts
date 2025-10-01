@@ -12,9 +12,11 @@ if (process.env.NODE_ENV !== 'production') {
 import { app, shell, BrowserWindow, ipcMain } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
-import icon from '../../resources/icon.png?asset'
+import icon from '../../resources/favicon.ico?asset'
 import { initDatabase, closeDatabase } from './db'
 import { registerDatabaseIpcHandlers, registerProductSyncIpcHandlers } from './handlers/ipcHandlers'
+// import { Icon } from "../../resources/favicon.ico?asset";
+
 
 async function createWindow(): Promise<void> {
   try {
@@ -30,10 +32,16 @@ async function createWindow(): Promise<void> {
 
   // Create the browser window.
   const mainWindow = new BrowserWindow({
-    width: 900,
-    height: 670,
+    width: 1400,
+    height: 900,
     show: false,
+    accentColor: '#052315',
+    tabbingIdentifier: 'cheetah-front-desk',
     autoHideMenuBar: true,
+    title: 'Cheetah Front Desk',
+
+    // icon: icon,
+    icon: join(__dirname, '../../resources/favicon.ico'),
     ...(process.platform === 'linux' ? { icon } : {}),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),

@@ -99,15 +99,15 @@ export async function syncProductsFromRemote(): Promise<void> {
       // }
 
       // Insert new products
-      const insertStmt = database.prepare(`
-        INSERT INTO products (id, name, price, category, code, raw_response)
-        VALUES (@id, @name, @price, @category, @code, @raw_response)
-      `)
+      // const insertStmt = database.prepare(`
+      //   INSERT INTO products (id, name, price, category, code, raw_response)
+      //   VALUES (@id, @name, @price, @category, @code, @raw_response)
+      // `)
 
       let insertedCount = 0
       for (const product of products) {
         try {
-          const result = insertStmt.run(product)
+          // const result = insertStmt.run(product)
           insertedCount++
           if (insertedCount % 100 === 0) {
             console.log(`[DB] Inserted ${insertedCount}/${products.length} products...`)
@@ -208,7 +208,7 @@ export function searchProducts(query: string, limit: number = 50): ProductRecord
 
 export function upsertProducts(products: any[]): void {
   const database = getDatabase()
-  
+
   const insertStmt = database.prepare(`
     INSERT OR REPLACE INTO products (id, name, price, category, code, raw_response)
     VALUES (@id, @name, @price, @category, @code, @raw_response)

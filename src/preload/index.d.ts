@@ -263,7 +263,7 @@ declare global {
             id: number
             name: string
             display_name: string
-            is_active: boolean
+            is_active: string
             business_profile_id: number
             user_id: number
             created_at: string

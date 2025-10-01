@@ -45,6 +45,7 @@ export interface SaleRecord {
   note: string | null
   status: number
   hold_ref_no: string | null
+  user_id: string // ID of the user who created this sale
 }
 
 export interface UserRecord {

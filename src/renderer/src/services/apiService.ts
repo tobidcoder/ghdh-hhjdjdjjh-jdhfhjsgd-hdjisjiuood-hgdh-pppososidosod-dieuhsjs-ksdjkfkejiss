@@ -1,4 +1,4 @@
-import { api as axiosApi, ApiResponse, ApiError } from '@renderer/lib/axios'
+import { api as axiosApi } from '@renderer/lib/axios'
 
 // Unified API service that can handle both IPC and HTTP calls
 export class ApiService {

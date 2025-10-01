@@ -42,10 +42,16 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   const [paymentStatus, setPaymentStatus] = useState(1)
   const [paymentType, setPaymentType] = useState('')
 
+  // Get settings for field visibility
+  const { getTaxEnabled, getDiscountEnabled, getShippingEnabled } = useSettingsStore()
+  const taxEnabled = getTaxEnabled()
+  const discountEnabled = getDiscountEnabled()
+  const shippingEnabled = getShippingEnabled()
+
   // Calculate totals
   const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0)
-  // const taxAmount = subtotal * 0.15 // 15% tax
-  const totalAmount = subtotal 
+  const taxAmount = subtotal * 0.15 // 15% tax
+  const totalAmount = subtotal
   // + taxAmount
   const changeReturn = parseFloat(receivedAmount) - totalAmount
 
@@ -97,7 +103,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-[0.2] flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg shadow-xl w-[80vw] max-w-6xl h-[80vh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
@@ -229,15 +235,28 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                 </span>
               </div> */}
 
-              <div className="flex items-center justify-between">
-                <span className="text-gray-600">Discount</span>
-                <span className="text-gray-800 font-semibold">{formatPriceBySymbol(0)}</span>
-              </div>
+              {taxEnabled && (
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-600">Tax</span>
+                  <span className="font-semibold text-gray-800">
+                    {formatPriceBySymbol(taxAmount)}
+                  </span>
+                </div>
+              )}
 
-              <div className="flex items-center justify-between">
-                <span className="text-gray-600">Shipping</span>
-                <span className="text-gray-800 font-semibold">{formatPriceBySymbol(0)}</span>
-              </div>
+              {discountEnabled && (
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-600">Discount</span>
+                  <span className="text-gray-800 font-semibold">{formatPriceBySymbol(0)}</span>
+                </div>
+              )}
+
+              {shippingEnabled && (
+                <div className="flex items-center justify-between">
+                  <span className="text-gray-600">Shipping</span>
+                  <span className="text-gray-800 font-semibold">{formatPriceBySymbol(0)}</span>
+                </div>
+              )}
 
               <div className="border-t border-gray-300 pt-3">
                 <div className="flex items-center justify-between">

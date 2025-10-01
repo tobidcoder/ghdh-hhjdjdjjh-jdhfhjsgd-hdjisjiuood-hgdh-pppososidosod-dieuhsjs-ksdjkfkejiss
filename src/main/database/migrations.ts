@@ -548,5 +548,27 @@ export function runMigrations(): void {
     markMigrationComplete(db, '017_create_holds_table')
   }
 
+  // Migration 18: Add user_id column to sales table for user-specific sales
+  if (!migrationExists(db, '018_add_user_id_to_sales')) {
+    try {
+      // Check if user_id column already exists
+      const salesColumns = db.pragma('table_info(sales)')
+      const hasUserId = salesColumns.some((col: any) => col.name === 'user_id')
+
+      if (!hasUserId) {
+        db.exec(`
+          ALTER TABLE sales ADD COLUMN user_id TEXT;
+        `)
+        console.log('[DB] Migration 018: Added user_id column to sales table')
+      } else {
+        console.log('[DB] Migration 018: user_id column already exists in sales table')
+      }
+    } catch (error: any) {
+      console.error('[DB] Migration 018 failed:', error.message)
+      throw error
+    }
+    markMigrationComplete(db, '018_add_user_id_to_sales')
+  }
+
   console.log('[DB] All migrations completed')
 }

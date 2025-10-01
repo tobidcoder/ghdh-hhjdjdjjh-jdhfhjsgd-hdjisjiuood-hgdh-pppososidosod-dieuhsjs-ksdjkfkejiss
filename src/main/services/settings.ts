@@ -1,7 +1,7 @@
 import { getDatabase } from '../database/connection'
 import { SettingsRecord, FrontSettingsRecord } from '../database/types'
-import { getBaseUrl } from '../database/connection'
-import { requireCurrentUserToken } from './auth'
+// import { getBaseUrl } from '../database/connection'
+// import { requireCurrentUserToken } from './auth'
 import { apiClient } from './apiClient'
 
 // Settings functions
@@ -14,11 +14,11 @@ export function upsertSettings(
 
   const stmt = database.prepare(`
     INSERT OR REPLACE INTO settings (
-      id, currency, email, company_name, phone, default_language, default_customer, 
-      default_warehouse, address, logo, show_phone, show_address, show_customer, 
-      show_email, show_tax_discount_shipping, show_note, show_barcode_in_receipt, 
-      show_logo_in_receipt, protect_cart_product_delete, protect_cart_product_reduce, 
-      enable_shipping, enable_tax, enable_discount, warehouse_name, customer_name, 
+      id, currency, email, company_name, phone, default_language, default_customer,
+      default_warehouse, address, logo, show_phone, show_address, show_customer,
+      show_email, show_tax_discount_shipping, show_note, show_barcode_in_receipt,
+      show_logo_in_receipt, protect_cart_product_delete, protect_cart_product_reduce,
+      enable_shipping, enable_tax, enable_discount, warehouse_name, customer_name,
       currency_symbol, created_at, updated_at
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `)
@@ -57,6 +57,14 @@ export function upsertSettings(
   return getSettings()!
 }
 
+// export function getSettings(): SettingsRecord {
+//   const database = getDatabase()
+//   const result = database
+//     .prepare('SELECT * FROM payment_methods ORDER BY email')
+//     .all() as SettingsRecord[]
+//   return result[0]
+// }
+
 export function getSettings(): SettingsRecord | null {
   const database = getDatabase()
   const result = database.prepare('SELECT * FROM settings WHERE id = ?').get('settings') as
@@ -75,9 +83,9 @@ export function upsertFrontSettings(
 
   const stmt = database.prepare(`
     INSERT OR REPLACE INTO front_settings (
-      id, currency, email, company_name, phone, default_language, default_customer, 
-      default_warehouse, address, protect_cart_product_delete, protect_cart_product_reduce, 
-      enable_shipping, enable_tax, enable_discount, logo, warehouse_name, customer_name, 
+      id, currency, email, company_name, phone, default_language, default_customer,
+      default_warehouse, address, protect_cart_product_delete, protect_cart_product_reduce,
+      enable_shipping, enable_tax, enable_discount, logo, warehouse_name, customer_name,
       currency_symbol, roles, connected_accounts, created_at, updated_at
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `)
@@ -112,9 +120,9 @@ export function upsertFrontSettings(
 
 export function getFrontSettings(): FrontSettingsRecord | null {
   const database = getDatabase()
-  const result = database.prepare('SELECT * FROM front_settings WHERE id = ?').get('front_settings') as
-    | FrontSettingsRecord
-    | undefined
+  const result = database
+    .prepare('SELECT * FROM front_settings WHERE id = ?')
+    .get('front_settings') as FrontSettingsRecord | undefined
   return result || null
 }
 
@@ -141,12 +149,21 @@ export async function fetchAndSaveSettings(): Promise<void> {
       show_address: { path: 'data.attributes.show_address', fallback: '1' },
       show_customer: { path: 'data.attributes.show_customer', fallback: '1' },
       show_email: { path: 'data.attributes.show_email', fallback: '1' },
-      show_tax_discount_shipping: { path: 'data.attributes.show_tax_discount_shipping', fallback: '1' },
+      show_tax_discount_shipping: {
+        path: 'data.attributes.show_tax_discount_shipping',
+        fallback: '1'
+      },
       show_note: { path: 'data.attributes.show_note', fallback: null },
       show_barcode_in_receipt: { path: 'data.attributes.show_barcode_in_receipt', fallback: '1' },
       show_logo_in_receipt: { path: 'data.attributes.show_logo_in_receipt', fallback: '1' },
-      protect_cart_product_delete: { path: 'data.attributes.protect_cart_product_delete', fallback: '0' },
-      protect_cart_product_reduce: { path: 'data.attributes.protect_cart_product_reduce', fallback: '0' },
+      protect_cart_product_delete: {
+        path: 'data.attributes.protect_cart_product_delete',
+        fallback: '0'
+      },
+      protect_cart_product_reduce: {
+        path: 'data.attributes.protect_cart_product_reduce',
+        fallback: '0'
+      },
       enable_shipping: { path: 'data.attributes.enable_shipping', fallback: '0' },
       enable_tax: { path: 'data.attributes.enable_tax', fallback: '0' },
       enable_discount: { path: 'data.attributes.enable_discount', fallback: '0' },
@@ -158,7 +175,7 @@ export async function fetchAndSaveSettings(): Promise<void> {
     // If we couldn't extract data using the expected structure, try alternative paths
     if (!settingsData.currency || settingsData.currency === 'NGN') {
       console.log('[DB] Trying alternative data extraction paths...')
-      
+
       // Try direct data access
       const directData = apiClient.extractData(response, 'data', 'attributes')
       if (directData) {
@@ -207,50 +224,45 @@ export async function fetchAndSaveSettings(): Promise<void> {
 
     upsertSettings(settings)
     console.log('[DB] Settings saved successfully with flexible extraction')
-
   } catch (error: any) {
     console.error('[DB] Failed to fetch settings:', error.message)
-    
+
     // Create default settings if API fails
-    console.log('[DB] Creating default settings due to API failure...')
-    const defaultSettings: Omit<SettingsRecord, 'id' | 'created_at' | 'updated_at'> = {
-      currency: 'NGN',
-      email: '',
-      company_name: 'Cheetah POS',
-      phone: '',
-      default_language: 'en',
-      default_customer: '',
-      default_warehouse: '',
-      address: '',
-      logo: null,
-      show_phone: '1',
-      show_address: '1',
-      show_customer: '1',
-      show_email: '1',
-      show_tax_discount_shipping: '1',
-      show_note: null,
-      show_barcode_in_receipt: '1',
-      show_logo_in_receipt: '1',
-      protect_cart_product_delete: '0',
-      protect_cart_product_reduce: '0',
-      enable_shipping: '0',
-      enable_tax: '0',
-      enable_discount: '0',
-      warehouse_name: '',
-      customer_name: '',
-      currency_symbol: '₦'
-    }
+    // console.log('[DB] Creating default settings due to API failure...')
+    // const defaultSettings: Omit<SettingsRecord, 'id' | 'created_at' | 'updated_at'> = {
+    //   currency: 'NGN',
+    //   email: '',
+    //   company_name: 'Cheetah POS',
+    //   phone: '',
+    //   default_language: 'en',
+    //   default_customer: '',
+    //   default_warehouse: '',
+    //   address: '',
+    //   logo: null,
+    //   show_phone: '1',
+    //   show_address: '1',
+    //   show_customer: '1',
+    //   show_email: '1',
+    //   show_tax_discount_shipping: '1',
+    //   show_note: null,
+    //   show_barcode_in_receipt: '1',
+    //   show_logo_in_receipt: '1',
+    //   protect_cart_product_delete: '0',
+    //   protect_cart_product_reduce: '0',
+    //   enable_shipping: '0',
+    //   enable_tax: '0',
+    //   enable_discount: '0',
+    //   warehouse_name: '',
+    //   customer_name: '',
+    //   currency_symbol: '₦'
+    // }
 
     try {
-      upsertSettings(defaultSettings)
-      console.log('[DB] Default settings created successfully')
+      // upsertSettings(defaultSettings)
+      console.log(' settings not created ')
     } catch (dbError: any) {
       console.error('[DB] Failed to create default settings:', dbError.message)
       throw error // Throw original API error
     }
   }
 }
-
-
-
-

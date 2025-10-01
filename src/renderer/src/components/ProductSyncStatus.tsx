@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect } from 'react'
 import { useProductsStore } from '@renderer/store/products'
 import { useAuthStore } from '@renderer/store/auth'
 import { Badge } from '@renderer/components/ui/badge'
@@ -16,7 +16,7 @@ export const ProductSyncStatus: React.FC = () => {
   const { syncProgress, isSyncing, syncError, checkSyncProgress, startSync, resetSync } =
     useProductsStore()
   const { user } = useAuthStore()
-  const [isExpanded, setIsExpanded] = useState(false)
+  // const [isExpanded, setIsExpanded] = useState(false)
 
   useEffect(() => {
     // Check sync progress on mount
@@ -74,9 +74,9 @@ export const ProductSyncStatus: React.FC = () => {
     }
   }
 
-  const toggleExpanded = () => {
-    setIsExpanded(!isExpanded)
-  }
+  // const toggleExpanded = () => {
+  //   setIsExpanded(!isExpanded)
+  // }
 
   return (
     <>

@@ -73,7 +73,7 @@ export class FlexibleApiClient {
 
       const data = await response.json()
       console.log(`[API] Response from ${endpoint}:`, data)
-      
+
       return this.normalizeResponse(data)
     } catch (error: any) {
       console.error(`[API] GET ${endpoint} failed:`, error.message)
@@ -103,7 +103,7 @@ export class FlexibleApiClient {
 
       const data = await response.json()
       console.log(`[API] Response from ${endpoint}:`, data)
-      
+
       return this.normalizeResponse(data)
     } catch (error: any) {
       console.error(`[API] POST ${endpoint} failed:`, error.message)
@@ -149,7 +149,7 @@ export class FlexibleApiClient {
     if (Array.isArray(response)) {
       return {
         success: true,
-        data: response,
+        data: response as unknown as T,
         ...response
       }
     }
@@ -224,7 +224,7 @@ export class FlexibleApiClient {
    */
   extractArrayData<T = any>(response: ApiResponse, ...paths: string[]): T[] {
     const data = this.extractData(response, ...paths)
-    
+
     if (Array.isArray(data)) {
       return data
     }
@@ -245,7 +245,7 @@ export class FlexibleApiClient {
    */
   extractSingleData<T = any>(response: ApiResponse, ...paths: string[]): T | null {
     const data = this.extractData(response, ...paths)
-    
+
     if (data && typeof data === 'object' && !Array.isArray(data)) {
       return data as T
     }
@@ -263,7 +263,7 @@ export class FlexibleApiClient {
     transform?: (value: any) => any
   ): any {
     const value = this.getNestedValue(response, propertyPath)
-    
+
     if (value === undefined || value === null) {
       return fallback
     }

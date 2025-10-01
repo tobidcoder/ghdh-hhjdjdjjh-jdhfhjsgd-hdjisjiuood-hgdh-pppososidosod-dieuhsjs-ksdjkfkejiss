@@ -1,7 +1,7 @@
 import { getDatabase } from '../database/connection'
 import { WarehouseRecord } from '../database/types'
-import { getBaseUrl } from '../database/connection'
-import { requireCurrentUserToken } from './auth'
+// import { getBaseUrl } from '../database/connection'
+// import { requireCurrentUserToken } from './auth'
 import { apiClient } from './apiClient'
 
 export function upsertWarehouses(warehouses: WarehouseRecord[]): void {
@@ -57,7 +57,7 @@ export async function fetchAndSaveWarehouses(): Promise<void> {
 
     // Extract warehouses array using flexible extraction
     const warehousesData = apiClient.extractArrayData(response, 'data', 'warehouses', 'data.data')
-    
+
     if (warehousesData.length === 0) {
       // Try alternative extraction paths
       const altData = apiClient.extractData(response, 'data', 'attributes')
@@ -85,11 +85,11 @@ export async function fetchAndSaveWarehouses(): Promise<void> {
       console.log(`[DB] ${warehouses.length} warehouses saved successfully with flexible extraction`)
     } else {
       console.warn('[DB] No warehouses data found in API response, creating default warehouse...')
-      
+
       // Create a default warehouse if API doesn't return any
       const defaultWarehouses: WarehouseRecord[] = [
         {
-          id: '1',
+          id: 1,
           name: 'Main Warehouse',
           phone: '',
           country: 'Nigeria',
@@ -108,12 +108,12 @@ export async function fetchAndSaveWarehouses(): Promise<void> {
     }
   } catch (error: any) {
     console.error('[DB] Failed to fetch warehouses:', error.message)
-    
+
     // Create default warehouse on error
     console.log('[DB] Creating default warehouse due to API failure...')
     const defaultWarehouses: WarehouseRecord[] = [
       {
-        id: '1',
+        id: 1,
         name: 'Main Warehouse',
         phone: '',
         country: 'Nigeria',

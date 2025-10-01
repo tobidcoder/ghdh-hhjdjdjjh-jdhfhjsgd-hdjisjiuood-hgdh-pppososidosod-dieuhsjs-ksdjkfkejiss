@@ -1,4 +1,4 @@
-import { getDatabase } from '../database/connection'
+// import { getDatabase } from '../database/connection'
 import { SaleRecord } from '../database/types'
 import { getBaseUrl } from '../database/connection'
 import { requireCurrentUserToken } from './auth'

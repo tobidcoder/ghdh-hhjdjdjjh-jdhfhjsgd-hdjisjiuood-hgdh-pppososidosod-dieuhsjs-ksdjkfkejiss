@@ -63,7 +63,7 @@ export const initializeAxios = async (): Promise<AxiosInstance> => {
       
       // Transform axios error to our ApiError format
       const apiError: ApiError = {
-        message: error.response?.data?.message || error.message || 'Network error',
+        message: (error.response?.data as any)?.message || error.message || 'Network error',
         status: error.response?.status,
         code: error.code
       }

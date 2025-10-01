@@ -1,8 +1,10 @@
 // Environment configuration for the renderer process
+// import { env } from 'node:process'
+
 export const config = {
   // API Configuration
   BASE_URL: 'http://localhost:8000/api', // Default, will be overridden by getBaseUrl()
-
+  // BASE_URL: env.BASE_URL,
   // App Configuration
   APP_NAME: 'Cheetah Front Desk',
   APP_VERSION: '1.0.0',
@@ -25,7 +27,7 @@ export const getEnvVar = async (key: string, defaultValue?: string): Promise<str
 // Helper function to get BASE_URL from environment
 export const getBaseUrl = async (): Promise<string> => {
   const baseUrl = await getEnvVar('BASE_URL')
-  return baseUrl || 'http://localhost:8000/api'
+  return baseUrl
 }
 
 // Helper function to check if we're in development

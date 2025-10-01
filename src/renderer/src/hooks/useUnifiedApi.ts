@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react'
-import { apiService, ApiService } from '@renderer/services/apiService'
+import { apiService } from '@renderer/services/apiService'
 
 interface UseUnifiedApiOptions {
   onSuccess?: (data: any) => void

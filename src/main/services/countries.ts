@@ -1,7 +1,7 @@
 import { getDatabase } from '../database/connection'
 import { CountryRecord } from '../database/types'
-import { getBaseUrl } from '../database/connection'
-import { requireCurrentUserToken } from './auth'
+// import { getBaseUrl } from '../database/connection'
+// import { requireCurrentUserToken } from './auth'
 import { apiClient } from './apiClient'
 
 export function upsertCountries(countries: CountryRecord[]): void {
@@ -48,7 +48,7 @@ export async function fetchAndSaveCountries(): Promise<void> {
 
     // Extract countries array using flexible extraction
     const countriesData = apiClient.extractArrayData(response, 'data', 'countries', 'data.data')
-    
+
     if (countriesData.length === 0) {
       // Try alternative extraction paths
       const altData = apiClient.extractData(response, 'data', 'attributes')
@@ -73,39 +73,20 @@ export async function fetchAndSaveCountries(): Promise<void> {
       console.log(`[DB] ${countries.length} countries saved successfully with flexible extraction`)
     } else {
       console.warn('[DB] No countries data found in API response, creating default countries...')
-      
+
       // Create some default countries if API doesn't return any
       const defaultCountries: CountryRecord[] = [
         {
-          id: '1',
+          id: 1,
           name: 'Nigeria',
           short_code: 'NG',
-          phone_code: '+234',
+          phone_code: 234,
           active: 1,
           logo_url: null,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         },
-        {
-          id: '2',
-          name: 'United States',
-          short_code: 'US',
-          phone_code: '+1',
-          active: 1,
-          logo_url: null,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        },
-        {
-          id: '3',
-          name: 'United Kingdom',
-          short_code: 'GB',
-          phone_code: '+44',
-          active: 1,
-          logo_url: null,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        }
+
       ]
 
       upsertCountries(defaultCountries)
@@ -113,15 +94,15 @@ export async function fetchAndSaveCountries(): Promise<void> {
     }
   } catch (error: any) {
     console.error('[DB] Failed to fetch countries:', error.message)
-    
+
     // Create default countries on error
     console.log('[DB] Creating default countries due to API failure...')
     const defaultCountries: CountryRecord[] = [
       {
-        id: '1',
+        id: 1,
         name: 'Nigeria',
         short_code: 'NG',
-        phone_code: '+234',
+        phone_code: 234,
         active: 1,
         logo_url: null,
         created_at: new Date().toISOString(),
