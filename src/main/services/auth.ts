@@ -107,9 +107,9 @@ async function remoteLogin(
   credentials: { email: string; password: string }
 ): Promise<any> {
   // Try different possible endpoints
-  const endpoints = ['/login', '/api/login']
+  const endpoint = '/login'
 
-  for (const endpoint of endpoints) {
+  // for (const endpoint of endpoints) {
     try {
       console.log('[DB] Trying endpoint:', endpoint)
       console.log('[DB] Credentials:', { email: credentials.email, password: '***' })
@@ -117,10 +117,10 @@ async function remoteLogin(
       // Use the flexible API client for login
       const response = await apiClient.post(endpoint, credentials)
       console.log('[DB] Remote login successful with endpoint:', endpoint)
-      
+
       // Extract user data using flexible extraction
       const userData = apiClient.extractData(response, 'data.user', 'user', 'data.data.user')
-      const token = apiClient.safeExtract(response, 'data.token', null) || 
+      const token = apiClient.safeExtract(response, 'data.token', null) ||
                    apiClient.safeExtract(response, 'token', null) ||
                    apiClient.safeExtract(response, 'data.data.token', null)
 
@@ -140,13 +140,13 @@ async function remoteLogin(
 
     } catch (error: any) {
       console.log(`[DB] Error with endpoint ${endpoint}:`, error.message)
-      if (endpoint === endpoints[endpoints.length - 1]) {
-        throw error
-      }
+      // if (endpoint === endpoints[endpoints.length - 1]) {
+        // throw error
+      // }
       // Continue to next endpoint
-      continue
+      // continue
     }
-  }
+  // }
 }
 
 function normalizeRemoteResponse(remote: any): {
@@ -218,7 +218,10 @@ export async function performLogin(credentials: { email: string; password: strin
     return { user: toUserPayload(stored), source: 'remote' as const }
   } catch (error: any) {
     console.log('[DB] Remote login failed:', error.message)
-    throw new Error(error.message || 'Login failed')
+    throw new Error(
+      'This is your first time login in, please connect to the internet'
+    )
+    // throw new Error(error.message || 'Login failed')
   }
 }
 

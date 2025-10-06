@@ -118,7 +118,7 @@ export const SaleDetailsModal: React.FC<SaleDetailsModalProps> = ({
             {onReprint && (
               <button
                 onClick={() => onReprint(sale)}
-                className="flex items-center gap-2 px-3 py-2 bg-green-700 bg-opacity-20 hover:bg-opacity-30 text-white rounded-lg transition-colors"
+                className="flex cursor-pointer items-center gap-2 px-3 py-2 bg-green-700 bg-opacity-20 hover:bg-opacity-30 text-white rounded-lg transition-colors"
                 title="Reprint Receipt"
               >
                 <Printer className="w-4 h-4" />
@@ -128,7 +128,7 @@ export const SaleDetailsModal: React.FC<SaleDetailsModalProps> = ({
             {onSync && sale.sync_status !== 'synced' && (
               <button
                 onClick={() => onSync(sale)}
-                className="flex items-center gap-2 px-3 py-2 bg-green-700 bg-opacity-20 hover:bg-opacity-30 text-white rounded-lg transition-colors"
+                className="flex cursor-pointer items-center gap-2 px-3 py-2 bg-green-700 bg-opacity-20 hover:bg-opacity-30 text-white rounded-lg transition-colors"
                 title="Sync Sale"
               >
                 <RefreshCw className="w-4 h-4" />
@@ -137,7 +137,7 @@ export const SaleDetailsModal: React.FC<SaleDetailsModalProps> = ({
             )}
             <button
               onClick={onClose}
-              className="text-red-600 hover:text-blue-200 transition-colors p-1"
+              className="text-red-600 cursor-pointer hover:text-blue-200 transition-colors p-1"
             >
               <X className="w-6 h-6" />
             </button>
@@ -290,7 +290,7 @@ export const SaleDetailsModal: React.FC<SaleDetailsModalProps> = ({
         <div className="flex justify-end px-6 py-4 border-t border-gray-200 bg-gray-50">
           <button
             onClick={onClose}
-            className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+            className="px-4 py-2 cursor-pointer bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
           >
             Close
           </button>

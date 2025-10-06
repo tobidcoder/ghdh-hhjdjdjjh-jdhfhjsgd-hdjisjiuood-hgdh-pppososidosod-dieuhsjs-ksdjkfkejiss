@@ -77,7 +77,6 @@ export const SalesSyncStatus: React.FC = () => {
 
   return (
     <>
-
       <Dialog>
         <DialogTrigger>
           <Badge variant="outline" className={getStatusColor()}>
@@ -88,12 +87,11 @@ export const SalesSyncStatus: React.FC = () => {
         <DialogContent>
           <DialogHeader>
             <div className="flex items-center gap-5 space-x-2">
-
               <span>Sales Sync Status</span>
-            <Badge variant="outline" className={getStatusColor()}>
-              {getStatusIcon()}
-              <span className="ml-1">{getStatusText()}</span>
-            </Badge>
+              <Badge variant="outline" className={getStatusColor()}>
+                {getStatusIcon()}
+                <span className="ml-1">{getStatusText()}</span>
+              </Badge>
             </div>
           </DialogHeader>
 
@@ -113,7 +111,10 @@ export const SalesSyncStatus: React.FC = () => {
             <div className="p-2 bg-red-50 border border-red-200 rounded text-xs text-red-800">
               <div className="flex items-center justify-between">
                 <span>Error: {syncError}</span>
-                <button onClick={clearError} className="text-red-600 hover:text-red-800">
+                <button
+                  onClick={clearError}
+                  className="text-red-600 cursor-pointer hover:text-red-800"
+                >
                   ✕
                 </button>
               </div>

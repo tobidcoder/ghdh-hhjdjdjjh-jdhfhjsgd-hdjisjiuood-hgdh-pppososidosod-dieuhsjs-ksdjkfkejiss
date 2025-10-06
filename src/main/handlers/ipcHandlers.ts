@@ -578,7 +578,7 @@ export function registerDatabaseIpcHandlers(): void {
 
   // Environment variable handlers
   ipcMain.handle('env:get', (_event, key: string) => {
-    const value = process.env[key] 
+    const value = process.env[key]
     console.log(`[ENV] Requested ${key}:`, value)
     console.log(
       `[ENV] All env vars:`,

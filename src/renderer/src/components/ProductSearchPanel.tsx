@@ -60,7 +60,7 @@ export const ProductSearchPanel: React.FC<ProductSearchPanelProps> = ({
             </div>
             <button
               onClick={onClearAutoAddNotification}
-              className="text-green-600 hover:text-green-800"
+              className="text-green-600 cursor-pointer hover:text-green-800"
             >
               ✕
             </button>
@@ -87,7 +87,7 @@ export const ProductSearchPanel: React.FC<ProductSearchPanelProps> = ({
             {productSearchQuery && (
               <button
                 onClick={onClearProductSearch}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 hover:text-gray-600"
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 cursor-pointer hover:text-gray-600"
               >
                 ✕
               </button>

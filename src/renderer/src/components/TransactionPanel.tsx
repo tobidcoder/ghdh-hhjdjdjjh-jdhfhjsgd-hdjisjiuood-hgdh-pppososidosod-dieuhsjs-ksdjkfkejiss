@@ -172,7 +172,7 @@ export const TransactionPanel: React.FC<TransactionPanelProps> = ({
                     <div className="flex items-center space-x-1">
                       <button
                         onClick={() => onUpdateQuantity(item.id, item.quantity - 1)}
-                        className="w-5 h-5 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center text-gray-600 hover:text-gray-800 transition-colors"
+                        className="w-5 h-5 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center text-gray-600 hover:text-gray-800 transition-colors cursor-pointer disabled:cursor-not-allowed"
                         disabled={item.quantity <= 1}
                       >
                         <Minus className="w-3 h-3" />
@@ -180,7 +180,7 @@ export const TransactionPanel: React.FC<TransactionPanelProps> = ({
                       <span className="w-6 text-center font-medium">{item.quantity}</span>
                       <button
                         onClick={() => onUpdateQuantity(item.id, item.quantity + 1)}
-                        className="w-5 h-5 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center text-gray-600 hover:text-gray-800 transition-colors"
+                        className="w-5 h-5 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center text-gray-600 hover:text-gray-800 transition-colors cursor-pointer"
                       >
                         <Plus className="w-3 h-3" />
                       </button>
@@ -191,7 +191,7 @@ export const TransactionPanel: React.FC<TransactionPanelProps> = ({
                     <div className="flex items-center">
                       <button
                         onClick={() => onRemoveFromCart(item.id)}
-                        className="w-6 h-6 rounded-full bg-red-100 hover:bg-red-200 flex items-center justify-center text-red-600 hover:text-red-700 transition-colors"
+                        className="w-6 h-6 rounded-full bg-red-100 hover:bg-red-200 flex items-center justify-center text-red-600 hover:text-red-700 transition-colors cursor-pointer"
                         title="Remove item"
                       >
                         <Trash2 className="w-3 h-3" />

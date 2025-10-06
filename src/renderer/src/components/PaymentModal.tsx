@@ -108,7 +108,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <h2 className="text-2xl font-bold text-green-800">Make Payment</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700 transition-colors">
+          <button onClick={onClose} className="text-gray-500 cursor-pointer hover:text-gray-700 transition-colors">
             <X className="w-6 h-6" />
           </button>
         </div>

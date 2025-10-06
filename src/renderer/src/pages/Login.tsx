@@ -87,7 +87,7 @@ const Login: React.FC = () => {
               />
               <button
                 type="button"
-                className="absolute right-2 top-1/2 -translate-y-1/2 p-1"
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 cursor-pointer"
                 onClick={() => setShowPassword((v) => !v)}
                 tabIndex={-1}
               >
@@ -130,8 +130,8 @@ const Login: React.FC = () => {
                   {syncProgress.currentStep} ({syncProgress.completedSteps}/{syncProgress.totalSteps})
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div 
-                    className="bg-blue-600 h-2 rounded-full transition-all duration-300" 
+                  <div
+                    className="bg-blue-600 h-2 rounded-full transition-all duration-300"
                     style={{ width: `${(syncProgress.completedSteps / syncProgress.totalSteps) * 100}%` }}
                   ></div>
                 </div>
@@ -146,7 +146,7 @@ const Login: React.FC = () => {
           <Button
             type="submit"
             disabled={isSubmitting || syncProgress?.isSyncing}
-            className="w-full bg-[#052315] text-white rounded-md py-2 mt-2 hover:bg-[#09351f] disabled:opacity-50"
+            className="w-full bg-[#052315] text-white rounded-md py-2 mt-2 hover:bg-[#09351f] disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
           >
             {isSubmitting ? 'Signing in…' : syncProgress?.isSyncing ? 'Syncing data…' : 'Login'}
           </Button>

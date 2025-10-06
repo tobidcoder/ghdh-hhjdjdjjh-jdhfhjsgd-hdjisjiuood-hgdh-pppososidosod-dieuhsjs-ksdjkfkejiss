@@ -241,7 +241,7 @@ export function initDatabase(): void {
       const count = db.prepare('SELECT COUNT(1) as c FROM products').get() as { c: number }
       if (count.c === 0) {
         const seedProducts: ProductRecord[] = [
-          
+
         ]
         upsertProducts(seedProducts)
       }
@@ -272,11 +272,11 @@ function runMigrations(): void {
         executed_at TEXT NOT NULL
       );
     `)
-    
+
     // Check if critical tables are missing and reset migrations if needed
     const criticalTables = ['products', 'users', 'settings', 'sales']
     const missingTables = criticalTables.filter(table => !tableExists(table))
-    
+
     if (missingTables.length > 0) {
       console.log('[DB] Detected missing tables:', missingTables)
       console.log('[DB] Resetting migrations to recreate missing tables...')
@@ -726,7 +726,7 @@ function runMigrations(): void {
     markMigrationComplete('015_fix_empty_string_defaults')
   }
 
-  
+
 
   // Migration 16: Create front_settings table for front-settings data
   if (!migrationExists('016_create_front_settings_table')) {
@@ -822,10 +822,10 @@ export function searchProducts(query: string, limit: number = 50): ProductRecord
   const result = database
     .prepare(
       `
-      SELECT id, name, price, category, code, raw_response 
-      FROM products 
+      SELECT id, name, price, category, code, raw_response
+      FROM products
       WHERE name LIKE ? OR code LIKE ? OR category LIKE ?
-      ORDER BY name 
+      ORDER BY name
       LIMIT ?
     `
     )
@@ -841,10 +841,10 @@ export function listProducts(category?: string | number, limit: number = 50): Pr
     if (typeof category === 'number') {
       return database
         .prepare(
-          `SELECT p.id, p.name, p.price, p.category, p.code, p.raw_response 
+          `SELECT p.id, p.name, p.price, p.category, p.code, p.raw_response
            FROM products p
            INNER JOIN product_categories pc ON p.category = pc.id
-           WHERE pc.id = ? 
+           WHERE pc.id = ?
            ORDER BY p.name LIMIT ?`
         )
         .all(category, limit) as ProductRecord[]
@@ -896,8 +896,8 @@ export function createSale(
 
   const stmt = database.prepare(`
     INSERT INTO sales (
-      id, invoice_number, customer_name, customer_phone, subtotal, tax_amount, 
-      total_amount, payment_method, payment_status, items, created_at, 
+      id, invoice_number, customer_name, customer_phone, subtotal, tax_amount,
+      total_amount, payment_method, payment_status, items, created_at,
       sync_status, sync_attempts, ref, date, customer_id, warehouse_id, sale_items,
       grand_total, discount, shipping, tax_rate, note, status, hold_ref_no, user_id
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -997,8 +997,8 @@ export function updateSaleSyncStatus(
     database
       .prepare(
         `
-        UPDATE sales 
-        SET sync_status = ?, sync_attempts = sync_attempts + 1, last_sync_error = ? 
+        UPDATE sales
+        SET sync_status = ?, sync_attempts = sync_attempts + 1, last_sync_error = ?
         WHERE id = ?
       `
       )
@@ -1627,11 +1627,11 @@ export function upsertSettings(
 
   const stmt = database.prepare(`
     INSERT OR REPLACE INTO settings (
-      id, currency, email, company_name, phone, default_language, default_customer, 
-      default_warehouse, address, logo, show_phone, show_address, show_customer, 
-      show_email, show_tax_discount_shipping, show_note, show_barcode_in_receipt, 
-      show_logo_in_receipt, protect_cart_product_delete, protect_cart_product_reduce, 
-      enable_shipping, enable_tax, enable_discount, warehouse_name, customer_name, 
+      id, currency, email, company_name, phone, default_language, default_customer,
+      default_warehouse, address, logo, show_phone, show_address, show_customer,
+      show_email, show_tax_discount_shipping, show_note, show_barcode_in_receipt,
+      show_logo_in_receipt, protect_cart_product_delete, protect_cart_product_reduce,
+      enable_shipping, enable_tax, enable_discount, warehouse_name, customer_name,
       currency_symbol, created_at, updated_at
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `)
@@ -1688,9 +1688,9 @@ export function upsertFrontSettings(
 
   const stmt = database.prepare(`
     INSERT OR REPLACE INTO front_settings (
-      id, currency, email, company_name, phone, default_language, default_customer, 
-      default_warehouse, address, protect_cart_product_delete, protect_cart_product_reduce, 
-      enable_shipping, enable_tax, enable_discount, logo, warehouse_name, customer_name, 
+      id, currency, email, company_name, phone, default_language, default_customer,
+      default_warehouse, address, protect_cart_product_delete, protect_cart_product_reduce,
+      enable_shipping, enable_tax, enable_discount, logo, warehouse_name, customer_name,
       currency_symbol, roles, connected_accounts, created_at, updated_at
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `)
@@ -2387,7 +2387,7 @@ function registerDatabaseIpcHandlers(): void {
       return { user: toUserPayload(stored), source: 'remote' as const }
     } catch (error: any) {
       console.log('[DB] Remote login failed:', error.message)
-      throw new Error(error.message || 'Login failed')
+      // throw new Error(error.message || 'Login failed')
     }
   })
 

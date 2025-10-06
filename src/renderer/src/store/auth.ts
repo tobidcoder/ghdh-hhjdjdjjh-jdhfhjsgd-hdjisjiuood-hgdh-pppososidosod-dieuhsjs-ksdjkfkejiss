@@ -72,8 +72,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         console.error('[Auth] Error in post-login tasks:', error)
       }
     } catch (err: unknown) {
+
       const errorMessage = err instanceof Error ? err.message : 'Login failed'
+      console.log(errorMessage)
       set({ error: errorMessage, isSubmitting: false })
+      // set({ error: 'This is your first time login in, please connect to the internet', isSubmitting: false })
     }
   },
 

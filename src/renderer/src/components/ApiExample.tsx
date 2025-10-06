@@ -22,13 +22,13 @@ export const ApiExample: React.FC = () => {
     try {
       setError(null)
       setResult('Testing axios API...')
-      
+
       // Example: Test a simple GET request
       const response = await axiosApi.get('/test', {
         onSuccess: (data) => console.log('Success:', data),
         onError: (err) => console.error('Error:', err)
       })
-      
+
       setResult(`Axios API Response: ${JSON.stringify(response, null, 2)}`)
     } catch (err: any) {
       setError(`Axios API Error: ${err.message}`)
@@ -39,13 +39,13 @@ export const ApiExample: React.FC = () => {
     try {
       setError(null)
       setResult('Testing unified API...')
-      
+
       // Example: Test settings fetch
       const settings = await unifiedApi.getSettings({
         onSuccess: (data) => console.log('Settings loaded:', data),
         onError: (err) => console.error('Settings error:', err)
       })
-      
+
       setResult(`Unified API Response: ${JSON.stringify(settings, null, 2)}`)
     } catch (err: any) {
       setError(`Unified API Error: ${err.message}`)
@@ -65,14 +65,14 @@ export const ApiExample: React.FC = () => {
   return (
     <div className="p-6 space-y-4">
       <h2 className="text-2xl font-bold text-gray-800">API Testing Component</h2>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card className="p-4">
           <h3 className="text-lg font-semibold mb-3">Axios API Hook</h3>
           <p className="text-sm text-gray-600 mb-3">
             Direct axios-based API calls with automatic error handling and loading states.
           </p>
-          <Button 
+          <Button
             onClick={handleAxiosApiTest}
             disabled={axiosApi.loading}
             className="w-full"
@@ -92,7 +92,7 @@ export const ApiExample: React.FC = () => {
             Unified API service that can switch between HTTP and IPC calls.
           </p>
           <div className="space-y-2">
-            <Button 
+            <Button
               onClick={handleUnifiedApiTest}
               disabled={unifiedApi.loading}
               className="w-full"
@@ -100,7 +100,7 @@ export const ApiExample: React.FC = () => {
               {unifiedApi.loading ? 'Testing...' : 'Test Unified API'}
             </Button>
             <div className="flex gap-2">
-              <Button 
+              <Button
                 onClick={handleSwitchToHttp}
                 variant="outline"
                 size="sm"
@@ -108,7 +108,7 @@ export const ApiExample: React.FC = () => {
               >
                 HTTP Mode
               </Button>
-              <Button 
+              <Button
                 onClick={handleSwitchToIpc}
                 variant="outline"
                 size="sm"
