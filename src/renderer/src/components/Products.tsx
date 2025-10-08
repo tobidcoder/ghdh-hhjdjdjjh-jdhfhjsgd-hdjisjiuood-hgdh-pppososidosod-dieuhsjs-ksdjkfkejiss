@@ -79,19 +79,38 @@ interface ProductCardProps {
 }
 
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
-  const { addToCart } = useProductsStore()
+  const { addToCart, cartItems } = useProductsStore()
 
   const handleAddToCart = () => {
     addToCart(product)
   }
 
+  // Check if product is in cart
+  const isInCart = cartItems.some(item => item.id === product.id)
+
   return (
-    <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={handleAddToCart}>
-      <CardContent className="p-3">
-        <div className="space-y-2">
+    <Card
+      className={`hover:shadow-md transition-all cursor-pointer p-0 ${
+        isInCart ? 'border-2 border-[#b2d93b] shadow-md' : 'border border-gray-200'
+      }`}
+      onClick={handleAddToCart}
+    >
+      <CardContent className="p-0">
+        {/* Price at the top */}
+        <div className="flex justify-between items-start ">
+          <div className="bg-[#052315] rounded-tl-lg  rounded text-white px-1 py-0  text-sm">
+            {formatPriceBySymbol(product.price)}
+          </div>
+          {isInCart && (
+            <div className="bg-[#b2d93b] text-white px-1 py-0 rounded-tr-lg rounded text-xs font-medium">
+              In Cart
+            </div>
+          )}
+        </div>
+        <div className="space-y-2 px-2">
           {/* Product Image Placeholder */}
-          <div className="w-full h-24 bg-gray-200 rounded-md flex items-center justify-center">
-            <Package className="w-8 h-8 text-gray-400" />
+          <div className="w-full h-20 bg-gray-100 rounded-md flex items-center justify-center">
+            <div className="text-gray-400 text-xs font-medium">NO IMAGE</div>
           </div>
 
           {/* Product Info */}
@@ -99,18 +118,13 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             <h3 className="font-medium text-sm text-gray-900 line-clamp-2 leading-tight">
               {product.name}
             </h3>
-            <p className="text-lg font-bold text-gray-900">{formatPriceBySymbol(product.price)}</p>
             {product.code && <p className="text-xs text-gray-500 font-mono">#{product.code}</p>}
           </div>
-
-          {/* <div className="flex items-center justify-between">
-            <span className="text-lg font-bold text-gray-900">
+          <div className="flex mb-2">
+            <div className="bg-[#b2d93b]   rounded text-[#052315] px-2 py-0">
               {formatPriceBySymbol(product.price)}
-            </span>
-          </div> */}
-          {/* <Badge  className="text-xs">
-            {product.category}
-          </Badge> */}
+            </div>
+          </div>
         </div>
       </CardContent>
     </Card>
