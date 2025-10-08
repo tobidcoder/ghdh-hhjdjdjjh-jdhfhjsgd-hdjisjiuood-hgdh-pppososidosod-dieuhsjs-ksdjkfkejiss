@@ -2,7 +2,7 @@ import React, { useEffect } from 'react'
 import { useProductsStore } from '@renderer/store/products'
 import { useSalesStore } from '@renderer/store/sales'
 import { Card, CardContent } from '@renderer/components/ui/card'
-import { Package } from 'lucide-react'
+// import { Package } from 'lucide-react'
 import { formatPriceBySymbol } from '@renderer/lib/currencyUtils'
 
 export const Products: React.FC = () => {
