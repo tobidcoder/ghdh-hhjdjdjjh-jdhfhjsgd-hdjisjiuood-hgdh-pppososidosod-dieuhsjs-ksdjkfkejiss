@@ -11,7 +11,7 @@ export async function syncSaleToRemote(
   baseUrl: string
 ): Promise<void> {
   const saleData = {
-    invoice_number: sale.invoice_number,
+    reference_code: sale.invoice_number,
     customer_name: sale.customer_name,
     customer_phone: sale.customer_phone,
     subtotal: sale.subtotal,

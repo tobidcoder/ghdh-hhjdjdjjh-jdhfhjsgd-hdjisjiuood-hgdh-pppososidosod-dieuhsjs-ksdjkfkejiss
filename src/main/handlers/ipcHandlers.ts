@@ -12,6 +12,7 @@ import * as configService from '../services/config'
 import * as loginSyncService from '../services/loginSync'
 import * as authService from '../services/auth'
 import * as salesService from '../services/sales'
+import * as holdsService from '../services/holds'
 
 // Track registration state to prevent duplicates
 let databaseHandlersRegistered = false
@@ -287,6 +288,43 @@ export function registerDatabaseIpcHandlers(): void {
     } catch (error: any) {
       console.error('[DB] Failed to get payment methods by business profile:', error.message)
       return []
+    }
+  })
+
+  // Holds IPC handlers
+  ipcMain.handle('db:holds:save', (_event, hold: { name: string; items: any[]; totalAmount: number }) => {
+    try {
+      return holdsService.saveHold(hold)
+    } catch (error: any) {
+      console.error('[DB] Failed to save hold:', error.message)
+      return { success: false, error: error.message }
+    }
+  })
+
+  ipcMain.handle('db:holds:getAll', () => {
+    try {
+      return holdsService.getHolds()
+    } catch (error: any) {
+      console.error('[DB] Failed to get holds:', error.message)
+      return []
+    }
+  })
+
+  ipcMain.handle('db:holds:getById', (_event, id: string) => {
+    try {
+      return holdsService.getHoldById(id)
+    } catch (error: any) {
+      console.error('[DB] Failed to get hold by id:', error.message)
+      return null
+    }
+  })
+
+  ipcMain.handle('db:holds:delete', (_event, id: string) => {
+    try {
+      return holdsService.deleteHold(id)
+    } catch (error: any) {
+      console.error('[DB] Failed to delete hold:', error.message)
+      return { success: false, error: error.message }
     }
   })
 
