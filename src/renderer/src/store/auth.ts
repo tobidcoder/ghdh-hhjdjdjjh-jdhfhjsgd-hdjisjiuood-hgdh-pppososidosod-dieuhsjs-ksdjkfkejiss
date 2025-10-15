@@ -30,11 +30,14 @@ interface AuthState {
   } | null
   login: (payload: { email: string; password: string }) => Promise<void>
   logout: () => void
+  logoutWithDatabaseCleanup: () => Promise<void>
   clearError: () => void
   checkAndStartProductSync: () => Promise<void>
   fetchSettingsOnLogin: () => Promise<void>
   initializeAuth: () => void
 }
+
+let hasInitializedAuth = false
 
 export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
@@ -81,11 +84,33 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   logout: () => {
+    // Clear user data from state and local storage only (normal logout)
+    set({ user: null, loginSource: null, error: null, syncProgress: null })
+    removeUserFromStorage()
+    removeSettingsFromStorage() // Clear cached settings on logout
+    
+    console.log('[Auth] User logged out (normal logout - data preserved)')
+    // Navigate to login page after logout
+    window.location.href = '/'
+  },
+
+  logoutWithDatabaseCleanup: async () => {
     // Clear user data from state and local storage
     set({ user: null, loginSource: null, error: null, syncProgress: null })
     removeUserFromStorage()
     removeSettingsFromStorage() // Clear cached settings on logout
-    console.log('[Auth] User logged out and data cleared')
+    
+    // Clear current user data from local database (401 logout)
+    try {
+      console.log('[Auth] Clearing current user data from database due to 401...')
+      await window.api.auth.clearCurrentUserData()
+      console.log('[Auth] User data cleanup completed')
+    } catch (error) {
+      console.error('[Auth] Failed to clear user data:', error)
+      // Continue with logout even if database cleanup fails
+    }
+    
+    console.log('[Auth] User logged out with database cleanup (401 logout)')
     // Navigate to login page after logout
     window.location.href = '/'
   },
@@ -189,6 +214,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   initializeAuth: () => {
+    if (hasInitializedAuth) return
+    hasInitializedAuth = true
+
+    // Avoid re-initializing if user already exists in state
+    const currentUser = get().user
+    if (currentUser) return
+
     // Load user data from local storage on app initialization
     const storedUser = getUserFromStorage()
     if (storedUser) {

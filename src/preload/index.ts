@@ -90,7 +90,8 @@ const api = {
     seedFromResponse: (payload: { response: any; password: string }) =>
       ipcRenderer.invoke('auth:seedFromResponse', payload),
     getRawResponse: (emailOrUsername: string) =>
-      ipcRenderer.invoke('auth:getRawResponse', emailOrUsername)
+      ipcRenderer.invoke('auth:getRawResponse', emailOrUsername),
+    clearCurrentUserData: () => ipcRenderer.invoke('auth:clearCurrentUserData')
   },
   products: {
     sync: {

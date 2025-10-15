@@ -220,6 +220,67 @@ export const printReceipt = async (receiptData: any): Promise<void> => {
   }
 }
 
+// Convenience: build receipt data directly from a sale record and print
+export const printReceiptFromSale = async (sale: any): Promise<void> => {
+  try {
+    const settings = JSON.parse(localStorage.getItem('cheetah_settings') || '{}')
+    const user = JSON.parse(localStorage.getItem('cheetah_auth_user') || 'null')
+
+    // Parse cart items from sale.sale_items (double-encoded) or fallback to sale.items
+    let cartItems: any[] = []
+    try {
+      if (sale?.sale_items) {
+        cartItems = JSON.parse(JSON.parse(sale.sale_items))
+      } else if (sale?.items) {
+        cartItems = JSON.parse(sale.items)
+      }
+    } catch {
+      cartItems = []
+    }
+
+    // Normalize each item to { name, price, quantity }
+    const normalizedItems = cartItems.map((it: any) => ({
+      name: it.name ?? it.product_name ?? it.title ?? 'Item',
+      price: Number(it.price ?? it.selling_price ?? it.unit_price ?? 0),
+      quantity: Number(it.quantity ?? it.qty ?? 1)
+    }))
+
+    const invoiceNumber = sale?.invoice_number ?? sale?.ref ?? ''
+    const receiptData = {
+      saleData: {
+        invoiceNumber,
+        date: sale?.date || sale?.created_at || new Date().toISOString(),
+        customerName: sale?.customer_name || null,
+        paymentMethod: sale?.payment_method,
+        paymentStatus: sale?.payment_status,
+        note: sale?.note || null,
+        receivedAmount: sale?.received_amount ?? sale?.grand_total ?? sale?.total_amount ?? 0,
+        changeReturn: sale?.change_return ?? 0,
+        ref: sale?.ref || invoiceNumber
+      },
+      cartItems: normalizedItems,
+      companyInfo: {
+        name: settings?.company_name || '',
+        address: settings?.address || '',
+        phone: settings?.phone || '',
+        email: settings?.email || '',
+        branch: settings?.warehouse_name || '',
+        cashier: user?.name || user?.username || 'Cashier'
+      },
+      totals: {
+        subtotal: normalizedItems.reduce((sum: number, it: any) => sum + it.price * it.quantity, 0),
+        taxAmount: 0,
+        totalAmount: normalizedItems.reduce((sum: number, it: any) => sum + it.price * it.quantity, 0)
+      }
+    }
+
+    await printReceipt(receiptData)
+  } catch (error) {
+    console.error('[PRINT] Failed to build receipt from sale:', error)
+    throw error
+  }
+}
+
 const generateReceiptHTML = (receiptData: any): string => {
   const { saleData, cartItems, companyInfo } = receiptData
   const subtotal = cartItems.reduce((sum: number, item: any) => sum + item.price * item.quantity, 0)

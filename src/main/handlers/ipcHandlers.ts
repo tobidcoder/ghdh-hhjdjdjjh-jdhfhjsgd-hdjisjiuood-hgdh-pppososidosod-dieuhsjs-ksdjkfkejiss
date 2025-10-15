@@ -1,7 +1,4 @@
 import { ipcMain, BrowserWindow } from 'electron'
-import { writeFileSync, unlinkSync } from 'fs'
-import { join } from 'path'
-import { tmpdir } from 'os'
 import { getDatabaseFilePath } from '../database/connection'
 import { resetMigrations } from '../database/migrations'
 import * as productService from '../services/products-new'
@@ -535,50 +532,116 @@ export function registerDatabaseIpcHandlers(): void {
     }
   })
 
-  // Hold IPC handlers
-  ipcMain.handle('db:holds:save', async (_event, holdData: { name: string; items: any[]; totalAmount: number }) => {
+  ipcMain.handle('auth:clearCurrentUserData', () => {
     try {
-      const { saveHold } = await import('../services/holds')
-      return saveHold(holdData)
+      authService.clearCurrentUserData()
+      return { success: true }
     } catch (error: any) {
-      console.error('[DB] Failed to save hold:', error.message)
-      throw new Error(error.message || 'Failed to save hold')
-    }
-  })
-
-  ipcMain.handle('db:holds:getAll', async () => {
-    try {
-      const { getHolds } = await import('../services/holds')
-      return getHolds()
-    } catch (error: any) {
-      console.error('[DB] Failed to get holds:', error.message)
-      return []
-    }
-  })
-
-  ipcMain.handle('db:holds:getById', async (_event, id: string) => {
-    try {
-      const { getHoldById } = await import('../services/holds')
-      return getHoldById(id)
-    } catch (error: any) {
-      console.error('[DB] Failed to get hold by ID:', error.message)
-      return null
-    }
-  })
-
-  ipcMain.handle('db:holds:delete', async (_event, id: string) => {
-    try {
-      const { deleteHold } = await import('../services/holds')
-      return deleteHold(id)
-    } catch (error: any) {
-      console.error('[DB] Failed to delete hold:', error.message)
+      console.error('[DB] Failed to clear current user data:', error.message)
       return { success: false, error: error.message }
     }
   })
 
+  // Printing handlers
+  ipcMain.handle(
+    'print:receipt',
+    async (
+      _event,
+      htmlContent: string,
+      options?: { silent?: boolean; deviceName?: string }
+    ) => {
+      try {
+        const win = new BrowserWindow({
+          width: 800,
+          height: 900,
+          show: false,
+          webPreferences: { sandbox: false }
+        })
+
+        await win.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(htmlContent))
+
+        await new Promise<void>((resolve) => {
+          // Give the content a tick to render before printing
+          setTimeout(() => resolve(), 50)
+        })
+
+        await new Promise<void>((resolve, reject) => {
+          win.webContents.print(
+            {
+              silent: options?.silent ?? true,
+              deviceName: options?.deviceName
+            },
+            (success, failureReason) => {
+              if (!success) {
+                reject(new Error(failureReason || 'Print failed'))
+              } else {
+                resolve()
+              }
+            }
+          )
+        })
+
+        win.close()
+        return { success: true }
+      } catch (error: any) {
+        console.error('[PRINT] Failed to print receipt:', error.message)
+        return { success: false, error: error.message }
+      }
+    }
+  )
+
+  ipcMain.handle('print:receipt:openPreview', async (_event, htmlContent: string) => {
+    try {
+      const preview = new BrowserWindow({
+        width: 900,
+        height: 1000,
+        show: true,
+        title: 'Receipt Preview',
+        webPreferences: { sandbox: false }
+      })
+
+      await preview.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(htmlContent))
+      return { success: true }
+    } catch (error: any) {
+      console.error('[PRINT] Failed to open preview:', error.message)
+      return { success: false, error: error.message }
+    }
+  })
+
+  ipcMain.handle(
+    'print:receipt:current',
+    async (_event, options?: { silent?: boolean; deviceName?: string }) => {
+      try {
+        const focused = BrowserWindow.getFocusedWindow()
+        if (!focused) {
+          throw new Error('No focused window to print')
+        }
+        await new Promise<void>((resolve, reject) => {
+          focused.webContents.print(
+            {
+              silent: options?.silent ?? true,
+              deviceName: options?.deviceName
+            },
+            (success, failureReason) => {
+              if (!success) {
+                reject(new Error(failureReason || 'Print failed'))
+              } else {
+                resolve()
+              }
+            }
+          )
+        })
+        return { success: true }
+      } catch (error: any) {
+        console.error('[PRINT] Failed to print current window:', error.message)
+        return { success: false, error: error.message }
+      }
+    }
+  )
+
   // Environment variable handlers
   ipcMain.handle('env:get', (_event, key: string) => {
-    const value = process.env[key]
+    const value = process.env[key] || ''
     console.log(`[ENV] Requested ${key}:`, value)
     console.log(
       `[ENV] All env vars:`,
@@ -599,195 +662,6 @@ export function registerDatabaseIpcHandlers(): void {
       },
       {} as Record<string, string | undefined>
     )
-  })
-
-  // Print IPC handlers
-  let previewWindow: BrowserWindow | null = null
-
-  ipcMain.handle('print:receipt:openPreview', async (_event, htmlContent: string) => {
-    try {
-      if (previewWindow && !previewWindow.isDestroyed()) {
-        previewWindow.close()
-        previewWindow = null
-      }
-
-      previewWindow = new BrowserWindow({
-        width: 600,
-        height: 800,
-        show: true,
-        title: 'Receipt Preview',
-        webPreferences: {
-          nodeIntegration: false,
-          contextIsolation: true,
-          webSecurity: false
-        }
-      })
-
-      const loadPromise = new Promise<void>((resolve, reject) => {
-        const timeout = setTimeout(() => reject(new Error('Preview load timeout')), 10000)
-        previewWindow!.webContents.once('did-finish-load', () => {
-          clearTimeout(timeout)
-          resolve()
-        })
-        previewWindow!.webContents.once('did-fail-load', (_e, code, desc) => {
-          clearTimeout(timeout)
-          reject(new Error(`${code}: ${desc}`))
-        })
-      })
-
-      const tempName = `receipt_preview_${Date.now()}.html`
-      const tempPath = join(tmpdir(), tempName)
-      writeFileSync(tempPath, htmlContent, 'utf8')
-      await previewWindow.loadFile(tempPath)
-      await loadPromise
-      try { unlinkSync(tempPath) } catch {}
-      return { success: true }
-    } catch (error: any) {
-      console.error('[PRINT] Failed to open preview:', error.message)
-      return { success: false, error: error.message }
-    }
-  })
-
-  ipcMain.handle('print:receipt:current', async (_event, opts?: { silent?: boolean; deviceName?: string }) => {
-    try {
-      if (!previewWindow || previewWindow.isDestroyed()) {
-        throw new Error('No preview window available')
-      }
-      const printed = await previewWindow.webContents.print({
-        silent: opts?.silent ?? true,
-        deviceName: opts?.deviceName,
-        printBackground: true
-      })
-      return { success: true, data: printed }
-    } catch (error: any) {
-      console.error('[PRINT] Failed to print current preview:', error.message)
-      return { success: false, error: error.message }
-    }
-  })
-  ipcMain.handle('print:receipt', async (_event, htmlContent: string, opts?: { silent?: boolean; deviceName?: string }) => {
-    console.log('[PRINT] Starting receipt print process...')
-    let printWindow: BrowserWindow | null = null
-    let tempFilePath: string | undefined
-
-    try {
-      // Create a new BrowserWindow for printing
-      printWindow = new BrowserWindow({
-        width: 600,
-        height: 800,
-        show: true, // Show the window so user can see the preview
-        title: 'Receipt Print Preview',
-        webPreferences: {
-          nodeIntegration: false,
-          contextIsolation: true,
-          webSecurity: false,
-          allowRunningInsecureContent: true
-        }
-      })
-
-      console.log('[PRINT] Created print window')
-
-      // Focus the window to ensure it's visible
-      printWindow.focus()
-
-      // Set up event listeners before loading
-      const loadPromise = new Promise<void>((resolve, reject) => {
-        const timeout = setTimeout(() => {
-          reject(new Error('Load timeout after 10 seconds'))
-        }, 10000)
-
-        printWindow!.webContents.once('did-finish-load', () => {
-          clearTimeout(timeout)
-          console.log('[PRINT] Content loaded successfully')
-          resolve()
-        })
-
-        printWindow!.webContents.once('did-fail-load', (_event, errorCode, errorDescription) => {
-          clearTimeout(timeout)
-          console.error('[PRINT] Failed to load content:', errorCode, errorDescription)
-          reject(new Error(`Failed to load: ${errorDescription}`))
-        })
-      })
-
-      // Create a temporary HTML file instead of using data URL
-      const tempFileName = `receipt_${Date.now()}.html`
-      tempFilePath = join(tmpdir(), tempFileName)
-
-      console.log('[PRINT] Creating temporary file:', tempFilePath)
-      writeFileSync(tempFilePath, htmlContent, 'utf8')
-
-      console.log('[PRINT] Loading HTML content from file...')
-      await printWindow.loadFile(tempFilePath)
-      console.log('[PRINT] loadFile completed, waiting for did-finish-load...')
-
-      // Wait for content to load
-      await loadPromise
-
-      // Wait for the window to be ready and content to be fully rendered
-      console.log('[PRINT] Waiting for content to render...')
-      await new Promise(resolve => setTimeout(resolve, 3000))
-
-      // Ensure the window is ready for printing
-      await printWindow.webContents.executeJavaScript(`
-        new Promise((resolve) => {
-          if (document.readyState === 'complete') {
-            resolve();
-          } else {
-            window.addEventListener('load', resolve);
-          }
-        });
-      `)
-
-      console.log('[PRINT] Content is ready for printing')
-
-      // Direct print with options (supports silent printing)
-      const printOptions = {
-        silent: opts?.silent ?? false,
-        deviceName: opts?.deviceName,
-        printBackground: true
-      } as const
-
-      console.log('[PRINT] Starting direct print... silent:', printOptions.silent, 'device:', printOptions.deviceName || 'default')
-      const printed = await printWindow.webContents.print(printOptions)
-      console.log('[PRINT] Direct print completed:', printed)
-
-      // Clean up temporary file
-      try {
-        unlinkSync(tempFilePath)
-        console.log('[PRINT] Temporary file cleaned up')
-      } catch (cleanupError) {
-        console.warn('[PRINT] Failed to clean up temporary file:', cleanupError)
-      }
-
-      // Close the print window after a longer delay to allow user to see preview
-      setTimeout(() => {
-        if (printWindow && !printWindow.isDestroyed()) {
-          printWindow.close()
-          console.log('[PRINT] Print window closed')
-        }
-      }, 10000) // Increased to 10 seconds
-
-      return { success: true, data: 'PDF generated and opened' }
-    } catch (error: any) {
-      console.error('[PRINT] Failed to print receipt:', error.message)
-      console.error('[PRINT] Error stack:', error.stack)
-
-      // Clean up the window if it exists
-      if (printWindow && !printWindow.isDestroyed()) {
-        printWindow.close()
-      }
-
-      // Clean up temporary file if it exists
-      try {
-        if (tempFilePath) {
-          unlinkSync(tempFilePath)
-          console.log('[PRINT] Temporary file cleaned up on error')
-        }
-      } catch (cleanupError) {
-        console.warn('[PRINT] Failed to clean up temporary file on error:', cleanupError)
-      }
-
-      return { success: false, error: error.message }
-    }
   })
 
   // IPC test

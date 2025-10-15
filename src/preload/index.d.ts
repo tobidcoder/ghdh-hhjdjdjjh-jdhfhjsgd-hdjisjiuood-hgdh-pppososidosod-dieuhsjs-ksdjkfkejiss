@@ -454,6 +454,7 @@ declare global {
           }
         }>
         getRawResponse: (emailOrUsername: string) => Promise<any>
+        clearCurrentUserData: () => Promise<{ success: boolean; error?: string }>
       }
       products: {
         sync: {

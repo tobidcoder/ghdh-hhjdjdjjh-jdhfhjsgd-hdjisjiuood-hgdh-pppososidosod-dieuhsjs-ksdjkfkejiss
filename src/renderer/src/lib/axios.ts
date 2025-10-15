@@ -61,6 +61,23 @@ export const initializeAxios = async (): Promise<AxiosInstance> => {
     (error: AxiosError) => {
       console.error('[Axios] Response error:', error)
       
+      // Handle 401 Unauthorized responses
+      if (error.response?.status === 401) {
+        console.log('[Axios] 401 Unauthorized - triggering logout with database cleanup')
+        
+        // Trigger logout with database cleanup (guard against loops)
+        try {
+          if (typeof window !== 'undefined' && (window as any).__authStore) {
+            const useStore = (window as any).__authStore
+            const { user } = useStore.getState()
+            // Only attempt logout if a user exists
+            if (user) {
+              useStore.getState().logoutWithDatabaseCleanup()
+            }
+          }
+        } catch (_) {}
+      }
+      
       // Transform axios error to our ApiError format
       const apiError: ApiError = {
         message: (error.response?.data as any)?.message || error.message || 'Network error',

@@ -8,7 +8,7 @@ import { useAuthStore } from '@renderer/store/auth'
 import { SaleDetailsModal } from '@renderer/components/SaleDetailsModal'
 // import {  } from '@renderer/services/apiService'
 import { useSalesStore } from '@renderer/store/sales'
-import { printReceipt } from '@renderer/utils/printUtils'
+import { printReceiptFromSale } from '@renderer/utils/printUtils'
 
 interface SaleRecord {
   id: string
@@ -133,9 +133,7 @@ const RecentSales: React.FC = () => {
 
   const handleReprintReceipt = async (sale: SaleRecord) => {
     try {
-      // Call the electron API to reprint receipt
-      // await window.electronAPI.reprintReceipt(sale.id)
-      await printReceipt(sale)
+      await printReceiptFromSale(sale)
       // You could add a toast notification here
       console.log('Receipt reprinted successfully')
     } catch (error) {

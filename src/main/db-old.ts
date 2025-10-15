@@ -2387,7 +2387,7 @@ function registerDatabaseIpcHandlers(): void {
       return { user: toUserPayload(stored), source: 'remote' as const }
     } catch (error: any) {
       console.log('[DB] Remote login failed:', error.message)
-      // throw new Error(error.message || 'Login failed')
+      throw new Error(error.message || 'Login failed')
     }
   })
 

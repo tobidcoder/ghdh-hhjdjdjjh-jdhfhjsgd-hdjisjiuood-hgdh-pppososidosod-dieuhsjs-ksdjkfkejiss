@@ -311,3 +311,30 @@ export function requireCurrentUserToken(): string {
   }
   return token
 }
+
+// Function to clear current user data from local database
+export function clearCurrentUserData(): void {
+  const database = getDatabase()
+  if (!database) {
+    throw new Error('Database not initialized')
+  }
+
+  const currentUserId = getCurrentUserId()
+  if (!currentUserId) {
+    console.log('[DB] No current user found, skipping user data cleanup')
+    return
+  }
+
+  console.log('[DB] Clearing current user data from local database...', currentUserId)
+  
+  try {
+    // Delete only the current user from the users table
+    const deleteUserStmt = database.prepare('DELETE FROM users WHERE id = ?')
+    const result = deleteUserStmt.run(currentUserId)
+    
+    console.log('[DB] Current user deleted from database:', result.changes, 'rows affected')
+  } catch (error: any) {
+    console.error('[DB] Failed to clear current user data:', error.message)
+    throw error
+  }
+}

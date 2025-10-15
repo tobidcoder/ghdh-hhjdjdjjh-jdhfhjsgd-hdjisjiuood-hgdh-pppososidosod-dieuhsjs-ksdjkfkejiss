@@ -10,9 +10,30 @@ function App(): React.JSX.Element {
   const { initializeAuth } = useAuthStore()
 
   useEffect(() => {
+    // Expose the Zustand store (hook function) globally for axios interceptor access
+    ;(window as any).__authStore = useAuthStore
+
     // Initialize auth on app startup to load user data from local storage
     initializeAuth()
-  }, [initializeAuth])
+
+    // Listen for forced logout from main process (401 during background sync)
+    const handler = () => {
+      try {
+        const { logoutWithDatabaseCleanup } = useAuthStore.getState()
+        // Only trigger if a user exists
+        if (useAuthStore.getState().user) {
+          logoutWithDatabaseCleanup()
+        }
+      } catch {}
+    }
+    window.electron?.ipcRenderer?.on?.('auth:forceLogout401', handler)
+
+    return () => {
+      try {
+        window.electron?.ipcRenderer?.removeAllListeners?.('auth:forceLogout401')
+      } catch {}
+    }
+  }, [])
 
   return (
     <Routes>

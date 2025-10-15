@@ -1,7 +1,8 @@
 import { getDatabase } from '../database/connection'
 import { SaleRecord } from '../database/types'
 import { getBaseUrl } from '../database/connection'
-import { requireCurrentUserToken, requireCurrentUserId } from './auth'
+import { requireCurrentUserToken, requireCurrentUserId, clearCurrentUserData } from './auth'
+import { BrowserWindow } from 'electron'
 
 // Sales functions
 export function createSale(sale: any): SaleRecord {
@@ -216,6 +217,15 @@ export async function syncSalesToRemote(): Promise<void> {
                 const errorText = await response.text()
                 lastError = `HTTP ${response.status}: ${errorText}`
                 if (response.status === 401 || response.status === 403) {
+                  // On auth errors: clear current user and notify renderer to force logout
+                  try {
+                    clearCurrentUserData()
+                  } catch {}
+                  try {
+                    BrowserWindow.getAllWindows().forEach((w) =>
+                      w.webContents.send('auth:forceLogout401')
+                    )
+                  } catch {}
                   // Don't retry auth errors
                   throw new Error(`Authentication error: ${lastError}`)
                 }
