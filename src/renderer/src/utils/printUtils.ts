@@ -280,6 +280,10 @@ const generateReceiptHTML = (receiptData: any): string => {
   const taxAmount = 0
   // const taxAmount = subtotal * 0.15
   const totalAmount = subtotal + taxAmount
+  
+  // Calculate totals for display
+  const totalItems = cartItems.length
+  const totalQuantity = cartItems.reduce((sum: number, item: any) => sum + item.quantity, 0)
   const settings = JSON.parse(localStorage.getItem('cheetah_settings') || '{}')
   const showBarcode = settings.show_barcode_in_receipt == "1"
   // const showLogo = settings.show_logo_in_receipt == "1"
@@ -411,10 +415,21 @@ const generateReceiptHTML = (receiptData: any): string => {
         `
           )
           .join('')}
+          <div class="summary-row">
+            <div class="summary-row">
+              <span>Total Items: </span>
+              <span>${totalItems}</span>
+            </div>
+            <div class="summary-row">
+              <span>Total Quantity: </span>
+              <span>${totalQuantity}</span>
+            </div>
+          </div>
       </div>
 
       <!-- Summary Section -->
       <div class="summary">
+       
         <div class="summary-row">
           <span>Total Amount:</span>
           <span>${formatPrice(subtotal)}</span>
