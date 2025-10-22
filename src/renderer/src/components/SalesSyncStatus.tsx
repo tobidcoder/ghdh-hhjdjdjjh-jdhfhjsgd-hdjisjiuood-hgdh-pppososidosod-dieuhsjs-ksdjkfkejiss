@@ -78,7 +78,7 @@ export const SalesSyncStatus: React.FC = () => {
   return (
     <>
       <Dialog>
-        <DialogTrigger>
+        <DialogTrigger className='cursor-pointer'>
           <Badge variant="outline" className={getStatusColor()}>
             {getStatusIcon()}
             <span className="ml-1">{getStatusText()}</span>
