@@ -95,10 +95,10 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       }`}
       onClick={handleAddToCart}
     >
-      <CardContent className="p-0">
+      <CardContent className="p-0 pb-3">
         {/* Price at the top */}
         <div className="flex justify-between items-start ">
-          <div className="bg-[#052315] rounded-tl-lg  rounded text-white px-1 py-0  text-sm">
+          <div className="bg-[#052315] rounded-tl-lg  rounded text-white px-1 py-0  text-lg">
             {formatPriceBySymbol(product.price)}
           </div>
           {isInCart && (
@@ -118,13 +118,13 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             <h3 className="font-medium text-sm text-gray-900 line-clamp-2 leading-tight">
               {product.name}
             </h3>
-            {product.code && <p className="text-xs text-gray-500 font-mono">#{product.code}</p>}
+            {/* {product.code && <p className="text-xs text-gray-500 font-mono">#{product.code}</p>} */}
           </div>
-          <div className="flex mb-2">
+          {/* <div className="flex mb-2">
             <div className="bg-[#b2d93b]   rounded text-[#052315] px-2 py-0">
               {formatPriceBySymbol(product.price)}
             </div>
-          </div>
+          </div> */}
         </div>
       </CardContent>
     </Card>

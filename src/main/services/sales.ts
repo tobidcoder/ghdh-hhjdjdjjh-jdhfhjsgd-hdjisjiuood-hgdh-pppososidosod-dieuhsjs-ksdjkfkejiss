@@ -59,6 +59,24 @@ export function createSale(sale: any): SaleRecord {
   return getSaleById(saleId)!
 }
 
+// Delete synced sales older than 7 days for the current user
+export function cleanupOldSyncedSales(): number {
+  const database = getDatabase()
+  if (!database) {
+    throw new Error('Database not initialized')
+  }
+
+  const currentUserId = requireCurrentUserId()
+  const stmt = database.prepare(
+    `DELETE FROM sales
+     WHERE sync_status = 'synced'
+       AND user_id = ?
+       AND datetime(created_at) < datetime('now', '-7 days')`
+  )
+  const info = stmt.run(currentUserId)
+  return info.changes || 0
+}
+
 export function getPendingSales(): SaleRecord[] {
   const database = getDatabase()
   if (!database) {
@@ -214,8 +232,21 @@ export async function syncSalesToRemote(): Promise<void> {
                 updateSaleSyncStatus(sale.id, 'synced')
                 break // Success, exit retry loop
               } else {
-                const errorText = await response.text()
+                const rawText = await response.text()
+                let parsed: any = null
+                try { parsed = JSON.parse(rawText) } catch {}
+                const errorText = parsed?.message || rawText
                 lastError = `HTTP ${response.status}: ${errorText}`
+                // If the sale reference already exists remotely, consider it synced
+                if (
+                  response.status === 422 &&
+                  typeof errorText === 'string' &&
+                  errorText.toLowerCase().includes('reference code has already been taken')
+                ) {
+                  console.warn(`[DB] Reference already exists remotely for ${sale.invoice_number}. Marking as synced.`)
+                  updateSaleSyncStatus(sale.id, 'synced')
+                  break
+                }
                 if (response.status === 401 || response.status === 403) {
                   // On auth errors: clear current user and notify renderer to force logout
                   try {

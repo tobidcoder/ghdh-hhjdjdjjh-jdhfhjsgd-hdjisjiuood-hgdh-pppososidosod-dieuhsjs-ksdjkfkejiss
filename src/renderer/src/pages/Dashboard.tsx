@@ -22,7 +22,7 @@ export const Dashboard: React.FC = () => {
     removeFromCart,
     updateCartItemQuantity
   } = useProductsStore()
-  const { createSale, unsyncedCount } = useSalesStore()
+  const { createSale, unsyncedCount, syncSales, getUnsyncedCount } = useSalesStore()
   const { productCategories, fetchProductCategories } = useSettingsStore()
   const [currentTime, setCurrentTime] = useState(new Date())
   const [isOnline, setIsOnline] = useState(false) // Mock online status
@@ -38,6 +38,9 @@ export const Dashboard: React.FC = () => {
   const [isSearchCleared, setIsSearchCleared] = useState(false)
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false)
   const [saleRef, setSaleRef] = useState('')
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false)
+  const [isConfirmLogoutOpen, setIsConfirmLogoutOpen] = useState(false)
+  const [isSyncingLogout, setIsSyncingLogout] = useState(false)
 
   useEffect(() => {
 
@@ -88,6 +91,11 @@ export const Dashboard: React.FC = () => {
       salesSyncService.stop()
     }
   }, [user?.token])
+
+  // Keep unsynced count fresh
+  useEffect(() => {
+    getUnsyncedCount()
+  }, [getUnsyncedCount])
 
   // Fetch product categories when component mounts
   useEffect(() => {
@@ -184,6 +192,38 @@ export const Dashboard: React.FC = () => {
     setIsPaymentModalOpen(true)
   }
 
+  // Intercept logout to warn when there are unsynced sales
+  const handleLogoutRequested = async (): Promise<void> => {
+    try {
+      await getUnsyncedCount()
+    } catch {}
+    if (unsyncedCount > 0) {
+      setIsLogoutModalOpen(true)
+    } else {
+      logout()
+    }
+  }
+
+  const handleSyncThenLogout = async (): Promise<void> => {
+    setIsSyncingLogout(true)
+    try {
+      await syncSales()
+      await getUnsyncedCount()
+      setIsLogoutModalOpen(false)
+      if (useSalesStore.getState().unsyncedCount > 0) {
+        // Still pending; ask for confirmation
+        setIsConfirmLogoutOpen(true)
+      } else {
+        logout()
+      }
+    } catch {
+      // On error, allow user to decide
+      setIsConfirmLogoutOpen(true)
+    } finally {
+      setIsSyncingLogout(false)
+    }
+  }
+
   // Handle payment submission
   const handlePaymentSubmit = async (paymentData: any): Promise<void> => {
     try {
@@ -255,15 +295,14 @@ export const Dashboard: React.FC = () => {
 
       await createSale(saleData)
 
-      // Generate and print receipt
+      // Generate receipt and trigger print immediately (do not wait)
       const receiptData = generateReceiptData(saleRef, cartItems, paymentData, settings, saleRef)
-      await printReceipt(receiptData)
-
-      // Clear cart after successful sale
+      setIsPaymentModalOpen(false)
       useProductsStore.getState().clearCart()
-
-      // Show success message
-      alert('Payment completed successfully! Receipt has been printed.')
+      // Fire-and-forget printing
+      printReceipt(receiptData).catch((err) => {
+        console.error('[PRINT] Printing failed:', err)
+      })
     } catch (error) {
       console.error('Payment failed:', error)
 
@@ -289,7 +328,7 @@ export const Dashboard: React.FC = () => {
         user={user}
         isOnline={isOnline}
         unsyncedCount={unsyncedCount}
-        onLogout={logout}
+        onLogout={handleLogoutRequested}
       />
       <div className="flex-1  flex overflow-hidden">
         <div className="flex bg-white flex-col items-end h-[100%]">
@@ -334,6 +373,67 @@ export const Dashboard: React.FC = () => {
         cartItems={cartItems}
         onSubmit={handlePaymentSubmit}
       />
+
+      {/* Logout warning modal */}
+      {isLogoutModalOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl w-[90vw] max-w-md p-6">
+            <h3 className="text-xl font-bold text-gray-900 mb-2">Unsynced sales detected</h3>
+            <p className="text-sm text-gray-700 mb-4">
+              You have {unsyncedCount} unsynced sale{unsyncedCount === 1 ? '' : 's'}. Do you want to
+              sync them before logging out?
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                className="px-4 py-2 text-gray-700 border border-gray-300 rounded-md"
+                onClick={() => setIsConfirmLogoutOpen(true)}
+              >
+                Logout anyway
+              </button>
+              <button
+                className="px-4 py-2 bg-green-700 text-white rounded-md disabled:opacity-60"
+                onClick={handleSyncThenLogout}
+                disabled={isSyncingLogout}
+              >
+                {isSyncingLogout ? 'Syncing…' : 'Sync and logout'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirm logout without syncing */}
+      {isConfirmLogoutOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl w-[90vw] max-w-md p-6">
+            <h3 className="text-xl font-bold text-gray-900 mb-2">Proceed without syncing?</h3>
+            <p className="text-sm text-gray-700 mb-4">
+              Are you sure you want to logout without syncing pending sales?
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                className="px-4 py-2 text-gray-700 border border-gray-300 rounded-md"
+                onClick={() => {
+                  setIsConfirmLogoutOpen(false)
+                  setIsLogoutModalOpen(false)
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                className="px-4 py-2 bg-red-600 text-white rounded-md"
+                onClick={() => {
+                  setIsConfirmLogoutOpen(false)
+                  setIsLogoutModalOpen(false)
+                  logout()
+                }}
+              >
+                Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

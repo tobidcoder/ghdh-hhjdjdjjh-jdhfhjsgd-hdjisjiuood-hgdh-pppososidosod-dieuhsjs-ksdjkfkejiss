@@ -455,7 +455,10 @@ export function registerDatabaseIpcHandlers(): void {
   // Sales IPC handlers
   ipcMain.handle('db:sales:create', (_event, sale: any) => {
     try {
-      return salesService.createSale(sale)
+      const result = salesService.createSale(sale)
+      // Opportunistic cleanup after creating a sale (non-blocking)
+      try { salesService.cleanupOldSyncedSales() } catch {}
+      return result
     } catch (error: any) {
       console.error('[DB] Failed to create sale:', error.message)
       throw new Error(error.message || 'Failed to create sale')
@@ -512,9 +515,21 @@ export function registerDatabaseIpcHandlers(): void {
   ipcMain.handle('db:sales:sync', async () => {
     try {
       await salesService.syncSalesToRemote()
+      // Cleanup after sync completes
+      try { salesService.cleanupOldSyncedSales() } catch {}
       return { success: true }
     } catch (error: any) {
       console.error('[DB] Sales sync failed:', error.message)
+      return { success: false, error: error.message }
+    }
+  })
+
+  ipcMain.handle('db:sales:cleanupOldSynced', () => {
+    try {
+      const removed = salesService.cleanupOldSyncedSales()
+      return { success: true, removed }
+    } catch (error: any) {
+      console.error('[DB] Failed to cleanup old synced sales:', error.message)
       return { success: false, error: error.message }
     }
   })

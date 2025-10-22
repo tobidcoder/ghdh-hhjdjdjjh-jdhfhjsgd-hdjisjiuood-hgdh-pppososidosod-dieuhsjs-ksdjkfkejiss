@@ -26,13 +26,13 @@ export const PaymentSummary: React.FC<PaymentSummaryProps> = ({ cartItems, onChe
   return (
     <div className="mt-4   h-full w-full space-y-3 px-4 ">
       <Card>
-        <CardHeader className="">
-          <CardTitle className="text-sm">Customer & Payment</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          <Input placeholder="CUSTOMER" className="text-xs h-8" />
+        {/* <CardHeader className="">
+        </CardHeader> */}
+        <CardContent className="space-y-2 mt-0  pt-0">
+          <CardTitle className="text-lg"> Payment</CardTitle>
+          {/* <Input placeholder="CUSTOMER" className="text-xs h-8" /> */}
 
-          <div className="space-y-1 text-xs">
+          <div className="space-y-1 text-lg">
             <div className="flex justify-between">
               <span>Gross Amount:</span>
               <span>{formatPriceBySymbol(subtotal)}</span>
@@ -45,10 +45,10 @@ export const PaymentSummary: React.FC<PaymentSummaryProps> = ({ cartItems, onChe
               <span>Grand Total:</span>
               <span>{formatPriceBySymbol(totalAmount)}</span>
             </div>
-            <div className="flex justify-between">
+            {/* <div className="flex justify-between">
               <span>Paid:</span>
               <span>{formatPriceBySymbol(0)}</span>
-            </div>
+            </div> */}
           </div>
         </CardContent>
       </Card>

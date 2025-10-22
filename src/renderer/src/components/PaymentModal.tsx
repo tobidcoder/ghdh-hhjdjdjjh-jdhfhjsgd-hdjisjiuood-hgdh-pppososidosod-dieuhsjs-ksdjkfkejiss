@@ -71,10 +71,15 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
     if (isOpen && cartItems.length > 0) {
       setReceivedAmount(totalAmount.toFixed(2))
 
-      // Set default payment type to first available active method
+      // Force default payment type to 'Cash' if available, else first active
       if (paymentMethods.length > 0) {
         const activeMethods = paymentMethods.filter((method) => method.is_active)
-        if (activeMethods.length > 0) {
+        const cashMethod = activeMethods.find(
+          (method) => method.name?.toLowerCase() === 'cash' || method.display_name?.toLowerCase() === 'cash'
+        )
+        if (cashMethod) {
+          setPaymentType(String(cashMethod.id))
+        } else if (activeMethods.length > 0) {
           setPaymentType(String(activeMethods[0].id))
         }
       }

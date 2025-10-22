@@ -202,21 +202,14 @@ export const printReceipt = async (receiptData: any): Promise<void> => {
       </html>
     `
 
-    // In-app preview + one-click Print
-    console.log('[PRINT] Opening in-app preview...')
-    const open = await window.api.print.openPreview(htmlContent)
-    if (!open.success) {
-      throw new Error('Failed to open preview window')
-    }
-    console.log('[PRINT] Preview opened. Triggering print...')
-    const printRes = await window.api.print.current({ silent: true })
-    console.log('[PRINT] Print current preview result:', printRes)
+    // Silent print without opening a visible window
+    const printRes = await window.api.print.receipt(htmlContent, { silent: true })
     if (!printRes.success) {
       throw new Error(printRes.error || 'Unknown print error')
     }
   } catch (error) {
     console.error('Error printing receipt:', error)
-    alert('Error printing receipt: ' + (error as Error).message)
+    throw error
   }
 }
 
