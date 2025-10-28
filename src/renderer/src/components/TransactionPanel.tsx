@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { Button } from '@renderer/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@renderer/components/ui/card'
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@renderer/components/ui/card'
 import { formatPriceBySymbol } from '@renderer/lib/currencyUtils'
 import { Minus, Plus, Trash2, Eye } from 'lucide-react'
 import { apiService } from '@renderer/services/apiService'
@@ -202,19 +202,10 @@ export const TransactionPanel: React.FC<TransactionPanelProps> = ({
                   ))}
                 </div>
 
-                {/* Simple Cart Total */}
-                <div className="pt-3 border-t border-gray-200">
-                  <div className="flex items-center justify-between text-sm font-medium">
-                    <span className="text-gray-600">Total:</span>
-                    <span className="font-bold text-gray-900">
-                      {formatPriceBySymbol(
-                        cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0)
-                      )}
-                    </span>
-                  </div>
-                </div>
+
               </>
             )}
+                
             {/* Add item input */}
             {/* <div className="pt-2 space-y-2">
               <Input
@@ -244,6 +235,16 @@ export const TransactionPanel: React.FC<TransactionPanelProps> = ({
               )}
             </div> */}
           </CardContent>
+          <CardFooter className='py-0 w-full' >
+            <div className="flex items-center justify-between text-sm font-medium">
+              <span className="text-gray-600">Total:</span>
+              <span className="font-bold text-gray-900">
+                {formatPriceBySymbol(
+                  cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0)
+                )}
+              </span>
+            </div>
+          </CardFooter>
         </Card>
       </div>
 

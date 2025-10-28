@@ -33,14 +33,14 @@ export const PaymentSummary: React.FC<PaymentSummaryProps> = ({ cartItems, onChe
           {/* <Input placeholder="CUSTOMER" className="text-xs h-8" /> */}
 
           <div className="space-y-1 text-lg">
-            <div className="flex justify-between">
+            {/* <div className="flex justify-between">
               <span>Gross Amount:</span>
               <span>{formatPriceBySymbol(subtotal)}</span>
             </div>
             <div className="flex justify-between text-orange-600">
               <span>Tax Amount:</span>
               <span>{formatPriceBySymbol(taxAmount)}</span>
-            </div>
+            </div> */}
             <div className="flex justify-between text-blue-600 font-medium">
               <span>Grand Total:</span>
               <span>{formatPriceBySymbol(totalAmount)}</span>
