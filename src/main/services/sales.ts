@@ -192,6 +192,7 @@ export async function syncSalesToRemote(): Promise<void> {
         // Prepare sale data for API
         const saleData = {
           reference_code: sale.invoice_number,
+          ref: sale.ref,
           payment_type: parseInt(sale.payment_method),
           payment_status: parseInt(sale.payment_status),
           hold_ref_no: "",

@@ -41,7 +41,7 @@ export const PaymentSummary: React.FC<PaymentSummaryProps> = ({ cartItems, onChe
               <span>Tax Amount:</span>
               <span>{formatPriceBySymbol(taxAmount)}</span>
             </div> */}
-            <div className="flex justify-between text-blue-600 font-medium">
+            <div className="flex justify-between text-green-800 font-medium">
               <span>Grand Total:</span>
               <span>{formatPriceBySymbol(totalAmount)}</span>
             </div>
