@@ -97,7 +97,8 @@ const api = {
     sync: {
       start: () => ipcRenderer.invoke('products:sync:start'),
       progress: () => ipcRenderer.invoke('products:sync:progress'),
-      reset: () => ipcRenderer.invoke('products:sync:reset')
+      reset: () => ipcRenderer.invoke('products:sync:reset'),
+      getUpdated: () => ipcRenderer.invoke('products:sync:getUpdated')
     }
   },
   loginSync: {

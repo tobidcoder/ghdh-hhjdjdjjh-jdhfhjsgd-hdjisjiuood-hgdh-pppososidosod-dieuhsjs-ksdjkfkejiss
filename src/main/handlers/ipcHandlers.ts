@@ -45,6 +45,16 @@ export function registerProductSyncIpcHandlers(): void {
     return { success: true }
   })
 
+  ipcMain.handle('products:sync:getUpdated', async () => {
+    try {
+      await productService.fetchUpdatedProducts()
+      return { success: true }
+    } catch (error: any) {
+      console.error('[DB] Get updated products failed:', error.message)
+      return { success: false, error: error.message }
+    }
+  })
+
   // Mark as registered
   productSyncHandlersRegistered = true
   console.log('[DB] Product sync IPC handlers registered successfully')

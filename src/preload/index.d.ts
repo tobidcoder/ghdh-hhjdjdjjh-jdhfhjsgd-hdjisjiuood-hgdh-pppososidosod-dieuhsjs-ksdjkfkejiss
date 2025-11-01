@@ -468,6 +468,7 @@ declare global {
             total_products: number
           } | null>
           reset: () => Promise<{ success: boolean }>
+          getUpdated: () => Promise<{ success: boolean; error?: string }>
         }
       }
       loginSync: {

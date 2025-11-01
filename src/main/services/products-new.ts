@@ -98,6 +98,122 @@ export function resetProductSyncProgress(): void {
   stmt.run(PROGRESS_ID, 1, 1, 0, now, 0)
 }
 
+/**
+ * Fetch updated products from /get-products-updated endpoint
+ * This endpoint returns products that have been updated or newly added
+ * Updates existing products and adds new ones to the local database
+ */
+export async function fetchUpdatedProducts(): Promise<void> {
+  if (productSyncRunning) {
+    console.log('[DB] Product sync already in progress, skipping get-products-updated')
+    return
+  }
+
+  productSyncRunning = true
+  try {
+    console.log('[DB] Starting fetch of updated products from /get-products-updated...')
+    const baseUrl = getBaseUrl()
+    const userToken = requireCurrentUserToken()
+
+    const endpoint = '/get-products-updated'
+    let currentPage = 1
+    let lastPage = 1
+    let totalUpdated = 0
+
+    // Fetch first page to get pagination info
+    console.log(`[DB] Fetching first page from ${baseUrl}${endpoint}?page=1`)
+    const firstPageUrl = `${baseUrl}${endpoint}?page=1`
+
+    const firstPageResponse = await fetch(firstPageUrl, {
+      headers: {
+        Authorization: `Bearer ${userToken}`,
+        Accept: 'application/json'
+      }
+    })
+
+    if (!firstPageResponse.ok) {
+      const errorText = await firstPageResponse.text().catch(() => 'No error details available')
+      throw new Error(
+        `Failed to fetch updated products: ${firstPageResponse.status} ${firstPageResponse.statusText} - ${errorText}`
+      )
+    }
+
+    const firstPageData = await firstPageResponse.json()
+    console.log(`[DB] First page data:`, {
+      current_page: firstPageData.meta?.current_page,
+      last_page: firstPageData.meta?.last_page,
+      total: firstPageData.meta?.total,
+      data_length: firstPageData.data?.length || 0
+    })
+
+    // Update pagination info from first page
+    lastPage = firstPageData.meta?.last_page || 1
+    currentPage = firstPageData.meta?.current_page || 1
+    totalUpdated = firstPageData.meta?.total || 0
+
+    // Process and store first page products
+    if (firstPageData.data && Array.isArray(firstPageData.data)) {
+      const products: ProductRecord[] = firstPageData.data.map((product: any) => ({
+        id: String(product.id),
+        name: product.attributes?.name || '',
+        price: parseFloat(product.attributes?.product_price) || 0,
+        category: product.attributes?.product_category_id || '',
+        code: product.attributes?.code || null,
+        raw_response: JSON.stringify(product)
+      }))
+
+      upsertProducts(products)
+      console.log(`[DB] Updated/added ${products.length} products from first page`)
+    }
+
+    // If there are more pages, fetch them
+    currentPage = 2
+    while (currentPage <= lastPage) {
+      console.log(`[DB] Fetching updated products page ${currentPage}...`)
+      const url = `${baseUrl}${endpoint}?page=${currentPage}`
+
+      const response = await fetch(url, {
+        headers: {
+          Authorization: `Bearer ${userToken}`,
+          Accept: 'application/json'
+        }
+      })
+
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => 'No error details available')
+        throw new Error(
+          `Failed to fetch updated products page ${currentPage}: ${response.status} ${response.statusText} - ${errorText}`
+        )
+      }
+
+      const data = await response.json()
+
+      if (data.data && Array.isArray(data.data)) {
+        const products: ProductRecord[] = data.data.map((product: any) => ({
+          id: String(product.id),
+          name: product.attributes?.name || '',
+          price: parseFloat(product.attributes?.product_price) || 0,
+          category: product.attributes?.product_category_id || '',
+          code: product.attributes?.code || null,
+          raw_response: JSON.stringify(product)
+        }))
+
+        upsertProducts(products)
+        console.log(`[DB] Updated/added ${products.length} products from page ${currentPage}`)
+      }
+
+      currentPage++
+    }
+
+    console.log(`[DB] Successfully fetched and updated ${totalUpdated} products from /get-products-updated`)
+  } catch (error: any) {
+    console.error(`[DB] Failed to fetch updated products:`, error.message)
+    throw error
+  } finally {
+    productSyncRunning = false
+  }
+}
+
 export async function syncProductsFromRemote(): Promise<void> {
   if (productSyncRunning) {
     console.log('[DB] Product sync already in progress, skipping new start')

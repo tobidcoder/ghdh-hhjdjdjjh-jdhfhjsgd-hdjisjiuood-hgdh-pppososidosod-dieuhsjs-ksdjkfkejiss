@@ -18,6 +18,7 @@ import {
   DialogContent,
   // DialogDescription,
   DialogHeader,
+  DialogTitle,
   // DialogTitle,
   DialogTrigger
 } from '@renderer/components/ui/dialog'
@@ -84,6 +85,7 @@ export const SalesSyncStatus: React.FC = () => {
             <span className="ml-1">{getStatusText()}</span>
           </Badge>
         </DialogTrigger>
+        <DialogTitle></DialogTitle>
         <DialogContent>
           <DialogHeader>
             <div className="flex items-center gap-5 space-x-2">

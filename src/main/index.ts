@@ -9,7 +9,17 @@ if (process.env.NODE_ENV !== 'production') {
   }
 }
 
-import { app, shell, BrowserWindow, ipcMain } from 'electron'
+  // main.js
+  // const { app } = require('electron');
+  // const path = require('path');
+
+  // if (app.isPackaged) {
+  //   require('dotenv').config({ path: path.join(process.resourcesPath, '.env') });
+  // } else {
+  //   require('dotenv').config();
+  // }
+
+import {app,  shell, BrowserWindow, ipcMain } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/favicon.ico?asset'

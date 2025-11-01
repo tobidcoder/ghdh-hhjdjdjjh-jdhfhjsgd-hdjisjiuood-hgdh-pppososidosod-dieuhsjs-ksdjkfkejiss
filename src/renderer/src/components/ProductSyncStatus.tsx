@@ -9,11 +9,12 @@ import {
   Dialog,
   DialogContent,
   DialogHeader,
+  DialogTitle,
   DialogTrigger
 } from '@renderer/components/ui/dialog'
 
 export const ProductSyncStatus: React.FC = () => {
-  const { syncProgress, isSyncing, syncError, checkSyncProgress, startSync, resetSync } =
+  const { syncProgress, isSyncing, syncError, checkSyncProgress, startSync, resetSync, getProductsUpdated } =
     useProductsStore()
   const { user } = useAuthStore()
   // const [isExpanded, setIsExpanded] = useState(false)
@@ -74,6 +75,17 @@ export const ProductSyncStatus: React.FC = () => {
     }
   }
 
+  const handleGetProductsUpdated = async () => {
+    if (!user?.token) return
+
+    try {
+      console.log('Fetching updated products...')
+      await getProductsUpdated()
+    } catch (error) {
+      console.error('Get updated products failed:', error)
+    }
+  }
+
   // const toggleExpanded = () => {
   //   setIsExpanded(!isExpanded)
   // }
@@ -87,6 +99,8 @@ export const ProductSyncStatus: React.FC = () => {
             <span className="ml-1">{getStatusText()}</span>
           </Badge>
         </DialogTrigger>
+        {/* <VisuallyHidden></VisuallyHidden> */}
+        <DialogTitle></DialogTitle>
         <DialogContent>
           <DialogHeader>
             <div className="flex gap-5 items-center space-x-2">
@@ -124,15 +138,32 @@ export const ProductSyncStatus: React.FC = () => {
 
           {user?.token && (
             <div className="flex gap-2">
-              <Button onClick={handleManualSync} disabled={isSyncing} size="sm" variant="outline">
-                {isSyncing ? 'Syncing...' : 'Manual Sync'}
-              </Button>
-              <Button onClick={checkSyncProgress} size="sm" variant="ghost">
-                Refresh Status
-              </Button>
-              <Button onClick={handleResetSync} size="sm" variant="destructive">
-                Reset Sync
-              </Button>
+              {syncProgress?.is_completed ? (
+                // Show Get Product Update button when sync is completed
+                <Button 
+                  onClick={handleGetProductsUpdated} 
+                  disabled={isSyncing} 
+                  size="sm" 
+                  variant="default"
+                >
+                  {isSyncing ? 'Updating...' : 'Get Product Update'}
+                </Button>
+              ) : (
+                // Show other buttons only when sync is not completed and not syncing
+                !isSyncing && (
+                  <>
+                    <Button onClick={handleManualSync} disabled={isSyncing} size="sm" variant="outline">
+                      {isSyncing ? 'Syncing...' : 'Manual Sync'}
+                    </Button>
+                    <Button onClick={checkSyncProgress} size="sm" variant="ghost">
+                      Refresh Status
+                    </Button>
+                    <Button onClick={handleResetSync} size="sm" variant="destructive">
+                      Reset Sync
+                    </Button>
+                  </>
+                )
+              )}
             </div>
           )}
 

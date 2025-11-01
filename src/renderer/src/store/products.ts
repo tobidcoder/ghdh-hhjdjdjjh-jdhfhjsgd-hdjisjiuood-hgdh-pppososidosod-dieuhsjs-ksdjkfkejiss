@@ -52,6 +52,7 @@ interface ProductsState {
   startSync: () => Promise<void>
   checkSyncProgress: () => Promise<void>
   resetSync: () => Promise<void>
+  getProductsUpdated: () => Promise<void>
   clearError: () => void
 
   // Cart actions
@@ -149,6 +150,19 @@ export const useProductsStore = create<ProductsState>((set, get) => ({
       set({ syncProgress: null, syncError: null, isSyncing: false })
     } catch (err: any) {
       set({ syncError: err?.message ?? 'Failed to reset sync' })
+    }
+  },
+
+  getProductsUpdated: async () => {
+    set({ isSyncing: true, syncError: null })
+    try {
+      await window.api.products.sync.getUpdated()
+      // Refresh products after update
+      await get().refresh()
+      // Check progress to update sync status
+      await get().checkSyncProgress()
+    } catch (err: any) {
+      set({ syncError: err?.message ?? 'Failed to get updated products', isSyncing: false })
     }
   },
 

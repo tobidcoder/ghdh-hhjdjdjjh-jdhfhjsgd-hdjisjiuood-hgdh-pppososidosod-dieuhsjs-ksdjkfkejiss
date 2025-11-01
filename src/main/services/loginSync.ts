@@ -119,10 +119,20 @@ export async function performLoginSync(): Promise<LoginSyncResult> {
     // Step 8: Fetch products (this might take longer)
     try {
       steps.push({ step: 'Products', completed: false })
-      await productsService.syncProductsFromRemote()
+      // Check if product sync is already completed
+      const existingProgress = productsService.getProductSyncProgress()
+      if (existingProgress && existingProgress.is_completed) {
+        // Use get-products-updated endpoint if sync is already completed
+        console.log('[DB] Product sync already completed, fetching updated products...')
+        await productsService.fetchUpdatedProducts()
+        console.log('[DB] ✓ Updated products fetched')
+      } else {
+        // Perform full sync if not completed
+        await productsService.syncProductsFromRemote()
+        console.log('[DB] ✓ Products synced')
+      }
       steps[steps.length - 1].completed = true
       completedSteps++
-      console.log('[DB] ✓ Products synced')
     } catch (error: any) {
       steps[steps.length - 1].error = error.message
       console.error('[DB] ✗ Products sync failed:', error.message)
