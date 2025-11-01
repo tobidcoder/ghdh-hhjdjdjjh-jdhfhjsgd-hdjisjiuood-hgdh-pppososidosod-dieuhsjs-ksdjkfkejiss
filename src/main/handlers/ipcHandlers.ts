@@ -621,6 +621,17 @@ export function registerDatabaseIpcHandlers(): void {
           webPreferences: { sandbox: false }
         })
 
+        // Check for available printers before attempting to print
+        const printers = await win.webContents.getPrintersAsync()
+        if (!printers || printers.length === 0) {
+          win.close()
+          return {
+            success: false,
+            error: 'NO_PRINTER_CONNECTED',
+            message: 'No printer is connected. Please connect a printer and try again.'
+          }
+        }
+
         await win.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(htmlContent))
 
         await new Promise<void>((resolve) => {
@@ -636,7 +647,23 @@ export function registerDatabaseIpcHandlers(): void {
             },
             (success, failureReason) => {
               if (!success) {
-                reject(new Error(failureReason || 'Print failed'))
+                // Check if the failure is due to no printer
+                const errorMessage = failureReason || 'Print failed'
+                const isNoPrinterError =
+                  errorMessage.toLowerCase().includes('printer') ||
+                  errorMessage.toLowerCase().includes('no printer') ||
+                  errorMessage.toLowerCase().includes('device') ||
+                  errorMessage.toLowerCase().includes('not found')
+
+                if (isNoPrinterError) {
+                  reject(
+                    new Error(
+                      'NO_PRINTER_CONNECTED: No printer is connected. Please connect a printer and try again.'
+                    )
+                  )
+                } else {
+                  reject(new Error(errorMessage))
+                }
               } else {
                 resolve()
               }
@@ -648,6 +675,14 @@ export function registerDatabaseIpcHandlers(): void {
         return { success: true }
       } catch (error: any) {
         console.error('[PRINT] Failed to print receipt:', error.message)
+        // Check if it's a no printer error
+        if (error.message.includes('NO_PRINTER_CONNECTED')) {
+          return {
+            success: false,
+            error: 'NO_PRINTER_CONNECTED',
+            message: 'No printer is connected. Please connect a printer and try again.'
+          }
+        }
         return { success: false, error: error.message }
       }
     }

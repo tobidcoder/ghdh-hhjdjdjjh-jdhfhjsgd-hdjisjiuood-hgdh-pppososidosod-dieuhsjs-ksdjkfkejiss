@@ -502,7 +502,7 @@ declare global {
         receipt: (
           htmlContent: string,
           options?: { silent?: boolean; deviceName?: string }
-        ) => Promise<{ success: boolean; data?: any; error?: string }>
+        ) => Promise<{ success: boolean; data?: any; error?: string; message?: string }>
         openPreview: (htmlContent: string) => Promise<{ success: boolean }>
         current: (
           options?: { silent?: boolean; deviceName?: string }

@@ -1,4 +1,5 @@
 import JsBarcode from 'jsbarcode'
+import { toast } from 'sonner'
 // import { useSettingsStore } from '../store/settings'
 
 export const printReceipt = async (receiptData: any): Promise<void> => {
@@ -205,10 +206,23 @@ export const printReceipt = async (receiptData: any): Promise<void> => {
     // Silent print without opening a visible window
     const printRes = await window.api.print.receipt(htmlContent, { silent: true })
     if (!printRes.success) {
-      throw new Error(printRes.error || 'Unknown print error')
+      // Check if it's a no printer error
+      const printResult = printRes as { success: boolean; error?: string; message?: string }
+      if (printResult.error === 'NO_PRINTER_CONNECTED' || printResult.message) {
+        const message = printResult.message || 'No printer is connected. Please connect a printer and try again.'
+        toast.error(message)
+        throw new Error(message)
+      }
+      throw new Error(printResult.error || 'Unknown print error')
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error printing receipt:', error)
+    // Only show notification if not already shown (to avoid duplicate toasts)
+    if (error.message && error.message.includes('No printer is connected')) {
+      // Notification already shown above
+    } else if (error.message && !error.message.includes('NO_PRINTER_CONNECTED')) {
+      toast.error('Failed to print receipt: ' + error.message)
+    }
     throw error
   }
 }
