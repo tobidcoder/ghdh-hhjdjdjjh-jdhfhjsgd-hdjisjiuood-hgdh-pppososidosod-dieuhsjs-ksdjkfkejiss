@@ -1,7 +1,7 @@
 import React from 'react'
 import { Button } from '@renderer/components/ui/button'
-import { Input } from '@renderer/components/ui/input'
-import { Card, CardContent, CardHeader, CardTitle } from '@renderer/components/ui/card'
+// import { Input } from '@renderer/components/ui/input'
+import { Card, CardContent,  CardTitle } from '@renderer/components/ui/card'
 import { CreditCard } from 'lucide-react'
 import { formatPriceBySymbol } from '@renderer/lib/currencyUtils'
 
