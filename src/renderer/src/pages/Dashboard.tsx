@@ -45,11 +45,11 @@ export const Dashboard: React.FC = () => {
   useEffect(() => {
 
     if (cartItems.length == 1) {
-      setSaleRef(`INV-${Date.now()}${user?.id}-${Math.floor(Math.random() * 1000)}`)
+      setSaleRef(`SR-${user?.id}${Date.now()}${user?.id}${Math.random().toString(36).slice(2, 8).toUpperCase()}`)
     } else if (cartItems.length === 0) {
       setSaleRef('')
     }else if (cartItems.length >=1 && saleRef === '') {
-      setSaleRef(`INV-${Date.now()}${user?.id}-${Math.floor(Math.random() * 1000)}`)
+      setSaleRef(`SR-${user?.id}${Date.now()}${user?.id}${Math.random().toString(36).slice(2, 8).toUpperCase()}`)
     }
   }, [cartItems.length])
 
@@ -233,8 +233,6 @@ export const Dashboard: React.FC = () => {
       const taxAmount = 0
       const totalAmount = subtotal + taxAmount
 
-      // Generate invoice number (you might want to make this more sophisticated)
-      // const invoiceNumber = `INV-${Date.now()}-${Math.floor(Math.random() * 1000)}`
 
       // Create sale_items in API format
       const saleItems = cartItems.map((item) => ({

@@ -142,17 +142,17 @@ export const TransactionPanel: React.FC<TransactionPanelProps> = ({
         <Card>
           <CardHeader className="">
             <CardTitle className="text-sm text-[#b2d93b] font-bold">
-              Invoice Number : <span className="text-[#052315]  "> {saleRef}</span>
+              Sale's Ref : <span className="text-[#052315]  "> {saleRef}</span>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 max-h-[40dvh] ">
-            <div className="grid grid-cols-7 gap-2 text-xs font-medium text-gray-600 border-b border-gray-200 pb-2">
-              <span>LINE</span>
-              <span className="col-span-2">DESCRIPTION</span>
-              <span>PRICE</span>
-              <span>QTY</span>
-              <span>AMOUNT</span>
-              <span></span>
+            <div className="grid grid-cols-17 gap-2 text-xs font-medium text-gray-600 border-b border-gray-200 pb-2">
+              <span className="col-span-1"></span>
+              <span className="col-span-5">DESCRIPTION</span>
+              <span className="col-span-3">PRICE</span>
+              <span className="col-span-3">QTY</span>
+              <span className="col-span-3">AMOUNT</span>
+              <span className="col-span-2"></span>
             </div>
             {/* Cart items */}
             {cartItems.length === 0 ? (
@@ -163,14 +163,14 @@ export const TransactionPanel: React.FC<TransactionPanelProps> = ({
                   {cartItems.map((item, index) => (
                     <div
                       key={item.id}
-                      className="grid grid-cols-7 gap-2 text-xs py-2 border-b border-gray-100"
+                      className="grid grid-cols-17 gap-2 text-xs py-2 border-b border-gray-100"
                     >
-                      <span className="flex items-center">{index + 1}</span>
-                      <span className="col-span-2 flex items-center text-xs leading-tight">
+                      <span className="col-span-1 flex items-center">{index + 1}</span>
+                      <span className="col-span-5 flex items-center text-xs leading-tight">
                         {item.name}
                       </span>
-                      <span className="flex items-center">{formatPriceBySymbol(item.price)}</span>
-                      <div className="flex items-center space-x-1">
+                      <span className="col-span-3 flex items-center">{formatPriceBySymbol(item.price)}</span>
+                      <div className="col-span-3 flex items-center space-x-1">
                         <button
                           onClick={() => onUpdateQuantity(item.id, item.quantity - 1)}
                           className="w-5 h-5 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center text-gray-600 hover:text-gray-800 transition-colors cursor-pointer disabled:cursor-not-allowed"
@@ -178,7 +178,7 @@ export const TransactionPanel: React.FC<TransactionPanelProps> = ({
                         >
                           <Minus className="w-3 h-3" />
                         </button>
-                        <span className="w-6 text-center font-medium">{item.quantity}</span>
+                        <span className=" w-6 text-center font-medium">{item.quantity}</span>
                         <button
                           onClick={() => onUpdateQuantity(item.id, item.quantity + 1)}
                           className="w-5 h-5 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center text-gray-600 hover:text-gray-800 transition-colors cursor-pointer"
@@ -186,10 +186,10 @@ export const TransactionPanel: React.FC<TransactionPanelProps> = ({
                           <Plus className="w-3 h-3" />
                         </button>
                       </div>
-                      <span className="flex items-center font-medium">
+                      <span className="col-span-3 flex items-center font-medium">
                         {formatPriceBySymbol(item.price * item.quantity)}
                       </span>
-                      <div className="flex items-center">
+                      <div className="col-span-2 flex items-center">
                         <button
                           onClick={() => onRemoveFromCart(item.id)}
                           className="w-6 h-6 rounded-full bg-red-100 hover:bg-red-200 flex items-center justify-center text-red-600 hover:text-red-700 transition-colors cursor-pointer"
