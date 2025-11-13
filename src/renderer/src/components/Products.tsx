@@ -2,8 +2,9 @@ import React, { useEffect } from 'react'
 import { useProductsStore } from '@renderer/store/products'
 import { useSalesStore } from '@renderer/store/sales'
 import { Card, CardContent } from '@renderer/components/ui/card'
-// import { Package } from 'lucide-react'
+import { Tag } from 'lucide-react'
 import { formatPriceBySymbol } from '@renderer/lib/currencyUtils'
+import { getWholesaleInfo } from '@renderer/lib/wholesalePricing'
 
 export const Products: React.FC = () => {
   const { products, isLoading, error, refresh, searchQuery } = useProductsStore()
@@ -86,7 +87,10 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   }
 
   // Check if product is in cart
-  const isInCart = cartItems.some(item => item.id === product.id)
+  const isInCart = cartItems.some((item) => item.id === product.id)
+
+  // Get wholesale information
+  const wholesaleInfo = getWholesaleInfo(product.raw_response || null)
 
   return (
     <Card
@@ -118,6 +122,13 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             <h3 className="font-medium text-sm text-gray-900 line-clamp-2 leading-tight">
               {product.name}
             </h3>
+            {/* Show wholesale pricing info if available */}
+            {wholesaleInfo && (
+              <div className="flex items-center gap-1 text-[10px] text-green-600 font-medium">
+                <Tag className="w-3 h-3" />
+                <span>{wholesaleInfo.message}</span>
+              </div>
+            )}
             {/* {product.code && <p className="text-xs text-gray-500 font-mono">#{product.code}</p>} */}
           </div>
           {/* <div className="flex mb-2">

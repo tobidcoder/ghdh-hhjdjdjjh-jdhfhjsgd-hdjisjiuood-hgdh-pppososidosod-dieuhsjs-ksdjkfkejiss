@@ -3,12 +3,13 @@ import { useNavigate } from 'react-router-dom'
 import { Button } from '@renderer/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@renderer/components/ui/card'
 import { Badge } from '@renderer/components/ui/badge'
-import { ArrowLeft, Calendar, Filter, CheckCircle, Clock,  RefreshCw, XCircle } from 'lucide-react'
+import { ArrowLeft, Calendar, Filter, CheckCircle, Clock, RefreshCw, XCircle } from 'lucide-react'
 import { useAuthStore } from '@renderer/store/auth'
 import { SaleDetailsModal } from '@renderer/components/SaleDetailsModal'
 // import {  } from '@renderer/services/apiService'
 import { useSalesStore } from '@renderer/store/sales'
 import { printReceiptFromSale } from '@renderer/utils/printUtils'
+import { showError, showSuccess, showInfo } from '@renderer/utils/notifications'
 
 interface SaleRecord {
   id: string
@@ -90,10 +91,22 @@ const RecentSales: React.FC = () => {
     selectedDate.setDate(today.getDate() - daysBack)
 
     // Get start of day (00:00:00)
-    const startOfDay = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate())
+    const startOfDay = new Date(
+      selectedDate.getFullYear(),
+      selectedDate.getMonth(),
+      selectedDate.getDate()
+    )
 
     // Get end of day (23:59:59.999)
-    const endOfDay = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(), 23, 59, 59, 999)
+    const endOfDay = new Date(
+      selectedDate.getFullYear(),
+      selectedDate.getMonth(),
+      selectedDate.getDate(),
+      23,
+      59,
+      59,
+      999
+    )
 
     return {
       startDate: startOfDay.toISOString(),
@@ -134,14 +147,13 @@ const RecentSales: React.FC = () => {
   const handleReprintReceipt = async (sale: SaleRecord) => {
     try {
       await printReceiptFromSale(sale)
-      // You could add a toast notification here
+      // Notification is shown by printReceipt function
       console.log('Receipt reprinted successfully')
     } catch (error) {
       console.error('Error reprinting receipt:', error)
-      // You could add error handling/notification here
+      // Error notification is shown by printReceipt function
     }
   }
-
 
   // const handleSync = async () => {
   //   if (!user?.token) {
@@ -158,20 +170,21 @@ const RecentSales: React.FC = () => {
 
   const handleSyncSale = async () => {
     try {
+      showInfo('Syncing sales...', 'Please wait')
       // Call the electron API to sync sale
       await syncSales()
       // Refresh the sales data to show updated sync status
       fetchSales()
-      console.log('Sale synced successfully')
-    } catch (error) {
+      showSuccess('Sales synced successfully!', 'Sync Complete')
+    } catch (error: any) {
       console.error('Error syncing sale:', error)
-      // You could add error handling/notification here
+      showError(error?.message || 'Failed to sync sales', 'Sync Failed')
     }
   }
 
   const handleSyncAll = async () => {
     if (!user?.token) {
-      alert('No authentication token available')
+      showError('No authentication token available. Please login again.', 'Authentication Error')
       return
     }
 
@@ -241,9 +254,9 @@ const RecentSales: React.FC = () => {
   }
 
   const totalAmount = sales.reduce((sum, sale) => sum + sale.total_amount, 0)
-  const syncedCount = sales.filter(sale => sale.sync_status === 'synced').length
-  const pendingCount = sales.filter(sale => sale.sync_status === 'pending' ).length
-  const failedCount = sales.filter(sale => sale.sync_status === 'failed').length
+  const syncedCount = sales.filter((sale) => sale.sync_status === 'synced').length
+  const pendingCount = sales.filter((sale) => sale.sync_status === 'pending').length
+  const failedCount = sales.filter((sale) => sale.sync_status === 'failed').length
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}

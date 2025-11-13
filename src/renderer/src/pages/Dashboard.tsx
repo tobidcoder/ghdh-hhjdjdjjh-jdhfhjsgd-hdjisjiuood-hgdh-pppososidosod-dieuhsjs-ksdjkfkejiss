@@ -10,6 +10,7 @@ import { TransactionPanel } from '@renderer/components/TransactionPanel'
 import { PaymentSummary } from '@renderer/components/PaymentSummary'
 import { PaymentModal } from '@renderer/components/PaymentModal'
 import { printReceipt, generateReceiptData } from '@renderer/utils/printUtils'
+import { showError, showSuccess, showInfo } from '@renderer/utils/notifications'
 
 export const Dashboard: React.FC = () => {
   const { user, logout } = useAuthStore()
@@ -43,13 +44,16 @@ export const Dashboard: React.FC = () => {
   const [isSyncingLogout, setIsSyncingLogout] = useState(false)
 
   useEffect(() => {
-
     if (cartItems.length == 1) {
-      setSaleRef(`SR-${user?.id}${Date.now()}${user?.id}${Math.random().toString(36).slice(2, 8).toUpperCase()}`)
+      setSaleRef(
+        `SR-${user?.id}${Date.now()}${user?.id}${Math.random().toString(36).slice(2, 8).toUpperCase()}`
+      )
     } else if (cartItems.length === 0) {
       setSaleRef('')
-    }else if (cartItems.length >=1 && saleRef === '') {
-      setSaleRef(`SR-${user?.id}${Date.now()}${user?.id}${Math.random().toString(36).slice(2, 8).toUpperCase()}`)
+    } else if (cartItems.length >= 1 && saleRef === '') {
+      setSaleRef(
+        `SR-${user?.id}${Date.now()}${user?.id}${Math.random().toString(36).slice(2, 8).toUpperCase()}`
+      )
     }
   }, [cartItems.length])
 
@@ -233,7 +237,6 @@ export const Dashboard: React.FC = () => {
       const taxAmount = 0
       const totalAmount = subtotal + taxAmount
 
-
       // Create sale_items in API format
       const saleItems = cartItems.map((item) => ({
         name: item.name,
@@ -287,34 +290,41 @@ export const Dashboard: React.FC = () => {
         // tax_rate: 0.15, // 15% tax rate
         tax_rate: 0,
         status: 1, // Active status
-        hold_ref_no: null ,// Use null instead of empty string
-        user_id: user!.id, // Add required user_id field from auth store
+        hold_ref_no: null, // Use null instead of empty string
+        user_id: user!.id // Add required user_id field from auth store
       }
 
       await createSale(saleData)
 
-      // Generate receipt and trigger print immediately (do not wait)
+      // Generate receipt and trigger print
       const receiptData = generateReceiptData(saleRef, cartItems, paymentData, settings, saleRef)
       setIsPaymentModalOpen(false)
       useProductsStore.getState().clearCart()
-      // Fire-and-forget printing
-      printReceipt(receiptData).catch((err) => {
-        console.error('[PRINT] Printing failed:', err)
-      })
+
+      // Show success message
+      showSuccess('Sale completed successfully!', 'Payment Received')
+
+      // Try to print receipt
+      try {
+        await printReceipt(receiptData)
+      } catch (printError) {
+        console.error('[PRINT] Printing failed:', printError)
+        // Error notification is already shown by printReceipt function
+      }
     } catch (error) {
       console.error('Payment failed:', error)
 
       // Provide more detailed error information
       let errorMessage = 'Payment failed. Please try again.'
       if (error instanceof Error) {
-        errorMessage = `Payment failed: ${error.message}`
+        errorMessage = error.message
       } else if (typeof error === 'string') {
-        errorMessage = `Payment failed: ${error}`
+        errorMessage = error
       } else if (error && typeof error === 'object' && 'message' in error) {
-        errorMessage = `Payment failed: ${(error as any).message}`
+        errorMessage = (error as any).message
       }
 
-      alert(errorMessage)
+      showError(errorMessage, 'Payment Failed')
     }
   }
 
@@ -331,15 +341,14 @@ export const Dashboard: React.FC = () => {
       <div className="flex-1  flex overflow-hidden">
         <div className="flex bg-white flex-col items-end h-[100%]">
           <div>
-
-          <TransactionPanel
-            cartItems={cartItems}
-            onClearCart={() => useProductsStore.getState().clearCart()}
-            onRemoveFromCart={removeFromCart}
-            onUpdateQuantity={updateCartItemQuantity}
-            onAddItem={(product) => useProductsStore.getState().addToCart(product)}
-            saleRef={saleRef}
-          />
+            <TransactionPanel
+              cartItems={cartItems}
+              onClearCart={() => useProductsStore.getState().clearCart()}
+              onRemoveFromCart={removeFromCart}
+              onUpdateQuantity={updateCartItemQuantity}
+              onAddItem={(product) => useProductsStore.getState().addToCart(product)}
+              saleRef={saleRef}
+            />
           </div>
           <div className="h-[100%]"></div>
 

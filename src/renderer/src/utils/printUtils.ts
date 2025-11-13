@@ -1,6 +1,5 @@
 import JsBarcode from 'jsbarcode'
-import { toast } from 'sonner'
-// import { useSettingsStore } from '../store/settings'
+import { showPrinterError } from './notifications'
 
 export const printReceipt = async (receiptData: any): Promise<void> => {
   console.log('[PRINT] Starting printReceipt function with data:', receiptData)
@@ -8,10 +7,15 @@ export const printReceipt = async (receiptData: any): Promise<void> => {
     // Fetch payment method display name if paymentMethod is an ID
     let paymentMethodDisplayName = receiptData.saleData.paymentMethod
 
-    if (typeof receiptData.saleData.paymentMethod === 'number' ||
-        (typeof receiptData.saleData.paymentMethod === 'string' && !isNaN(Number(receiptData.saleData.paymentMethod)))) {
+    if (
+      typeof receiptData.saleData.paymentMethod === 'number' ||
+      (typeof receiptData.saleData.paymentMethod === 'string' &&
+        !isNaN(Number(receiptData.saleData.paymentMethod)))
+    ) {
       try {
-        const paymentMethod = await window.api.db.getPaymentMethodById(Number(receiptData.saleData.paymentMethod))
+        const paymentMethod = await window.api.db.getPaymentMethodById(
+          Number(receiptData.saleData.paymentMethod)
+        )
         if (paymentMethod && paymentMethod.display_name) {
           paymentMethodDisplayName = paymentMethod.display_name
         }
@@ -203,25 +207,36 @@ export const printReceipt = async (receiptData: any): Promise<void> => {
       </html>
     `
 
-    // Silent print without opening a visible window
-    const printRes = await window.api.print.receipt(htmlContent, { silent: true })
+    // Show print dialog to let user select printer and verify settings
+    // Using silent: false ensures the user sees the print dialog and can:
+    // 1. Verify the correct printer is selected
+    // 2. See if any printer is available
+    // 3. Confirm the print before it happens
+    const printRes = await window.api.print.receipt(htmlContent, { silent: false })
     if (!printRes.success) {
       // Check if it's a no printer error
       const printResult = printRes as { success: boolean; error?: string; message?: string }
       if (printResult.error === 'NO_PRINTER_CONNECTED' || printResult.message) {
-        const message = printResult.message || 'No printer is connected. Please connect a printer and try again.'
-        toast.error(message)
+        const message =
+          printResult.message || 'No printer is connected. Please connect a printer and try again.'
+        showPrinterError(message)
         throw new Error(message)
       }
       throw new Error(printResult.error || 'Unknown print error')
     }
+
+    // Note: We don't show a success notification here because:
+    // 1. The print operation completing just means the user clicked print in the dialog
+    // 2. We can't confirm the printer actually printed it
+    // 3. The print dialog itself provides feedback to the user
+    // Only errors are shown to alert the user to issues
+    console.log('[PRINT] Print dialog completed')
   } catch (error: any) {
     console.error('Error printing receipt:', error)
-    // Only show notification if not already shown (to avoid duplicate toasts)
-    if (error.message && error.message.includes('No printer is connected')) {
-      // Notification already shown above
-    } else if (error.message && !error.message.includes('NO_PRINTER_CONNECTED')) {
-      toast.error('Failed to print receipt: ' + error.message)
+
+    // Show appropriate error notification
+    if (!error.message?.includes('NO_PRINTER_CONNECTED')) {
+      showPrinterError(error)
     }
     throw error
   }
@@ -277,7 +292,10 @@ export const printReceiptFromSale = async (sale: any): Promise<void> => {
       totals: {
         subtotal: normalizedItems.reduce((sum: number, it: any) => sum + it.price * it.quantity, 0),
         taxAmount: 0,
-        totalAmount: normalizedItems.reduce((sum: number, it: any) => sum + it.price * it.quantity, 0)
+        totalAmount: normalizedItems.reduce(
+          (sum: number, it: any) => sum + it.price * it.quantity,
+          0
+        )
       }
     }
 
@@ -294,23 +312,22 @@ const generateReceiptHTML = (receiptData: any): string => {
   const taxAmount = 0
   // const taxAmount = subtotal * 0.15
   const totalAmount = subtotal + taxAmount
-  
+
   // Calculate totals for display
   const totalItems = cartItems.length
   const totalQuantity = cartItems.reduce((sum: number, item: any) => sum + item.quantity, 0)
   const settings = JSON.parse(localStorage.getItem('cheetah_settings') || '{}')
-  const showBarcode = settings.show_barcode_in_receipt == "1"
+  const showBarcode = settings.show_barcode_in_receipt == '1'
   // const showLogo = settings.show_logo_in_receipt == "1"
-  const showPhone = settings.show_phone == "1"
-  const showAddress = settings.show_address == "1"
-  const showCustomer = settings.show_customer == "1"
-  const showEmail = settings.show_email == "1"
-  const showNote = settings.show_note == "1"
+  const showPhone = settings.show_phone == '1'
+  const showAddress = settings.show_address == '1'
+  const showCustomer = settings.show_customer == '1'
+  const showEmail = settings.show_email == '1'
+  const showNote = settings.show_note == '1'
   // const showTaxDiscountShipping = settings.show_tax_discount_shipping == "1"
-  const taxEnabled = settings.enable_tax =="1"
-  const discountEnabled = settings.enable_discount =="1"
-  const shippingEnabled = settings.enable_shipping =="1"
-
+  const taxEnabled = settings.enable_tax == '1'
+  const discountEnabled = settings.enable_discount == '1'
+  const shippingEnabled = settings.enable_shipping == '1'
 
   // Get settings for field visibility
   // const {
@@ -331,7 +348,6 @@ const generateReceiptHTML = (receiptData: any): string => {
   // const showAddress = getShowAddress()
   // const showCustomer = getShowCustomer()
   // const showEmail = getShowEmail()
-
 
   // const showBarcodeInReceipt = getShowBarcodeInReceipt()
   // const showLogoInReceipt = getShowLogoInReceipt()
@@ -514,8 +530,8 @@ const generateReceiptHTML = (receiptData: any): string => {
           ${generateBarcodeSVG(saleData.ref || saleData.invoiceNumber)}
         </div>
         `
-        : ''
-      }
+            : ''
+        }
       <p class="barcode-text">${saleData.ref || saleData.invoiceNumber}</p>
         <p class="powered-by">Powered by: www.usecheetah.com</p>
       </div>
@@ -552,7 +568,7 @@ export const generateReceiptData = (
       address: companyInfo?.address || '',
       phone: companyInfo?.phone || '',
       email: companyInfo?.email || '',
-      branch: companyInfo?.warehouse_name||"",
+      branch: companyInfo?.warehouse_name || '',
       cashier: 'Rapheal'
     },
     totals: {

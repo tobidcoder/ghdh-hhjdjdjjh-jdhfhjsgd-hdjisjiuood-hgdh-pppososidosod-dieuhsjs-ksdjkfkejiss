@@ -9,7 +9,7 @@ import {
   CheckCircle,
   AlertCircle,
   Clock,
-  RefreshCw,
+  RefreshCw
   // ChevronDown,
   // ChevronRight
 } from 'lucide-react'
@@ -22,6 +22,7 @@ import {
   // DialogTitle,
   DialogTrigger
 } from '@renderer/components/ui/dialog'
+import { showError, showSuccess, showInfo, showWarning } from '@renderer/utils/notifications'
 
 export const SalesSyncStatus: React.FC = () => {
   const { unsyncedCount, isSyncing, syncError, getUnsyncedCount, syncSales, clearError } =
@@ -40,14 +41,17 @@ export const SalesSyncStatus: React.FC = () => {
 
   const handleSync = async () => {
     if (!user?.token) {
-      alert('No authentication token available')
+      showWarning('Please login to sync sales', 'Authentication Required')
       return
     }
 
     try {
+      showInfo('Syncing sales...', 'Please Wait')
       await syncSales()
+      showSuccess(`${unsyncedCount} sales synced successfully`, 'Sync Complete')
     } catch (error: any) {
       console.error('Sales sync failed:', error)
+      showError(error?.message || 'Failed to sync sales', 'Sync Failed')
     }
   }
 
@@ -79,7 +83,7 @@ export const SalesSyncStatus: React.FC = () => {
   return (
     <>
       <Dialog>
-        <DialogTrigger className='cursor-pointer'>
+        <DialogTrigger className="cursor-pointer">
           <Badge variant="outline" className={getStatusColor()}>
             {getStatusIcon()}
             <span className="ml-1">{getStatusText()}</span>

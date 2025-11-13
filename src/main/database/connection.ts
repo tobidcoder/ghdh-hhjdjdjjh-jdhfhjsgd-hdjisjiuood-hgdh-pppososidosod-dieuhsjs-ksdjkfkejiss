@@ -7,8 +7,8 @@ let db: Database.Database | null = null
 
 // Centralized base URL function with validation
 export function getBaseUrl(): string {
-  const baseUrl = process.env.BASE_URL || 'https://app.usecheetah.com/api'
-  // const baseUrl = process.env.BASE_URL || 'http://localhost:8000/api'
+  // const baseUrl = process.env.BASE_URL || 'https://app.usecheetah.com/api'
+  const baseUrl = process.env.BASE_URL || 'http://localhost:8000/api'
   if (!baseUrl) {
     throw new Error('BASE_URL environment variable is not set')
   }

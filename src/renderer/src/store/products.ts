@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { calculateWholesalePrice } from '../lib/wholesalePricing'
 
 export interface Product {
   id: string
@@ -21,10 +22,16 @@ export interface ProductSyncProgress {
 interface CartItem {
   id: string
   name: string
-  price: number
+  price: number // This will be the effective price (base or wholesale)
+  basePrice: number // Original price
   quantity: number
   code: string | null
+  raw_response?: string | null
+  isWholesale?: boolean // Flag to indicate if wholesale pricing is applied
 }
+
+// Export CartItem for use in components
+export type { CartItem }
 
 interface ProductsState {
   // Product list management
@@ -174,21 +181,37 @@ export const useProductsStore = create<ProductsState>((set, get) => ({
     const existingItem = cartItems.find((item) => item.id === product.id)
 
     if (existingItem) {
+      const newQuantity = existingItem.quantity + 1
+      const effectivePrice = calculateWholesalePrice(
+        product.price,
+        newQuantity,
+        product.raw_response || null
+      )
+      const isWholesale = effectivePrice < product.price
+
       set({
         cartItems: cartItems.map((item) =>
-          item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
+          item.id === product.id
+            ? { ...item, quantity: newQuantity, price: effectivePrice, isWholesale }
+            : item
         )
       })
     } else {
+      const effectivePrice = calculateWholesalePrice(product.price, 1, product.raw_response || null)
+      const isWholesale = effectivePrice < product.price
+
       set({
         cartItems: [
           ...cartItems,
           {
             id: product.id,
             name: product.name,
-            price: product.price,
+            price: effectivePrice,
+            basePrice: product.price,
             quantity: 1,
-            code: product.code
+            code: product.code,
+            raw_response: product.raw_response,
+            isWholesale
           }
         ]
       })
@@ -206,7 +229,20 @@ export const useProductsStore = create<ProductsState>((set, get) => ({
     } else {
       const { cartItems } = get()
       set({
-        cartItems: cartItems.map((item) => (item.id === productId ? { ...item, quantity } : item))
+        cartItems: cartItems.map((item) => {
+          if (item.id === productId) {
+            // Recalculate price based on new quantity
+            const effectivePrice = calculateWholesalePrice(
+              item.basePrice,
+              quantity,
+              item.raw_response || null
+            )
+            const isWholesale = effectivePrice < item.basePrice
+
+            return { ...item, quantity, price: effectivePrice, isWholesale }
+          }
+          return item
+        })
       })
     }
   },

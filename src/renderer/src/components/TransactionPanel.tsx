@@ -2,8 +2,9 @@ import React, { useState } from 'react'
 import { Button } from '@renderer/components/ui/button'
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@renderer/components/ui/card'
 import { formatPriceBySymbol } from '@renderer/lib/currencyUtils'
-import { Minus, Plus, Trash2, Eye } from 'lucide-react'
+import { Minus, Plus, Trash2, Eye, Tag } from 'lucide-react'
 import { apiService } from '@renderer/services/apiService'
+import { CartItem } from '@renderer/store/products'
 import {
   Dialog,
   DialogContent,
@@ -13,15 +14,7 @@ import {
 } from '@renderer/components/ui/dialog'
 import { Input } from '@renderer/components/ui/input'
 import { Label } from '@renderer/components/ui/label'
-import { toast } from 'sonner'
-
-interface CartItem {
-  id: string
-  name: string
-  price: number
-  quantity: number
-  code: string | null
-}
+import { showError, showSuccess, showWarning } from '@renderer/utils/notifications'
 
 interface TransactionPanelProps {
   cartItems: CartItem[]
@@ -50,12 +43,12 @@ export const TransactionPanel: React.FC<TransactionPanelProps> = ({
 
   const handleSaveHold = async () => {
     if (!holdName.trim()) {
-      toast.error('Please enter a name for the hold')
+      showWarning('Please enter a name for the hold', 'Name Required')
       return
     }
 
     if (cartItems.length === 0) {
-      toast.error('Cannot save an empty cart')
+      showWarning('Cannot save an empty cart', 'Empty Cart')
       return
     }
 
@@ -66,12 +59,12 @@ export const TransactionPanel: React.FC<TransactionPanelProps> = ({
         totalAmount: total
       })
 
-      toast.success('Hold saved successfully')
+      showSuccess('Hold saved successfully', 'Hold Saved')
       setHoldName('')
       setIsHoldDialogOpen(false)
       onClearCart()
     } catch (error: any) {
-      toast.error('Failed to save hold: ' + error.message)
+      showError(error?.message || 'Failed to save hold', 'Save Failed')
     }
   }
 
@@ -81,7 +74,7 @@ export const TransactionPanel: React.FC<TransactionPanelProps> = ({
       const holdsData = await apiService.getHolds()
       setHolds(holdsData)
     } catch (error: any) {
-      toast.error('Failed to load holds: ' + error.message)
+      showError(error?.message || 'Failed to load holds', 'Load Failed')
     } finally {
       setIsLoadingHolds(false)
     }
@@ -116,23 +109,23 @@ export const TransactionPanel: React.FC<TransactionPanelProps> = ({
       // Delete the hold after successfully loading it
       await apiService.deleteHold(hold.id)
 
-      toast.success(`Hold "${hold.name}" loaded and removed from holds`)
+      showSuccess(`Hold "${hold.name}" loaded and removed from holds`, 'Hold Loaded')
       setIsViewHoldsOpen(false)
 
       // Refresh the holds list in case the dialog is opened again
       await loadHolds()
     } catch (error: any) {
-      toast.error('Failed to load hold: ' + error.message)
+      showError(error?.message || 'Failed to load hold', 'Load Failed')
     }
   }
 
   const handleDeleteHold = async (holdId: string) => {
     try {
       await apiService.deleteHold(holdId)
-      toast.success('Hold deleted successfully')
+      showSuccess('Hold deleted successfully', 'Hold Deleted')
       await loadHolds() // Refresh the list
     } catch (error: any) {
-      toast.error('Failed to delete hold: ' + error.message)
+      showError(error?.message || 'Failed to delete hold', 'Delete Failed')
     }
   }
   return (
@@ -167,9 +160,28 @@ export const TransactionPanel: React.FC<TransactionPanelProps> = ({
                     >
                       <span className="col-span-1 flex items-center">{index + 1}</span>
                       <span className="col-span-5 flex items-center text-xs leading-tight">
-                        {item.name}
+                        <div className="flex flex-col">
+                          <span>{item.name}</span>
+                          {item.isWholesale && (
+                            <span className="text-[10px] text-green-600 flex items-center gap-1">
+                              <Tag className="w-3 h-3" />
+                              Wholesale price
+                            </span>
+                          )}
+                        </div>
                       </span>
-                      <span className="col-span-3 flex items-center">{formatPriceBySymbol(item.price)}</span>
+                      <span className="col-span-3 flex items-center">
+                        <div className="flex flex-col">
+                          <span className={item.isWholesale ? 'text-green-600 font-semibold' : ''}>
+                            {formatPriceBySymbol(item.price)}
+                          </span>
+                          {item.isWholesale && item.basePrice && (
+                            <span className="text-[10px] text-gray-400 line-through">
+                              {formatPriceBySymbol(item.basePrice)}
+                            </span>
+                          )}
+                        </div>
+                      </span>
                       <div className="col-span-3 flex items-center space-x-1">
                         <button
                           onClick={() => onUpdateQuantity(item.id, item.quantity - 1)}
@@ -201,11 +213,9 @@ export const TransactionPanel: React.FC<TransactionPanelProps> = ({
                     </div>
                   ))}
                 </div>
-
-
               </>
             )}
-                
+
             {/* Add item input */}
             {/* <div className="pt-2 space-y-2">
               <Input
@@ -235,7 +245,7 @@ export const TransactionPanel: React.FC<TransactionPanelProps> = ({
               )}
             </div> */}
           </CardContent>
-          <CardFooter className='py-0 w-full' >
+          <CardFooter className="py-0 w-full">
             <div className="flex items-center justify-between text-sm font-medium">
               <span className="text-gray-600">Total:</span>
               <span className="font-bold text-gray-900">

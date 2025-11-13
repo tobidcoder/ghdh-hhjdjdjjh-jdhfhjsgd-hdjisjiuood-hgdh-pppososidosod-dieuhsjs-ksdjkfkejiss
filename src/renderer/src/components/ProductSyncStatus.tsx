@@ -4,7 +4,7 @@ import { useAuthStore } from '@renderer/store/auth'
 import { Badge } from '@renderer/components/ui/badge'
 import { Progress } from './ui/progress'
 import { Button } from './ui/button'
-import {  RefreshCw, AlertCircle, CheckCircle, Clock } from 'lucide-react'
+import { RefreshCw, AlertCircle, CheckCircle, Clock } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
@@ -12,10 +12,18 @@ import {
   DialogTitle,
   DialogTrigger
 } from '@renderer/components/ui/dialog'
+import { showError, showSuccess, showInfo, showWarning } from '@renderer/utils/notifications'
 
 export const ProductSyncStatus: React.FC = () => {
-  const { syncProgress, isSyncing, syncError, checkSyncProgress, startSync, resetSync, getProductsUpdated } =
-    useProductsStore()
+  const {
+    syncProgress,
+    isSyncing,
+    syncError,
+    checkSyncProgress,
+    startSync,
+    resetSync,
+    getProductsUpdated
+  } = useProductsStore()
   const { user } = useAuthStore()
   // const [isExpanded, setIsExpanded] = useState(false)
 
@@ -56,13 +64,19 @@ export const ProductSyncStatus: React.FC = () => {
   }
 
   const handleManualSync = async () => {
-    if (!user?.token) return
+    if (!user?.token) {
+      showWarning('Please login to sync products', 'Authentication Required')
+      return
+    }
 
     try {
       console.log('Starting manual sync...')
+      showInfo('Starting product sync...', 'Syncing')
       await startSync()
-    } catch (error) {
+      showSuccess('Product sync started successfully', 'Sync Started')
+    } catch (error: any) {
       console.error('Manual sync failed:', error)
+      showError(error?.message || 'Failed to start product sync', 'Sync Failed')
     }
   }
 
@@ -70,19 +84,27 @@ export const ProductSyncStatus: React.FC = () => {
     try {
       await resetSync()
       console.log('Sync progress reset')
-    } catch (error) {
+      showSuccess('Sync progress reset successfully', 'Reset Complete')
+    } catch (error: any) {
       console.error('Failed to reset sync:', error)
+      showError(error?.message || 'Failed to reset sync progress', 'Reset Failed')
     }
   }
 
   const handleGetProductsUpdated = async () => {
-    if (!user?.token) return
+    if (!user?.token) {
+      showWarning('Please login to fetch updated products', 'Authentication Required')
+      return
+    }
 
     try {
       console.log('Fetching updated products...')
+      showInfo('Fetching updated products...', 'Please Wait')
       await getProductsUpdated()
-    } catch (error) {
+      showSuccess('Products updated successfully', 'Update Complete')
+    } catch (error: any) {
       console.error('Get updated products failed:', error)
+      showError(error?.message || 'Failed to fetch updated products', 'Update Failed')
     }
   }
 
@@ -93,7 +115,7 @@ export const ProductSyncStatus: React.FC = () => {
   return (
     <>
       <Dialog>
-        <DialogTrigger className='cursor-pointer'>
+        <DialogTrigger className="cursor-pointer">
           <Badge variant={getStatusColor()}>
             {getStatusIcon()}
             <span className="ml-1">{getStatusText()}</span>
@@ -140,10 +162,10 @@ export const ProductSyncStatus: React.FC = () => {
             <div className="flex gap-2">
               {syncProgress?.is_completed ? (
                 // Show Get Product Update button when sync is completed
-                <Button 
-                  onClick={handleGetProductsUpdated} 
-                  disabled={isSyncing} 
-                  size="sm" 
+                <Button
+                  onClick={handleGetProductsUpdated}
+                  disabled={isSyncing}
+                  size="sm"
                   variant="default"
                 >
                   {isSyncing ? 'Updating...' : 'Get Product Update'}
@@ -152,7 +174,12 @@ export const ProductSyncStatus: React.FC = () => {
                 // Show other buttons only when sync is not completed and not syncing
                 !isSyncing && (
                   <>
-                    <Button onClick={handleManualSync} disabled={isSyncing} size="sm" variant="outline">
+                    <Button
+                      onClick={handleManualSync}
+                      disabled={isSyncing}
+                      size="sm"
+                      variant="outline"
+                    >
                       {isSyncing ? 'Syncing...' : 'Manual Sync'}
                     </Button>
                     <Button onClick={checkSyncProgress} size="sm" variant="ghost">
