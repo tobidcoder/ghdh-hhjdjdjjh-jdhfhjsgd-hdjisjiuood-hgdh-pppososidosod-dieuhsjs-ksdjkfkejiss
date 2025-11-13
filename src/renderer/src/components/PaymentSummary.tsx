@@ -1,7 +1,7 @@
 import React from 'react'
 import { Button } from '@renderer/components/ui/button'
-// import { Input } from '@renderer/components/ui/input'
-import { Card, CardContent,  CardTitle } from '@renderer/components/ui/card'
+import { Input } from '@renderer/components/ui/input'
+import { Card, CardContent, CardTitle } from '@renderer/components/ui/card'
 import { CreditCard } from 'lucide-react'
 import { formatPriceBySymbol } from '@renderer/lib/currencyUtils'
 
@@ -16,12 +16,34 @@ interface CartItem {
 interface PaymentSummaryProps {
   cartItems: CartItem[]
   onCheckout: () => void
+  taxRate: number
+  onTaxRateChange: (rate: number) => void
+  taxEnabled: boolean // From settings enable_tax
 }
 
-export const PaymentSummary: React.FC<PaymentSummaryProps> = ({ cartItems, onCheckout }) => {
+export const PaymentSummary: React.FC<PaymentSummaryProps> = ({
+  cartItems,
+  onCheckout,
+  taxRate,
+  onTaxRateChange,
+  taxEnabled
+}) => {
   const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0)
-  const taxAmount = subtotal * 0 // 15% tax
+  const taxAmount = subtotal * (taxRate / 100)
   const totalAmount = subtotal + taxAmount
+
+  const handleTaxRateChange = (value: string) => {
+    // Allow empty string to clear the input
+    if (value === '') {
+      onTaxRateChange(0)
+      return
+    }
+
+    const numValue = parseFloat(value)
+    if (!isNaN(numValue) && numValue >= 0 && numValue <= 100) {
+      onTaxRateChange(numValue)
+    }
+  }
 
   return (
     <div className="mt-4   h-full w-full space-y-3 px-4 ">
@@ -33,15 +55,41 @@ export const PaymentSummary: React.FC<PaymentSummaryProps> = ({ cartItems, onChe
           {/* <Input placeholder="CUSTOMER" className="text-xs h-8" /> */}
 
           <div className="space-y-1 text-lg">
-            {/* <div className="flex justify-between">
-              <span>Gross Amount:</span>
+            <div className="flex justify-between text-gray-700">
+              <span>Subtotal:</span>
               <span>{formatPriceBySymbol(subtotal)}</span>
             </div>
-            <div className="flex justify-between text-orange-600">
-              <span>Tax Amount:</span>
-              <span>{formatPriceBySymbol(taxAmount)}</span>
-            </div> */}
-            <div className="flex justify-between text-green-800 font-medium">
+
+            {/* Tax Input (enabled based on settings) */}
+            <div className="flex items-center justify-between py-2 border-t border-gray-200 gap-2">
+              <div className="flex items-center space-x-2 flex-1">
+                <label htmlFor="tax-input" className="text-sm text-gray-600 whitespace-nowrap">
+                  Tax
+                </label>
+                <div className="flex items-center gap-1 flex-1">
+                  <Input
+                    id="tax-input"
+                    type="number"
+                    value={taxRate}
+                    onChange={(e) => handleTaxRateChange(e.target.value)}
+                    disabled={!taxEnabled}
+                    min="0"
+                    max="100"
+                    step="0.1"
+                    className={`h-8 text-sm w-20 ${!taxEnabled ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                    placeholder="0"
+                  />
+                  <span className="text-sm text-gray-600">%</span>
+                </div>
+              </div>
+              <span
+                className={`text-sm ${taxEnabled && taxAmount > 0 ? 'text-orange-600 font-medium' : 'text-gray-400'}`}
+              >
+                {formatPriceBySymbol(taxAmount)}
+              </span>
+            </div>
+
+            <div className="flex justify-between text-green-800 font-medium pt-2 border-t border-gray-300">
               <span>Grand Total:</span>
               <span>{formatPriceBySymbol(totalAmount)}</span>
             </div>
@@ -65,7 +113,7 @@ export const PaymentSummary: React.FC<PaymentSummaryProps> = ({ cartItems, onChe
           disabled={cartItems.length === 0}
           size={'lg'}
         >
-          <CreditCard  className="mr-2" />
+          <CreditCard className="mr-2" />
           PAY
         </Button>
       </div>

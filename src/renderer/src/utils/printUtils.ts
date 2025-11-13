@@ -309,8 +309,7 @@ export const printReceiptFromSale = async (sale: any): Promise<void> => {
 const generateReceiptHTML = (receiptData: any): string => {
   const { saleData, cartItems, companyInfo } = receiptData
   const subtotal = cartItems.reduce((sum: number, item: any) => sum + item.price * item.quantity, 0)
-  const taxAmount = 0
-  // const taxAmount = subtotal * 0.15
+  const taxAmount = saleData.taxAmount || 0
   const totalAmount = subtotal + taxAmount
 
   // Calculate totals for display
@@ -325,7 +324,6 @@ const generateReceiptHTML = (receiptData: any): string => {
   const showEmail = settings.show_email == '1'
   const showNote = settings.show_note == '1'
   // const showTaxDiscountShipping = settings.show_tax_discount_shipping == "1"
-  const taxEnabled = settings.enable_tax == '1'
   const discountEnabled = settings.enable_discount == '1'
   const shippingEnabled = settings.enable_shipping == '1'
 
@@ -465,10 +463,10 @@ const generateReceiptHTML = (receiptData: any): string => {
           <span>${formatPrice(subtotal)}</span>
         </div>
         ${
-          taxEnabled
+          taxAmount > 0
             ? `
         <div class="summary-row">
-          <span>Tax:</span>
+          <span>Tax (${((saleData.taxRate || 0) * 100).toFixed(1)}%):</span>
           <span>${formatPrice(taxAmount)}</span>
         </div>
         `
@@ -544,11 +542,13 @@ export const generateReceiptData = (
   cartItems: any[],
   paymentData: any,
   companyInfo: any,
-  saleRef?: string
+  saleRef?: string,
+  taxAmount?: number,
+  taxRate?: number
 ) => {
   const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0)
-  const taxAmount = subtotal * 0.15
-  const totalAmount = subtotal + taxAmount
+  const actualTaxAmount = taxAmount !== undefined ? taxAmount : 0
+  const totalAmount = subtotal + actualTaxAmount
 
   return {
     saleData: {
@@ -560,7 +560,9 @@ export const generateReceiptData = (
       note: paymentData.note,
       receivedAmount: paymentData.receivedAmount,
       changeReturn: paymentData.changeReturn,
-      ref: saleRef || invoiceNumber // Add ref field for barcode
+      ref: saleRef || invoiceNumber, // Add ref field for barcode
+      taxAmount: actualTaxAmount,
+      taxRate: taxRate || 0
     },
     cartItems,
     companyInfo: {

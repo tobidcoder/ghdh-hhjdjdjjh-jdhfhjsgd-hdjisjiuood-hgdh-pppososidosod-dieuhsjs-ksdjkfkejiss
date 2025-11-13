@@ -19,6 +19,9 @@ interface PaymentModalProps {
   onClose: () => void
   cartItems: CartItem[]
   onSubmit: (paymentData: PaymentData) => void
+  taxEnabled?: boolean
+  taxAmount?: number
+  taxRate?: number
 }
 
 interface PaymentData {
@@ -35,6 +38,9 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   onClose,
   cartItems,
   onSubmit,
+  taxEnabled = false,
+  taxAmount = 0,
+  taxRate = 0
 }) => {
   const { paymentMethods, fetchPaymentMethods, isLoading } = useSettingsStore()
   const [receivedAmount, setReceivedAmount] = useState('')
@@ -43,16 +49,13 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   const [paymentType, setPaymentType] = useState('')
 
   // Get settings for field visibility
-  const { getTaxEnabled, getDiscountEnabled, getShippingEnabled } = useSettingsStore()
-  const taxEnabled = getTaxEnabled()
+  const { getDiscountEnabled, getShippingEnabled } = useSettingsStore()
   const discountEnabled = getDiscountEnabled()
   const shippingEnabled = getShippingEnabled()
 
-  // Calculate totals
+  // Calculate totals using props
   const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0)
-  const taxAmount = subtotal * 0.15 // 15% tax
-  const totalAmount = subtotal
-  // + taxAmount
+  const totalAmount = subtotal + taxAmount
   const changeReturn = parseFloat(receivedAmount) - totalAmount
 
   // Fetch payment methods when modal opens
@@ -62,9 +65,9 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
     }
   }, [isOpen])
 
-//   if (paymentMethods) {
-// console.log('Available payment methods:', paymentMethods)
-//   }
+  //   if (paymentMethods) {
+  // console.log('Available payment methods:', paymentMethods)
+  //   }
 
   // Set default received amount to total amount and default payment type
   useEffect(() => {
@@ -75,7 +78,8 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
       if (paymentMethods.length > 0) {
         const activeMethods = paymentMethods.filter((method) => method.is_active)
         const cashMethod = activeMethods.find(
-          (method) => method.name?.toLowerCase() === 'cash' || method.display_name?.toLowerCase() === 'cash'
+          (method) =>
+            method.name?.toLowerCase() === 'cash' || method.display_name?.toLowerCase() === 'cash'
         )
         if (cashMethod) {
           setPaymentType(String(cashMethod.id))
@@ -113,7 +117,10 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <h2 className="text-2xl font-bold text-green-800">Make Payment</h2>
-          <button onClick={onClose} className="text-gray-500 cursor-pointer hover:text-gray-700 transition-colors">
+          <button
+            onClick={onClose}
+            className="text-gray-500 cursor-pointer hover:text-gray-700 transition-colors"
+          >
             <X className="w-6 h-6" />
           </button>
         </div>
@@ -240,10 +247,10 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                 </span>
               </div> */}
 
-              {taxEnabled && (
+              {taxEnabled && taxAmount > 0 && (
                 <div className="flex items-center justify-between">
-                  <span className="text-gray-600">Tax</span>
-                  <span className="font-semibold text-gray-800">
+                  <span className="text-gray-600">Tax ({(taxRate * 100).toFixed(1)}%)</span>
+                  <span className="font-semibold text-orange-600">
                     {formatPriceBySymbol(taxAmount)}
                   </span>
                 </div>

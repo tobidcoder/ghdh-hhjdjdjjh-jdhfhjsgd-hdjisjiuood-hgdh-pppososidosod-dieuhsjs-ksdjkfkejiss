@@ -10,7 +10,7 @@ import { TransactionPanel } from '@renderer/components/TransactionPanel'
 import { PaymentSummary } from '@renderer/components/PaymentSummary'
 import { PaymentModal } from '@renderer/components/PaymentModal'
 import { printReceipt, generateReceiptData } from '@renderer/utils/printUtils'
-import { showError, showSuccess, showInfo } from '@renderer/utils/notifications'
+import { showError, showSuccess } from '@renderer/utils/notifications'
 
 export const Dashboard: React.FC = () => {
   const { user, logout } = useAuthStore()
@@ -42,6 +42,10 @@ export const Dashboard: React.FC = () => {
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false)
   const [isConfirmLogoutOpen, setIsConfirmLogoutOpen] = useState(false)
   const [isSyncingLogout, setIsSyncingLogout] = useState(false)
+  const [taxRate, setTaxRate] = useState(0) // Tax rate as percentage (0-100), default 0
+
+  // Compute taxEnabled from settings
+  const taxEnabled = settings.enable_tax === '1' || settings.enable_tax === true
 
   useEffect(() => {
     if (cartItems.length == 1) {
@@ -232,9 +236,7 @@ export const Dashboard: React.FC = () => {
   const handlePaymentSubmit = async (paymentData: any): Promise<void> => {
     try {
       const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0)
-      // const taxAmount = subtotal * 0.15 // 15% tax
-      // const totalAmount = subtotal + taxAmount
-      const taxAmount = 0
+      const taxAmount = taxEnabled ? subtotal * (taxRate / 100) : 0
       const totalAmount = subtotal + taxAmount
 
       // Create sale_items in API format
@@ -287,8 +289,7 @@ export const Dashboard: React.FC = () => {
         grand_total: totalAmount.toString(),
         discount: 0,
         shipping: 0,
-        // tax_rate: 0.15, // 15% tax rate
-        tax_rate: 0,
+        tax_rate: taxEnabled ? taxRate / 100 : 0,
         status: 1, // Active status
         hold_ref_no: null, // Use null instead of empty string
         user_id: user!.id // Add required user_id field from auth store
@@ -297,7 +298,15 @@ export const Dashboard: React.FC = () => {
       await createSale(saleData)
 
       // Generate receipt and trigger print
-      const receiptData = generateReceiptData(saleRef, cartItems, paymentData, settings, saleRef)
+      const receiptData = generateReceiptData(
+        saleRef,
+        cartItems,
+        paymentData,
+        settings,
+        saleRef,
+        taxAmount,
+        taxEnabled ? taxRate / 100 : 0
+      )
       setIsPaymentModalOpen(false)
       useProductsStore.getState().clearCart()
 
@@ -353,7 +362,13 @@ export const Dashboard: React.FC = () => {
           <div className="h-[100%]"></div>
 
           <div className="w-full bg-white border-l border-gray-200 flex flex-col mb-4">
-            <PaymentSummary cartItems={cartItems} onCheckout={handleCheckout} />
+            <PaymentSummary
+              cartItems={cartItems}
+              onCheckout={handleCheckout}
+              taxEnabled={taxEnabled}
+              taxRate={taxRate}
+              onTaxRateChange={setTaxRate}
+            />
           </div>
         </div>
 
@@ -379,6 +394,13 @@ export const Dashboard: React.FC = () => {
         onClose={() => setIsPaymentModalOpen(false)}
         cartItems={cartItems}
         onSubmit={handlePaymentSubmit}
+        taxEnabled={taxEnabled}
+        taxAmount={
+          taxEnabled
+            ? cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0) * (taxRate / 100)
+            : 0
+        }
+        taxRate={taxRate / 100}
       />
 
       {/* Logout warning modal */}
