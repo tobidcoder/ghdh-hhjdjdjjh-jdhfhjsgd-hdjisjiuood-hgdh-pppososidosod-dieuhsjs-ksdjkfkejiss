@@ -9,17 +9,18 @@ if (process.env.NODE_ENV !== 'production') {
   }
 }
 
-  // main.js
-  // const { app } = require('electron');
-  // const path = require('path');
+// main.js
+// const { app } = require('electron');
+// const path = require('path');
 
-  // if (app.isPackaged) {
-  //   require('dotenv').config({ path: path.join(process.resourcesPath, '.env') });
-  // } else {
-  //   require('dotenv').config();
-  // }
+// if (app.isPackaged) {
+//   require('dotenv').config({ path: path.join(process.resourcesPath, '.env') });
+// } else {
+//   require('dotenv').config();
+// }
 
-import {app,  shell, BrowserWindow, ipcMain } from 'electron'
+import { updateElectronApp } from 'update-electron-app'
+import { app, shell, BrowserWindow, ipcMain } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/favicon.ico?asset'
@@ -27,7 +28,6 @@ import { initDatabase, closeDatabase } from './db'
 import { registerDatabaseIpcHandlers, registerProductSyncIpcHandlers } from './handlers/ipcHandlers'
 import * as salesService from './services/sales'
 // import { Icon } from "../../resources/favicon.ico?asset";
-
 
 async function createWindow(): Promise<void> {
   try {
@@ -103,15 +103,21 @@ app.whenReady().then(() => {
   // Register IPC handlers
   registerDatabaseIpcHandlers()
   registerProductSyncIpcHandlers()
+  updateElectronApp()
 
   // Initialize offline database
   initDatabase()
 
   // Schedule periodic cleanup of old synced sales (every 6 hours)
   try {
-    setInterval(() => {
-      try { salesService.cleanupOldSyncedSales() } catch {}
-    }, 6 * 60 * 60 * 1000)
+    setInterval(
+      () => {
+        try {
+          salesService.cleanupOldSyncedSales()
+        } catch {}
+      },
+      6 * 60 * 60 * 1000
+    )
   } catch {}
 
   createWindow()
