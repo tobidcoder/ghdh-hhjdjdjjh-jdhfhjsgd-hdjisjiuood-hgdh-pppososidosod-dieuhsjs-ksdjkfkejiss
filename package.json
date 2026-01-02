@@ -43,9 +43,11 @@
     "sweetalert2": "^11.26.3",
     "tailwind-merge": "^3.3.1",
     "tw-animate-css": "^1.3.6",
+    "update-electron-app": "^3.1.2",
     "zustand": "^5.0.7"
   },
   "devDependencies": {
+    "@electron-forge/publisher-github": "^7.10.2",
     "@electron-toolkit/eslint-config-prettier": "^3.0.0",
     "@electron-toolkit/eslint-config-ts": "^3.0.0",
     "@electron-toolkit/tsconfig": "^1.0.1",
