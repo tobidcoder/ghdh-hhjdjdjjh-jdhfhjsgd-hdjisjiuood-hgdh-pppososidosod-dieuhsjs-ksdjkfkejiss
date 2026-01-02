@@ -9,8 +9,8 @@ module.exports = {
       name: '@electron-forge/publisher-github',
       config: {
         repository: {
-          owner: 'me',
-          name: 'awesome-thing'
+          owner: 'tobidcoder',
+          name: 'ghdh-hhjdjdjjh-jdhfhjsgd-hdjisjiuood-hgdh-pppososidosod-dieuhsjs-ksdjkfkejiss'
         },
         prerelease: true
       }
