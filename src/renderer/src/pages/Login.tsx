@@ -18,7 +18,8 @@ const Login: React.FC = () => {
   }, [user, navigate])
 
   return (
-    <div className="min-h-screen min-w-screen flex items-center justify-center bg-[#052315]">
+    // bg-[#052315]
+    <div className="min-h-screen min-w-screen flex items-center justify-center bg-[red]">
       <div className="bg-white rounded-2xl shadow-lg p-10 w-full max-w-md flex flex-col items-center">
         <div className="flex flex-col items-center mb-6">
           <span className="text-4xl font-bold text-[#052315] flex items-center gap-2 mb-2">
@@ -127,12 +128,15 @@ const Login: React.FC = () => {
               <div className="font-medium">Syncing Data...</div>
               <div className="mt-2">
                 <div className="text-xs text-gray-600 mb-1">
-                  {syncProgress.currentStep} ({syncProgress.completedSteps}/{syncProgress.totalSteps})
+                  {syncProgress.currentStep} ({syncProgress.completedSteps}/
+                  {syncProgress.totalSteps})
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2">
                   <div
                     className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                    style={{ width: `${(syncProgress.completedSteps / syncProgress.totalSteps) * 100}%` }}
+                    style={{
+                      width: `${(syncProgress.completedSteps / syncProgress.totalSteps) * 100}%`
+                    }}
                   ></div>
                 </div>
               </div>
