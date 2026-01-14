@@ -19,7 +19,7 @@ const Login: React.FC = () => {
 
   return (
     // bg-[#052315]
-    <div className="min-h-screen min-w-screen flex items-center justify-center bg-[red]">
+    <div className="min-h-screen min-w-screen flex items-center justify-center bg-[#052315]">
       <div className="bg-white rounded-2xl shadow-lg p-10 w-full max-w-md flex flex-col items-center">
         <div className="flex flex-col items-center mb-6">
           <span className="text-4xl font-bold text-[#052315] flex items-center gap-2 mb-2">

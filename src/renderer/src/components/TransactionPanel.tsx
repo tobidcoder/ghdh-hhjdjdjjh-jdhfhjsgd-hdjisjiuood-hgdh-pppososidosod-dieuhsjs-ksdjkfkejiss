@@ -216,34 +216,7 @@ export const TransactionPanel: React.FC<TransactionPanelProps> = ({
               </>
             )}
 
-            {/* Add item input */}
-            {/* <div className="pt-2 space-y-2">
-              <Input
-                placeholder="Search by product code..."
-                className="text-xs h-8"
-                value={searchCode}
-                onChange={(e) => onSearchCodeChange(e.target.value)}
-                onKeyPress={onKeyPress}
-              />
-              <Button onClick={onProductSearch} size="sm" className="w-full text-xs h-8">
-                Search & Add
-              </Button>
-
-              //  Search Result
-              {searchResult && (
-                <div
-                  className={`text-xs p-2 rounded ${
-                    searchResult.type === 'error'
-                      ? 'bg-red-100 text-red-800'
-                      : 'bg-green-100 text-green-800'
-                  }`}
-                >
-                  {searchResult.type === 'error'
-                    ? searchResult.error
-                    : `Added: ${searchResult.product.name}`}
-                </div>
-              )}
-            </div> */}
+           
           </CardContent>
           <CardFooter className="py-0 w-full">
             <div className="flex items-center justify-between text-sm font-medium">

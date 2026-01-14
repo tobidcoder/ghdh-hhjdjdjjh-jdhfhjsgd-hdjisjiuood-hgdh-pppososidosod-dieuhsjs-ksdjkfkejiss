@@ -348,7 +348,7 @@ export const Dashboard: React.FC = () => {
         onLogout={handleLogoutRequested}
       />
       <div className="flex-1  flex overflow-hidden">
-        <div className="flex bg-white flex-col items-end h-[100%]">
+        <div className="flex bg-white flex-col items-end overflow-y-scroll h-[100%]">
           <div>
             <TransactionPanel
               cartItems={cartItems}

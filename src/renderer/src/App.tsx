@@ -3,6 +3,8 @@ import { Routes, Route } from 'react-router-dom'
 import Login from './pages/Login'
 import { Dashboard } from './pages/Dashboard'
 import RecentSales from './pages/RecentSales'
+import PriceChecker from './pages/PriceChecker'
+import ProductList from './pages/ProductList'
 import { useAuthStore } from './store/auth'
 // removed unused imports
 
@@ -41,6 +43,8 @@ function App(): React.JSX.Element {
       {/* <Route path="/dashboard" element={<h1>kjkj</h1>} /> */}
       <Route path="/dashboard" element={<Dashboard />} />
       <Route path="/recent-sales" element={<RecentSales />} />
+      <Route path="/price-checker" element={<PriceChecker />} />
+      <Route path="/product-list" element={<ProductList />} />
     </Routes>
   )
 }
